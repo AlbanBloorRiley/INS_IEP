@@ -10,8 +10,8 @@ if iscell(A)
     J_lambda = zeros(m,l);
 %         QAQ = cell(1,l);
     for k = 1:l
-%         J_lambda(:,k)=diag(Q'*A{k}*Q);
-        J_lambda(:,k) =sum((Q'*A{k}).*Q',2);
+%         J_lambda(:,k)=round(diag(Q'*A{k}*Q),5);
+        J_lambda(:,k) =real(sum((Q.'*A{k}).*Q',2)); % Doesn't work for complex A?...
     end
     
 % %     for i = 1:m
