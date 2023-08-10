@@ -46,24 +46,33 @@ Exp.ev=ev;
 clear Sys
 rng(0)
 [Sys,Vary,Exp]=Dy_Sys;
-r=1;
-% Sys.B2 = [1;1;1;1]*[1000 0 -1000 0 0];
-% Sys.S=Sys1.S;
-% Sys.B2=round(Sys1.B2,r,'significant');
-% Sys.B4=round(Sys1.B4,r,'significant');
-% Sys.B6=round(Sys1.B6,r,'significant');
-% Sys.ee=round(Sys1.ee,r,'significant');
-% Sys.B2=Sys1.B2*(1+rand*0.1);
-% Sys.B4=Sys1.B4*(1+rand*0.1);
-% Sys.B6=Sys1.B6*(1+rand*0.1);
-% Sys.ee=Sys1.ee*(1+rand*0.1);
-% Exp.ev=Sys1.ev;
-% Vary = Sys;
 %%
-Opt = struct('NMinima',5,'Method','Newton','Linesearch','Basic',...
-    'MaxIter',1000,'p',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,'ObjectiveTolerance',1e-1,'Minalpha',1e-18,'Scaled',1,...
+clear Sys Vary
+[Sys,Vary,Exp]=Mn6_Sys;
+
+Opt = struct('NMinima',1,'Method','Gauss-NewtonT1','Linesearch','Armijo',...
+    'MaxIter',100,'p',2,'StepTolerance',1e-4,'GradientTolerance',1e-1,...
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-18,'Scaled',1,...
+    'deflatelinesearch',1,'IEPType','Classic','Verbose',1,'tau',0.5);
+%Now find the minima
+[SysOut, NIter, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
+%%
+
+
+
+
+
+
+Opt = struct('NMinima',1,'Method','Gauss-NewtonT1','Linesearch','Quadratic',...
+    'MaxIter',1000,'p','exp','StepTolerance',1e-6,'GradientTolerance',1e-1,...
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-18,'Scaled',1,...
     'deflatelinesearch',1,'IEPType','Classic','Verbose',0,'tau',0.5);
 [SysOut1, NIter1, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
+
+
+
+
+%% 
 
 clear SysOut NIter  
 j=1;    idx=[];
