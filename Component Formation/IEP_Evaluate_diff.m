@@ -43,7 +43,7 @@ end
 % R = (D(2:end)-D(1:end-1))-(constants.ev(2:end)-constants.ev(1:end-1));
 % J = FormJ_Lambda(Q(:,2:end),constants.A) - FormJ_Lambda(Q(:,1:end-1),constants.A);
 %  L = D-constants.ev;
-    RL = (D(2:end) - D(1:end-1)) - (constants.ev(2:end) - constants.ev(1:end-1));
+    RL = ((D(2:end) - D(1:end-1)) - (constants.ev(2:end) - constants.ev(1:end-1)))./constants.eigenvalueDifferenceSD;
     f = sqrt(sum((RL).^2));
 if nargout>1
     varargout{1} = RL;

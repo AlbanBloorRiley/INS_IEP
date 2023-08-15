@@ -11,7 +11,7 @@ function H_lambda = FormH_Lambda(Q,A,D,ev)
     DD(abs(DD)<1e-15) = Inf;
         for j=1:l
             for k = 1:l
-                H_lambda(k,j,:) = (2*sum(QAQ{k}.*QAQ{j}./DD));
+                H_lambda(k,j,:) = real(2*sum(QAQ{k}.*QAQ{j}./DD));
             end
         end
 end
