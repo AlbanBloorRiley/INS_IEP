@@ -85,6 +85,8 @@ defaultMinalpha = 1e-4;
 defaultTheta = 2;
 defaultSigma = 1;
 defaultSingleShift = false;
+defaultEpsilon = 0.1;
+
 
 defaultGradientTolerance = 1e-2;
 defaultStepTolerance = 1e-8;
@@ -118,6 +120,8 @@ addParameter(IP,'minalpha',defaultMinalpha)
 addParameter(IP,'theta',defaultTheta)
 addParameter(IP,'sigma',defaultSigma)
 addParameter(IP,'SingleShift',defaultSingleShift)
+addParameter(IP,'epsilon',defaultEpsilon)
+
 
 addParameter(IP,'ObjectiveTolerance',defaultObjectiveTolerance)
 addParameter(IP,'GradientTolerance',defaultGradientTolerance)
@@ -151,6 +155,8 @@ params.linesearch.minalpha = res.minalpha;
 params.deflation.theta = res.theta;
 params.deflation.sigma = res.sigma;
 params.deflation.singleshift = res.SingleShift;
+params.deflation.epsilon = res.epsilon;
+
 
 %Convergence Parameters
 params.convergence.ObjectiveTolerance = res.ObjectiveTolerance;
