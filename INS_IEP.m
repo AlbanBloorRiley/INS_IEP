@@ -285,10 +285,10 @@ switch res.Method
     otherwise
         error('Please select a valid method - Newton/Gauss-NewtonT1/Gauss-NewtonT2')
 end
-
+%[x,NIter,flag,obj_at_x,nbytes,xs]
 j=0;tic;
 for i=length(res.SysFound)+1:res.NMinima
-    [Y(:,i),NIter(i),Flags{i},FinalError{i},Iterates{i}] = Fun(obj_fun,x0,Y,params);
+    [Y(:,i),NIter(i),Flags{i},FinalError{i},nbytes,Iterates{i}] = Fun(obj_fun,x0,Y,params);
     if Flags{i} ~="Max Iterations reached"
         j = j+1;
         disp(['Currently found ',num2str(j),' minima in ',num2str(i),' iterations.'])
