@@ -25,9 +25,9 @@ else
 %         disp(D-D1(1:length(D)))
 %     end
 end
-f = sqrt(sum(((D-constants.ev)./constants.evsd).^2));
+f = sqrt(sum(((D-constants.ev)./constants.eigenvalueSD).^2));
 if nargout>1
-    varargout{1} = (D-constants.ev)/constants.eigenvalueSD;
+    varargout{1} = (D-constants.ev)./constants.eigenvalueSD;
 end
 if nargout>1
     varargout{2} =  FormJ_Lambda(Q,constants.A);
