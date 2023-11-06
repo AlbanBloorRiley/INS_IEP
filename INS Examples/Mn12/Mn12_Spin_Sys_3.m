@@ -1,5 +1,4 @@
-function Sys = Mn12_Spin_Sys_3(Mn_sol,sf)
-%conversions
+function [Sys,Exp] = Mn12_Spin_Sys_3(Mn_sol,sf)%conversions
 rcm = 29979.2458;    % reciprocal cm to MHz
 meV = rcm*8.065;     % meV           to MHz
 
@@ -24,7 +23,7 @@ Sys.B4 = [B44 0 0 0 B40 0 0 0 0];  % B(k=4,q) with q = +4,+3,+2,+1,0,-1,-2,-3,-4
 H = ham(Sys,[0,0,0]);
 [~,E]=eig(H);
 EE = diag(E);
-Sys.ev=EE-EE(1);
+Exp.ev=EE-EE(1);
 Sys.B2 = round([B22 0 B20 0 0],sf,'significant');        % B(k=2,q) with q = +2,+1,0,-1,-2
 Sys.B4 = round([B44 0 0 0 B40 0 0 0 0],sf,'significant');  % B(k=4,q) with q = +4,+3,+2,+1,0,-1,-2,-3,-4
 

@@ -3,10 +3,8 @@ xint=[];
 A={};
 Ops={};
 N_electrons = length(Sys0.S);
-n = prod(2*Sys0.S+1);
 Varynames = fieldnames(Vary);
 Sys0names = fieldnames(Sys0);
-A0=sparse(n,n);
 
 if ~any(contains(Sys0names,'J'))&&~any(contains(Sys0names,'ee'))&&N_electrons>1
     error('Please provide an electron-electron exchange coupling. Use either the J or ee field')
@@ -20,13 +18,12 @@ for i = 1:length(Varynames)
         if (str2double(Varynames{i}(2:end)))>12
             error('easyspin only accepts Stevens operators up to degree 12')
         end
-        %         stevk(end+1) = str2num(Varynames{i}(2:end));    %lists stevens operators used
         stevk(length(stevk)+1) = (Varynames{i});    %lists stevens operators used
     end
 end
 stevk=stevk(2:end); %removes first, empty string
-for Bk = stevk
-    SysFixed.(Bk) = zeros(size(Sys0.(Bk)));
+for Bk = stevk    %Iterates through all the Stevens operators used 
+    SysFixed.(Bk) = zeros(size(Sys0.(Bk)));     %Initialises all the                                                    
     SysFixed.(Bk)(~logical((Vary.(Bk)))) = Sys0.(Bk)(~logical((Vary.(Bk))));
     Vary.(Bk) = logical(Vary.(Bk)); %will use uncertainty data later
     [TempOps,TempInt,TempA] = StevOps(Sys0,Vary,Bk);
@@ -39,7 +36,7 @@ for Bk = stevk
     A = [A,TempA];
 end
 
-
+            
 
 
 if  any(contains(Sys0names,'J'))
@@ -103,11 +100,14 @@ for j = 1:length(initials)  %iterate along row
         if initials(j) == 0
             warning("Any ee parameters initialised to 0 will not be varied.")
             continue
-%         elseif  length(unique(abs(Sys0.ee(logical(idx)))))>1
-%             error("")
+            %         elseif  length(unique(abs(Sys0.ee(logical(idx)))))>1
+            %             error("")
         end
-        
+
         [Ops.ee{end+1}, A{end+1}] = CalculateOp(Sys,'ee',"ham_ee",OpDim,idx);
+        if initials(j) == 0
+            initials(j) = 1e-18;
+        end
         Int(end+1) = initials(j);
     end
 end
@@ -148,6 +148,9 @@ for i = 1:size(Sys0.(Bk),2)    %Iterate through columns
         lidx=((idx==j).*Vary.(Bk)(:,i));
         if any(logical(lidx))
             [Ops.(Bk){end+1}, A{end+1}] = CalculateOp(Sys,Bk,"ham_zf",size(Sys0.(Bk)),lidx,i);
+            if initials(j) == 0
+                initials(j) = 1e-18;
+            end
             Int(end+1) = initials(j);
         end
     end
@@ -166,22 +169,13 @@ for j = 1:length(initials)  %iterate along row
     lidx = ((idx==j).*Vary.J);
     if any(logical(lidx))
         [Ops.J{end+1}, A{end+1}] = CalculateOp(Sys,'J',"ham_ee",[1,(N_electrons-1)*(N_electrons)/2],lidx);
+        if initials(j) == 0
+            initials(j) = 1e-18;
+        end
         Int(end+1) = initials(j);
 
     end
 end
 end
 
-%
-% Sys = Cr_Spin_Sys_3(3);
-% Sys.B2(1) = 1.7*1e3;
-% Sys.B2(1,3) = -3.2*1e3;
-% Sys.B2(3) = 0;
-% Sys.ee=[ones(1,3)*3.53*1e5;0 0 0; ones(1,3)*-3.53*1e5];
-% Sys.ee=[eye(3)*3.53*1e5;zeros(3); eye(3)*-3.53*1e5];
-%
-% % Sys = rmfield(Sys, 'ee'); Sys.J = [3.53*1e5, 0, 3.53*1e5]; Vary.J = [1,1,1];
-% Vary = Sys;
-% Vary.B2(:,[1,3])=1;
-%
 

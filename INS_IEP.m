@@ -243,13 +243,13 @@ params.method.constants = constants;
 switch res.Method
     case "Newton"
         if res.deflatelinesearch
-            params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx) Mu^2*(Jx'*Rx)'*(Jx'*Rx);
+%             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx) Mu^2*(Jx'*Rx)'*(Jx'*Rx);
             params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) Deflated_Gradient(objective_function,x,constants,PreviousMinima,DeflationParameters);
 %             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) (Jx'*Rx*gradMu+Mu*(Jx'*Jx+S))*(2*Mu*Jx'*Rx);
             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*Mu*gradMu'*(Jx'*Rx)'*(Jx'*Rx)+ 2*Mu^2*(Jx'*Jx+S)*(Jx'*Rx);
 
         else
-            params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
+%             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
             params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters)  objective_function(x,constants);
             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
 
@@ -263,7 +263,7 @@ switch res.Method
                 warning("There is no deflated line search method for the Type 1 Gauss-Newton method. Using an undeflated line search.")
             end
         end
-        params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
+%         params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
         params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) objective_function(x,constants);
         params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
 
@@ -271,11 +271,11 @@ switch res.Method
 
     case "Gauss-NewtonT2"
         if res.deflatelinesearch
-            params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)Mu^2*obj_at_x;
+%             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)Mu^2*obj_at_x;
             params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) deflation(PreviousMinima,x,DeflationParameters)^2*objective_function(x,constants);
             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
         else
-            params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
+%             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
             params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) objective_function(x,constants);
             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
         end
@@ -286,6 +286,7 @@ switch res.Method
         error('Please select a valid method - Newton/Gauss-NewtonT1/Gauss-NewtonT2')
 end
 %[x,NIter,flag,obj_at_x,nbytes,xs]
+% [SysOut, NIter, Flags, Iterates, FinalError] 
 j=0;tic;
 for i=length(res.SysFound)+1:res.NMinima
     [Y(:,i),NIter(i),Flags{i},FinalError{i},nbytes,Iterates{i}] = Fun(obj_fun,x0,Y,params);
