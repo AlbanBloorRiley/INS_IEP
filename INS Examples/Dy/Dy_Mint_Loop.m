@@ -66,10 +66,10 @@ Exp.ev=EE;
 % - inputing a nonzero value for all the parameters you wish to use.
 % [Sys,Vary,Exp]=Dy_Sys;
 
-Opt = struct('NMinima',2,'Method','Gauss-NewtonT2','Linesearch','Basic',...
-    'MaxIter',1000,'theta',2,'StepTolerance',1e-2,'ObjectiveTolerance',1e-2,...
+Opt = struct('NMinima',1,'Method','Newton','Linesearch','Basic',...
+    'MaxIter',1000,'theta',2,'StepTolerance',1e-3,'ObjectiveTolerance',1e-1,...
     'GradientTolerance',1e-1,'Minalpha',1e-18,'Scaled',0,...
-    'deflatelinesearch',1,'IEPType','Classic','Verbose',0,'tau',0.8);
+    'deflatelinesearch',0,'IEPType','Difference','Verbose',1,'tau',0.9);
 
 [SysOut, NIter, Flags, Iters, FinalError] = INS_IEP(Sys,Vary,Exp,Opt)
 
@@ -83,7 +83,7 @@ for k = startminima:size(SysOut,2)
 %     SysOut(k).B6 = Sysfixed.B6;
 %         if ~(SysOut.Flags{k} == "error<tol")&&~(Flags{k} == "Input Minima")
     if (Flags{k}  == "Max Iterations reached")
-        continue
+%         continue
     end
 %     if SysOut(k).B2(2,3)>0
 %         continue
@@ -109,6 +109,7 @@ for k = startminima:size(SysOut,2)
 end
 %% Good fits?
 goodfits = [1 13 24 36 37  52 54 65 97 99 154 155 156 164 169 192 200];
+%Used newton with basic undeflated linesearch
 for k = goodfits
 %     k = goodfits()
     MintSys = SysFound_NBC(k);

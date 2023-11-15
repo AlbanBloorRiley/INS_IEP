@@ -5,25 +5,23 @@ meV = rcm*8.065;     % meV           to MHz
 Tesla = meV*0.116;   % Tesla         to MHz
 
 %% Mn12
-clear Sys
-Sys1 = Mn12_Spin_Sys_3(1,1);
+clear Sys Exp
+[Sys1,Exp] = Mn12_Spin_Sys_3(1,1);
 Sys.S=Sys1.S;
 Sys.B2 = [100,0,-1000,0,0];
 Sys.B4 = [-1,0,0,0,-1,0,0,0,0];
-Exp.ev=Sys1.ev;
 Vary=Sys;
 %% Cr_n
-clear Sys
-Sys1=Cr_Spin_Sys_3(6);
+clear Sys Exp
+[Sys1,Exp]=Cr_Spin_Sys_3(6);
 r=1;
 % Sys.B2 = [1;1;1;1]*[1000 0 -1000 0 0];
 Sys.S=Sys1.S;
 Sys.B2=round(Sys1.B2,r,'significant');
 Sys.ee=round(Sys1.ee,r,'significant');
-Exp.ev=Sys1.ev;
 Vary = Sys;
 %% Test 1
-clear Sys Sys1
+clear Sys Sys1 Exp
 rng(0)
 NumEigs = 100;
 Sys1.S = [2.5 2 2];
@@ -50,10 +48,10 @@ clear Sys Vary
 [Sys,Vary,Exp]=Mn6_Sys;
 
 %%
-Opt = struct('NMinima',4,'Method','Gauss-NewtonT2','Linesearch','Basic',...
+Opt = struct('NMinima',2,'Method','Gauss-NewtonT1','Linesearch','Basic',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
     'ObjectiveTolerance',1e-1,'Minalpha',1e-18,'Scaled',1,...
-    'deflatelinesearch',1,'IEPType','Difference','Verbose',0,'tau',0.5);
+    'deflatelinesearch',1,'IEPType','Classic','Verbose',0,'tau',0.5);
 [SysOut1, NIter1, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
 
 

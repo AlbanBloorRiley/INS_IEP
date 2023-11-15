@@ -55,8 +55,7 @@ J_23 = 0;
 J_13 = 0; J_24 = 0;
 
 Sys.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 J_34].*(-2); %-2JS.S formalism
-Sys2 = Sys;
-Sys2.J(1) = J_S4_S4.*(-2);
+
 % Stevens Operators for MnIII ions. As long as |J_S4_S4| >> |J_S4_S5| or 
 % |J_S5_S5|, the lowest eigenvalues are indepedent of these values
 % For scenario 1, these stay constant. Middle/green ones
@@ -81,21 +80,24 @@ Vary.B2= [0 0 0 0 0;
           1 0 1 0 0;
           1 0 1 0 0;
           1 0 1 0 0];
-Vary.J = [0 1 1 1 1 1 1 1 1 1 0 0 0 0 1]; 
+Vary.J = [1 1 1 1 1 1 1 1 1 1 0 0 0 0 1]; 
 
 NumEigs = 8;    %Number of experimental eigenvalues to be fit
 Exp.ev = (exp_eigs(1:NumEigs)-exp_eigs(1)).*meV;%Add eigenvalues to be used to Sys
 %%
 NMinima = 1;    %Minima to find
-Opt = struct('NMinima',NMinima,'UseInitialGuess',1,'Method','Gauss-NewtonT1',...
-    'Linesearch','Basic','Tolerance',1e-1,'p',2,'Scaled',1,...
-    'minalpha',1e-4,'tau',0.1,'theta',1,'MaxIter',100,'Verbose',true);
-%Now find the minima
-[SysOut, NIter, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
 
+warning('off','MATLAB:eigs:NotAllEigsConverged')
+Opt = struct('NMinima',2  ,'Method','Gauss-NewtonT2','Linesearch','Basic',...
+    'MaxIter',100,'theta',2,'StepTolerance',1e-2,'ObjectiveTolerance',1e-2,...
+    'GradientTolerance',1e-1,'Minalpha',1e-18,'Scaled',1,...
+    'deflatelinesearch',1,'IEPType','Difference','Verbose',1,'tau',0.9,'EigsNotConvergedWarning',false);
+%Now find the minima
+
+
+[SysOut, NIter, Flags, Iters, FinalError] = INS_IEP(Sys,Vary,Exp,Opt)
 
 %%
-clear Exp;
 % close all
 NumMinima = 1;
 %Loop to plot mint for all found minima
@@ -114,18 +116,18 @@ Sys1.Coords = [24.60550  13.06674   7.07523; % A
               ];
 
 
-Exp.SpectrumType = 'SE';
+MintExp.SpectrumType = 'SE';
 Ei = 5; %in meV, 1.28 = 8 Å
-Exp.lwfwhm = 0.02*Ei/2.355;
-Exp.Energy = 0:0.001:Ei*0.8;
-Exp.Q = 0.1:0.01:2.5;
-Exp.Temperature = [1.5 5 10 30];
+MintExp.lwfwhm = 0.02*Ei/2.355;
+MintExp.Energy = 0:0.001:Ei*0.8;
+MintExp.Q = 0.1:0.01:2.5;
+MintExp.Temperature = [1.5 5 10 30];
 
  Opt.NumEigs = 50;
 if exist('Opt','var') && isfield(Opt,'NumEigs')
-    [cross_sect] = mint(Sys1,Exp,Opt);
+    [cross_sect] = mint(Sys1,MintExp,Opt);
 else
-    [cross_sect] = mint(Sys1,Exp);
+    [cross_sect] = mint(Sys1,MintExp);
 end
 
 
@@ -135,11 +137,6 @@ plot(Exp.Energy,cross_sect)
 legend('1.5 K', '5 K', '10 K', '30 K')
 pause
 end
-%% Notes
-
-
-
-
 
 %%
 

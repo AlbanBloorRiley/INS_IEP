@@ -132,9 +132,15 @@ addParameter(IP,'IEPType',defaultIEPType)
 addParameter(IP,'SysFound',defaultSysFound)
 addParameter(IP,'Eigensolver',defaultEigensolver)
 
+addParameter(IP,'EigsNotConvergedWarning',true)
 
 IP.parse(Sys0,Vary,Exp,varargin{:})
 res = IP.Results;
+
+%Turns of the warining from eigs() when it fails to converge for some eigenvalues 
+if res.EigsNotConvergedWarning
+    warning('off','MATLAB:eigs:NotAllEigsConverged')
+end
 
 
 %Method Parameters
@@ -220,7 +226,7 @@ elseif res.IEPType == "Difference"
         if ~all(Exp.evdsd)
             warning('If standard deviation is given for experimental eigenvalue differences, any zero values are set to 1.')
             Exp.evsd(~Exp.evsd) = 1;
-        end                     
+        end
         constants.eigenvalueDifferenceSD = Exp.evdsd;
     else
         if isfield(Exp,'evsd')
@@ -245,13 +251,17 @@ switch res.Method
         if res.deflatelinesearch
 %             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx) Mu^2*(Jx'*Rx)'*(Jx'*Rx);
             params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) Deflated_Gradient(objective_function,x,constants,PreviousMinima,DeflationParameters);
-%             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) (Jx'*Rx*gradMu+Mu*(Jx'*Jx+S))*(2*Mu*Jx'*Rx);
-            params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*Mu*gradMu'*(Jx'*Rx)'*(Jx'*Rx)+ 2*Mu^2*(Jx'*Jx+S)*(Jx'*Rx);
+            params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) (Jx'*Rx*gradMu+Mu*(Jx'*Jx+S))*(2*Mu*Jx'*Rx);
+%             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*Mu*gradMu'*(Jx'*Rx)'*(Jx'*Rx)+ 2*Mu^2*(Jx'*Jx+S)*(Jx'*Rx);
 
         else
-%             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
+            %             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
             params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters)  objective_function(x,constants);
             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
+            %cant line search on gradient as H may be rank deficient or
+            %just not posdef.
+%             params.linesearch.phi = @(objective_function,x,constants,DeflatedPts,DeflationParameters) Gradient(objective_function,x,constants,DeflatedPts,DeflationParameters);
+%             params.linesearch.gradphi = @(Rx,Jx,~,~,S) (Jx'*Jx+S)*(Jx'*Rx);
 
         end
 
@@ -263,7 +273,7 @@ switch res.Method
                 warning("There is no deflated line search method for the Type 1 Gauss-Newton method. Using an undeflated line search.")
             end
         end
-%         params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
+        %         params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
         params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) objective_function(x,constants);
         params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
 
@@ -271,11 +281,11 @@ switch res.Method
 
     case "Gauss-NewtonT2"
         if res.deflatelinesearch
-%             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)Mu^2*obj_at_x;
+            %             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)Mu^2*obj_at_x;
             params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) deflation(PreviousMinima,x,DeflationParameters)^2*objective_function(x,constants);
-            params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
+            params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*Mu*gradMu'*Rx'*Rx+ 2*(Jx'*Rx);
         else
-%             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
+            %             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
             params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) objective_function(x,constants);
             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
         end
@@ -286,10 +296,18 @@ switch res.Method
         error('Please select a valid method - Newton/Gauss-NewtonT1/Gauss-NewtonT2')
 end
 %[x,NIter,flag,obj_at_x,nbytes,xs]
-% [SysOut, NIter, Flags, Iterates, FinalError] 
-j=0;tic;
+% [SysOut, NIter, Flags, Iterates, FinalError]
+j=0;    Y = [];
+tic;
 for i=length(res.SysFound)+1:res.NMinima
+    if ~isempty(Y)&&any(all(abs(Y - x0)<1e-16))
+        error('The intial vector is a deflated point')
+    end
     [Y(:,i),NIter(i),Flags{i},FinalError{i},nbytes,Iterates{i}] = Fun(obj_fun,x0,Y,params);
+    if Flags{i} == "NaN"
+        warning("Method diverging to NaN values, stopped deflations early.")
+        break
+    end
     if Flags{i} ~="Max Iterations reached"
         j = j+1;
         disp(['Currently found ',num2str(j),' minima in ',num2str(i),' iterations.'])
@@ -311,6 +329,10 @@ end
 end
 
 function f_out = Deflated_Gradient(objective_function,x,constants,PreviousMinima,DeflationParameters)
-[~,R,J] = objective_function(x,constants); 
+[~,R,J] = objective_function(x,constants);
 f_out = deflation(PreviousMinima,x,DeflationParameters)^2*(J'*R)'*(J'*R);
+end
+function f_out = Gradient(objective_function,x,constants,DeflatedPts,DeflationParameters)
+[~,R,J] = objective_function(x,constants);
+f_out = (J'*R)'*(J'*R);
 end

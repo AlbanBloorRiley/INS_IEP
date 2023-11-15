@@ -1,4 +1,4 @@
-function Sys = Cr_Spin_Sys_3 (N_electrons)
+function [Sys,Exp] = Cr_Spin_Sys_3 (N_electrons)
 %N_electrons = 3;clear Sys Sys1
 % conversions:
 rcm = 29979.2458;    % reciprocal cm to MHz
@@ -14,7 +14,7 @@ Sys.S = [S];
 for i = 2:N_electrons
     Sys.S = [Sys.S,S];
 end
-n = prod(2*Sys.S+1);
+% n = prod(2*Sys.S+1);
 % each of the spins has a non zero B22 and B20 
 B2 = [B22 0 B20 0 0]; % B(k=2,q) with q = +2,+1,0,-1,-2
  
@@ -34,10 +34,10 @@ Sys.ee = J.*ee;
 H=ham(Sys,[0,0,0],'sparse');
 [Vecs,EE] = eig(full(H),'vector');
 EE=EE(1:24);
-Sys.ev=EE;
+Exp.ev=EE;
 
-A = SysInput(Sys);
-A0 = sparse(n,n);
+% A = SysInput(Sys);
+% A0 = sparse(n,n);
 
 
 % 

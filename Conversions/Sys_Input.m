@@ -9,7 +9,7 @@ Sys0names = fieldnames(Sys0);
 if ~any(contains(Sys0names,'J'))&&~any(contains(Sys0names,'ee'))&&N_electrons>1
     error('Please provide an electron-electron exchange coupling. Use either the J or ee field')
 end
-stevk="";
+stevk="";   %adds empty string
 for i = 1:length(Varynames)
     if Varynames{i}(1) =='B'
         if ~any(contains(Sys0names,Varynames{i})) %validates that Sy0 and Vary have same fields.
@@ -22,10 +22,14 @@ for i = 1:length(Varynames)
     end
 end
 stevk=stevk(2:end); %removes first, empty string
+
 for Bk = stevk    %Iterates through all the Stevens operators used 
-    SysFixed.(Bk) = zeros(size(Sys0.(Bk)));     %Initialises all the                                                    
-    SysFixed.(Bk)(~logical((Vary.(Bk)))) = Sys0.(Bk)(~logical((Vary.(Bk))));
-    Vary.(Bk) = logical(Vary.(Bk)); %will use uncertainty data later
+    SysFixed.(Bk) = zeros(size(Sys0.(Bk)));     %Initialises fixed values to 0                                                  
+    SysFixed.(Bk)(~logical((Vary.(Bk)))) = Sys0.(Bk)(~logical((Vary.(Bk))));    %saves the fixed values
+    %----------------------------------------%
+    %Could use the values to define a range like in easyspin.
+    Vary.(Bk) = logical(Vary.(Bk)); 
+    %----------------------------------------%
     [TempOps,TempInt,TempA] = StevOps(Sys0,Vary,Bk);
     Ops.(Bk) = TempOps.(Bk);
     if size(TempInt,2)>1
@@ -37,7 +41,6 @@ for Bk = stevk    %Iterates through all the Stevens operators used
 end
 
             
-
 
 if  any(contains(Sys0names,'J'))
     if any(contains(Sys0names,'ee'))
