@@ -301,7 +301,8 @@ j=0;    Y = [];
 tic;
 for i=length(res.SysFound)+1:res.NMinima
     if ~isempty(Y)&&any(all(abs(Y - x0)<1e-16))
-        error('The intial vector is a deflated point')
+        warning('The intial vector is a deflated point, stopped deflations early')
+        break
     end
     [Y(:,i),NIter(i),Flags{i},FinalError{i},nbytes,Iterates{i}] = Fun(obj_fun,x0,Y,params);
     if Flags{i} == "NaN"
