@@ -85,7 +85,7 @@ defaultMinalpha = 1e-4;
 defaultTheta = 2;
 defaultSigma = 1;
 defaultSingleShift = false;
-defaultEpsilon = 0.1;
+defaultEpsilon = 0.01;
 
 
 defaultGradientTolerance = 1e-2;

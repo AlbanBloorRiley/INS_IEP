@@ -13,9 +13,13 @@ Sys.B4 = [-1,0,0,0,-1,0,0,0,0];
 Vary=Sys;
 %% Cr_n
 clear Sys Exp
-% [Sys1,Exp]=Cr_Spin_Sys_3(6);
-% r=1;
-% % Sys.B2 = [1;1;1;1]*[1000 0 -1000 0 0];
+[Sys1,Exp]=Cr_Spin_Sys_3(4);
+H=ham(Sys1,[0,0,0],'sparse'); [Vecs,EE] = eig(full(H),'vector');
+EE=EE(1:24);
+Exp.ev=EE-EE(1);
+
+r=1;
+% Sys.B2 = [1;1;1;1]*[1000 0 -1000 0 0];
 % Sys.S=Sys1.S;
 % Sys.B2=round(Sys1.B2,r,'significant');
 % Sys.ee=round(Sys1.ee,r,'significant');
@@ -23,35 +27,55 @@ clear Sys Exp
 N_electrons = 4;
 B20 = (-0.041/3).*meV; % convert from meV to MHz
 B22 = 0.007.*meV; % convert from meV to MHz
+B20 = -1000;
+B22=1000;
 BValues = [-3304.4;1692.5;353000];
 S=3/2;
 Sys.S = [S];
 for i = 2:N_electrons
     Sys.S = [Sys.S,S];
 end
-B2 = [B22 0 B20 0 0]; % B(k=2,q) with q = +2,+1,0,-1,-2
+B2 = [B22 0 B20 0 0]; % B(k=2,q) with q = +2,+1,0,-1,-2\% Sys.B2=round(Sys.B2,r,'significant');
+B2=round(B2,r,'significant');
 Sys.B2 = [B2];
 for i = 2:N_electrons
     Sys.B2 = [Sys.B2;B2];
 end
 J = 1.46*meV;   ee = [];ee1=[];JJ = [];
+% J = 0.1*meV;
+J = round(J,r,'significant');
 for i = 2:N_electrons
-    JJ = [1+i*1e-4,zeros(1,i-2),JJ];
+%     JJ = [1+i*1e-4,zeros(1,i-2),JJ];
+    JJ = [J,zeros(1,i-2),JJ];
+
     ee = [eye(3);zeros(3*(i-2),3);ee];
 end
+Sys.J = JJ;
+Vary = Sys;
 % Sys.ee = J.*ee;
-J=1;
-r = 1;
-Sys.J = round(J,r,'significant').*JJ;
-% Sys.J = [1 0 0 0 ]
-H=ham(Sys,[0,0,0],'sparse'); [Vecs,EE] = eig(full(H),'vector');
-EE=EE(1:24);
-Exp.ev=EE;
+% J=1;
 
-Sys.B2=round(Sys.B2,r,'significant');
+
+
+Opt = struct('NMinima',1,'Method','Gauss-NewtonT1','Linesearch','Basic',...
+    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.001,...
+    'deflatelinesearch',1,'IEPType','Difference','Verbose',0,'tau',0.5);
+[SysOut, NIter1, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
+
+SysOut.B2
+
+
+
+%For many minima:
+% Opt = struct('NMinima',8,'Method','Newton','Linesearch','Basic',...
+%     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
+%     'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.001,...
+%     'deflatelinesearch',0,'IEPType','Difference','Verbose',1,'tau',0.5);
+% Sys.B2=round(Sys.B2,r,'significant');
 % Sys.ee=round(Sys.ee,r,'significant');
 % Sys.J=round(Sys.J,r,'significant');
-Vary = Sys;
+
 %% Test 1
 clear Sys Sys1 Exp
 rng(0)
@@ -80,14 +104,16 @@ clear Sys Vary
 [Sys,Vary,Exp]=Mn6_Sys;
 
 %%
-Opt = struct('NMinima',5,'Method','Newton','Linesearch','Basic',...
+Opt = struct('NMinima',3,'Method','Gauss-NewtonT1','Linesearch','Basic',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-16,'Scaled',1,...
-    'deflatelinesearch',0,'IEPType','Difference','Verbose',0,'tau',0.5);
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.001,...
+    'deflatelinesearch',0,'IEPType','Difference','Verbose',1,'tau',0.5);
 [SysOut, NIter1, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
 
 
+SysOut.B2
 
+% SysOut.ee
 
 %% 
 
