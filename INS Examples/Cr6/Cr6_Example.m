@@ -1,6 +1,8 @@
 %Cr6 - Example
 clear Sys Exp
 %Simulate experimental data
+rcm = 29979.2458;   
+meV = rcm*8.065;  
 N_electrons = 6;    %Number of Cr atoms in chain
 N_eigenvalues = 21; %Number of Eigenvalues known experimentaly
 [Exp] = Cr_solution(N_electrons,N_eigenvalues); %Calculates simulated eigenvalues
@@ -33,7 +35,7 @@ Opt = struct('NMinima',5,'Method','Newton','Linesearch','Basic',...
 
 [SysOut, NIter, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt);
 
-SysOut.B2
+% SysOut.B2
 
 %%
 %Set up Mint variables - only works for Nelectrons = 6.

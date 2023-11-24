@@ -86,6 +86,7 @@ defaultTheta = 2;
 defaultSigma = 1;
 defaultSingleShift = false;
 defaultEpsilon = 0.01;
+defaultNormWeighting = speye(length(scale_x));
 
 
 defaultGradientTolerance = 1e-2;
@@ -121,6 +122,7 @@ addParameter(IP,'theta',defaultTheta)
 addParameter(IP,'sigma',defaultSigma)
 addParameter(IP,'SingleShift',defaultSingleShift)
 addParameter(IP,'epsilon',defaultEpsilon)
+addParameter(IP,'NormWeighting',defaultNormWeighting)
 
 
 addParameter(IP,'ObjectiveTolerance',defaultObjectiveTolerance)
@@ -162,6 +164,7 @@ params.deflation.theta = res.theta;
 params.deflation.sigma = res.sigma;
 params.deflation.singleshift = res.SingleShift;
 params.deflation.epsilon = res.epsilon;
+params.deflation.NormWeighting = res.NormWeighting;
 
 
 %Convergence Parameters
