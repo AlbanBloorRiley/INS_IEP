@@ -57,9 +57,9 @@ Vary = Sys;
 
 
 
-Opt = struct('NMinima',1,'Method','Gauss-NewtonT1','Linesearch','Basic',...
+Opt = struct('NMinima',3,'Method','Gauss-NewtonT1','Linesearch','Basic',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.001,...
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.0001,...
     'deflatelinesearch',1,'IEPType','Difference','Verbose',0,'tau',0.5);
 [SysOut, NIter1, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
 
@@ -104,17 +104,27 @@ clear Sys Vary
 [Sys,Vary,Exp]=Mn6_Sys;
 
 %%
-Opt = struct('NMinima',3,'Method','Gauss-NewtonT1','Linesearch','Basic',...
+Opt = struct('NMinima',4,'Method','Newton','Linesearch','No',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.001,...
-    'deflatelinesearch',0,'IEPType','Difference','Verbose',1,'tau',0.5);
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',0,'epsilon',0.001,...
+    'deflatelinesearch',1,'IEPType','Difference','Verbose',1,'tau',0.5);
 [SysOut, NIter1, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
 
+Iters{1};
 
-SysOut.B2
+% SysOut.B2
 
 % SysOut.ee
-
+%% Test scale invariance
+Opt = struct('NMinima',1,'Method','Newton','Linesearch','No',...
+    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'epsilon',0.001,...
+    'deflatelinesearch',1,'IEPType','Classic','Verbose',1,'tau',0.5);
+Opt.Scaled = 1;
+[SysOut1, NIter1, Flags1, Iters1, FinalError1]= INS_IEP(Sys,Vary,Exp,Opt);
+Opt.Scaled = 0;
+[SysOut0, NIter0, Flags0, Iters0, FinalError0]= INS_IEP(Sys,Vary,Exp,Opt);
+Iters1{1}.*Iters0{1}(:,1)-Iters0{1}
 %% 
 
 j=1;    idx=[];

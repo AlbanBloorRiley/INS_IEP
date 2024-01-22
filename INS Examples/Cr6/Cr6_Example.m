@@ -21,14 +21,14 @@ for i = 2:N_electrons   %Loop over all electrons
     Sys.S = [Sys.S,S];
     Sys.B2 = [Sys.B2;B2];
     %     Sys.J = [Jval,zeros(1,i-2),Sys.J];  %same value of J for all nearest neighbours
-    Sys.J = [Jval,zeros(1,i-2),Sys.J];   %different value of J for nearest neighbours
+    Sys.J = [Jval+i,zeros(1,i-2),Sys.J];   %different value of J for nearest neighbours
 end
 % Sys.J = Sys.J+[1 0 0 0 0 2 0 0 0 3 0 0 2 0 1];
 Vary = Sys; %This will vary all non-zero parameters
 
 
 %Optimse over parameters given
-Opt = struct('NMinima',2,'Method','Newton','Linesearch','Basic',...
+Opt = struct('NMinima',1,'Method','Newton','Linesearch','Basic',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
     'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,...
     'deflatelinesearch',1,'IEPType','Difference','Verbose',1,'tau',0.5);

@@ -1,12 +1,18 @@
 %% Simulation and Comparison  6A energy
 %Only need to run this once!
-
+% cmf = mfilename('fullpath')
+% cf = fileparts(cmf)
+% folder = fullfile(cf,'Dy_data')
+%
 %    folder = '/Volumes/mlbakerlab/neutron_data/FRMII/6396_TOFTOF/analysis/DyHNN2_analysis/2021/data/feb2022/for_Alan/';
-   folder = '/Users/user/Dropbox (The University of Manchester)/alban.bloorriley@manchester.ac.uk’s files/MatLab/mint/Dy_data/';
+%    folder = '/Users/user/Dropbox (The University of Manchester)/alban.bloorriley@manchester.ac.uk’s files/MatLab/mint/Dy_data/';
+%    folder = '/Dy_data/';
    filename = 'DyHNN2_IofE_6A_1K_2theta_gt_30_bkgdsub=0p1.inx';
-   Dy_6A1K = importdata([folder,filename]);
+%    Dy_6A1K = importdata([folder,filename]);
+   Dy_6A1K = importdata(filename);
    filename = 'DyHNN2_IofE_6A_9K_2theta_gt_30_bkgdsub_0p1.inx';
-   Dy_6A9K = importdata([folder,filename]);
+%    Dy_6A9K = importdata([folder,filename]);
+    Dy_6A9K = importdata(filename);
    A= {Dy_6A1K,Dy_6A9K};
    %for i=1:length(A)
    n=2;
@@ -33,7 +39,7 @@ MintExp.Energy = -1.5:0.001:1.5;
 MintExp.lwfwhm = 0.05;
 MintExp.Q = [0.1,0.5,1,1.5,2]; 
 %%
-clear Sys
+clear Sys Vary Exp Opt
 Sys.S = [1/2 15/2 1/2];
 B20 = -0.173585036568371*meV;%-0.1736;%-0.197;
 B22 = 0.443886669455654*meV;%0.4439;%0.066;
@@ -48,12 +54,12 @@ Sys.B2 = [0 0 0 0 0 ; B22 0 B20 0 0 ; 0 0 0 0 0 ];
 % Sys.B2 = [0 0 0 0 0 ; 0 0 B20 0 0 ; 0 0 0 0 0 ];
 Sys.B4 = [0 0 0 0 0 0 0 0 0; 0 0 0 0 B40 0 0 0 0; 0 0 0 0 0 0 0 0 0];
 Sys.B6 = [0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 B60 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0];
-Sys.J = [Jex1 0 Jex2];
-Vary.J = [1 0 1];
-% Sys.ee = [diag([Jex1,Jex1,Jex1]);zeros(3);diag([Jex2,Jex2,Jex2])];
+% Sys.J = [Jex1 0 Jex2];
+% Vary.J = [1 0 1];
+Sys.ee = [diag([Jex1,Jex1,Jex1]);zeros(3);diag([Jex2,Jex2,Jex2])];
 % 
 % Sys.ee = [diag([Jex1,Jex1,Jex1+1]);zeros(3);diag([Jex2,Jex2,Jex2+1])];
-% Vary.ee = [[1,0,1;0,1,0;1,0,1];zeros(3);[1,0,1;0,1,0;1,0,1]];
+Vary.ee = [[1,0,1;0,1,0;1,0,1];zeros(3);[1,0,1;0,1,0;1,0,1]];
 
 Vary.B2 = [zeros(1,5) ; 1 0 1 0 0 ; zeros(1,5)];
 Vary.B4 = [zeros(1,9); 0 0 0 0 1 0 0 0 0; zeros(1,9)];
@@ -62,14 +68,14 @@ Vary.B6 = [zeros(1,13); 0 0 0 0 0 0 1 0 0 0 0 0 0; zeros(1,13)];
 %dint = round(dint,2);
 EE = [0;0;0.72;0.72;1.12;1.12;1.28;1.28].*meV;
 Exp.ev=EE;
-%% Run whatever code you want to set up your Sys structure 
+% Run whatever code you want to set up your Sys structure 
 % - inputing a nonzero value for all the parameters you wish to use.
 % [Sys,Vary,Exp]=Dy_Sys;
 
-Opt = struct('NMinima',1,'Method','Newton','Linesearch','Basic',...
+Opt = struct('NMinima',2,'Method','Newton','Linesearch','Basic',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-3,'ObjectiveTolerance',1e-1,...
-    'GradientTolerance',1e-1,'Minalpha',1e-18,'Scaled',0,...
-    'deflatelinesearch',0,'IEPType','Difference','Verbose',1,'tau',0.9);
+    'GradientTolerance',1e-1,'Minalpha',1e-18,'Scaled',1,'epsilon',0,...
+    'deflatelinesearch',0,'IEPType','Classic','Verbose',1,'tau',0.5);
 
 [SysOut, NIter, Flags, Iters, FinalError] = INS_IEP(Sys,Vary,Exp,Opt)
 
