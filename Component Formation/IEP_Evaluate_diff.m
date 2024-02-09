@@ -4,15 +4,19 @@ function [f,varargout] = IEP_Evaluate_diff(x,constants)
 %prescribed eigenvalue (differences).
 %    * x is the current parameter guess where A = A_0 + sum(A_i*x_i)
 %    * constants is a structure containing the values of the constants A,
-%      A0 and the prescribed eigenvalues. Stored as constants.A,
-%      constants.A0, constants.ev (a column vector).
+%      A0, the type of eigendecompostion to be used and the prescribed 
+%      eigenvalues. Stored as constants.A,
+%      constants.A0, constants.ED ,constants.ev (a column vector), and 
+%      optionally the standard deviation of the eigenvalue differences.
 %
 %   [f,J] = IEP_Evaluate(x,constants) also outputs the residual function                      
 %
 %   [f,R,J] = IEP_Evaluate(x,constants) also outputs the Jacobian of R
 %   
 %   [f,R,J,H] = IEP_Evaluate(x,constants) also outputs the Hessian of R.                     
-
+if ~isfield(constants,'eigenvalueDifferenceSD')
+    constants.eigenvalueDifferenceSD = ones(length(constants.ev)-1,1);
+end
 if constants.ED =="eig"
     [Q,D] = eig(full(FormA(x,constants.A,constants.A0)),'vector');
     D = D(1:length(constants.ev));
