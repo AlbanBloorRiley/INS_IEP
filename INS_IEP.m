@@ -86,7 +86,8 @@ defaultTheta = 2;
 defaultSigma = 1;
 defaultSingleShift = false;
 defaultEpsilon = 0.01;
-defaultNormWeighting = speye(length(scale_x));
+defaultNormWeighting = [];
+% defaultNormWeighting = speye(length(scale_x));  %need to fix this for classic method
 
 
 defaultGradientTolerance = 1e-2;
@@ -142,6 +143,14 @@ res = IP.Results;
 %Turns of the warining from eigs() when it fails to converge for some eigenvalues 
 if res.EigsNotConvergedWarning
     warning('off','MATLAB:eigs:NotAllEigsConverged')
+end
+% Fixing default NormWeighting for Classic vs difference IEPTypes
+if isempty(res.NormWeighting )
+    if res.IEPType =="Classic"
+        res.NormWeighting = speye(length(scale_x)+1);
+    else
+        res.NormWeighting = speye(length(scale_x));
+    end
 end
 
 
@@ -329,7 +338,7 @@ if res.Scaled
 else
     SysOut = Sys_Output(Y,Ops,SysFixed);
 end
-
+warning('on','MATLAB:eigs:NotAllEigsConverged')
 end
 
 function f_out = Deflated_Gradient(objective_function,x,constants,PreviousMinima,DeflationParameters)
