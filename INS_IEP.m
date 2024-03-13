@@ -1,4 +1,4 @@
-function [SysOut, NIter, Flags, Iterates, FinalError] = INS_IEP(Sys0,Vary,Exp,varargin)
+function [SysOut] = INS_IEP(Sys0,Vary,Exp,varargin)
 % INS_IEP Inelastic Neutron Scattering Inverse Eigenvalue Problem
 % SysOut =  INS_IEP(Sys) produces an easy spin syle Sys structure
 % containing the parameters found at a local minima of the error bewtween
@@ -56,136 +56,52 @@ if ~isfield(Exp,"ev")
 end
 
 [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary);
+options = varargin{1};
 
-% x0 = scale_x;
-%  [A1,dint,ev1,Ops1] = SysInput(Sys0);
-%     defaultDeflate = "F";
-
-
-
-
-defaultMethod ='Newton';
-defaultNMinima = 1;
 if length(A{1})<1000
     defaultEigensolver = 'eig';
 else
     defaultEigensolver = 'eigs';
 end
-defaultVerbose = false;
-defaultScaled = true;
+
+IEPOptionFields = ["SysFound","Eigensolver",",EigsNotConvergedWarning","IEPType","Scaled"];
+for i = IEPOptionFields
+    if isfield(options,i)
+        IEPOptions.(i) = options.(i);
+        options = rmfield(options,i);
+    end
+end
+
+mergestructs = @(x,y) cell2struct([struct2cell(x);struct2cell(y)],[fieldnames(x);fieldnames(y)]);
+% isnumericscalar = @(x)isscalar(x)&&isnumeric(x);
+% islbylnumeric = @(x) all(size(x) == [length(x0),length(x0)] )&&isnumeric(x);
+% isstringorchar = @(x) isstring(x)||ischar(x);
 
 
-defaultLinesearch = 'Armijo';
-defaultDeflateLinesearch = true;
-defaultC1 = 1e-4;
-defaultTau = 0.5;
-defaultAlpha0 = 1;
-defaultMinalpha = 1e-4;
-
-defaultTheta = 2;
-defaultSigma = 1;
-defaultSingleShift = false;
-defaultEpsilon = 0.01;
-defaultNormWeighting = [];
-% defaultNormWeighting = speye(length(scale_x));  %need to fix this for classic method
-
-
-defaultGradientTolerance = 1e-2;
-defaultStepTolerance = 1e-8;
-defaultObjectiveTolerance = 1e-3;
-defaultMaxIter = 10000;
-
+defaultScaled = false;
 defaultIEPType = 'Difference';
 defaultSysFound = [];
 
-
-% defaultA0 = sparse(length(A{1}),length(A{1}));
 
 IP = inputParser;
 addRequired(IP,'Sys0_In')
 addRequired(IP,'Vary')
 addRequired(IP,'Exp')
 
-addParameter(IP,'Method',defaultMethod)
-addParameter(IP,'NMinima',defaultNMinima)
-addParameter(IP,'Verbose',defaultVerbose)
-addParameter(IP,'Scaled',defaultScaled)
-
-addParameter(IP,'Linesearch',defaultLinesearch)
-addParameter(IP,'deflatelinesearch',defaultDeflateLinesearch)
-addParameter(IP,'c1',defaultC1)
-addParameter(IP,'tau',defaultTau)
-addParameter(IP,'alpha0',defaultAlpha0)
-addParameter(IP,'minalpha',defaultMinalpha)
-
-
-addParameter(IP,'theta',defaultTheta)
-addParameter(IP,'sigma',defaultSigma)
-addParameter(IP,'SingleShift',defaultSingleShift)
-addParameter(IP,'epsilon',defaultEpsilon)
-addParameter(IP,'NormWeighting',defaultNormWeighting)
-
-
-addParameter(IP,'ObjectiveTolerance',defaultObjectiveTolerance)
-addParameter(IP,'GradientTolerance',defaultGradientTolerance)
-addParameter(IP,'StepTolerance',defaultStepTolerance)
-addParameter(IP,'MaxIter',defaultMaxIter)
-
 addParameter(IP,'IEPType',defaultIEPType)
 addParameter(IP,'SysFound',defaultSysFound)
 addParameter(IP,'Eigensolver',defaultEigensolver)
-
+addParameter(IP,'Scaled',defaultScaled,@islogical)
 addParameter(IP,'EigsNotConvergedWarning',true)
 
-IP.parse(Sys0,Vary,Exp,varargin{:})
+IP.parse(Sys0,Vary,Exp,IEPOptions)
 res = IP.Results;
 
 %Turns of the warining from eigs() when it fails to converge for some eigenvalues 
 if res.EigsNotConvergedWarning
     warning('off','MATLAB:eigs:NotAllEigsConverged')
 end
-% Fixing default NormWeighting for Classic vs difference IEPTypes
-if isempty(res.NormWeighting )
-    if res.IEPType =="Classic"
-        res.NormWeighting = speye(length(scale_x)+1);
-    else
-        res.NormWeighting = speye(length(scale_x));
-    end
-end
 
-
-%Method Parameters
-params.method.StepMethod = res.Method;
-params.method.MinimaRequested = res.NMinima;
-params.method.Verbose = res.Verbose;
-params.method.Scaled = res.Scaled;
-
-%Line search Parameters
-params.linesearch.method = res.Linesearch;
-params.linesearch.deflate = res.deflatelinesearch;
-params.linesearch.c1 = res.c1;
-params.linesearch.tau = res.tau;
-params.linesearch.alpha0 = res.alpha0;
-params.linesearch.minalpha = res.minalpha;
-
-%Deflation Parameters
-params.deflation.theta = res.theta;
-params.deflation.sigma = res.sigma;
-params.deflation.singleshift = res.SingleShift;
-params.deflation.epsilon = res.epsilon;
-params.deflation.NormWeighting = res.NormWeighting;
-
-
-%Convergence Parameters
-params.convergence.ObjectiveTolerance = res.ObjectiveTolerance;
-params.convergence.GradientTolerance = res.GradientTolerance;
-params.convergence.StepTolerance = res.StepTolerance;
-params.convergence.MaximumIterations = res.MaxIter;
-
-% %INS IEP type
-params.IEP.Eigensolver = res.Eigensolver;
-
-% params.IEP.type = res.IEPType;
 
 
 if res.Scaled
@@ -198,15 +114,19 @@ else
 end
 
 
+IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates"];
+if isstruct(res.SysFound)
+    for j = IterationFields
+        if isfield(res.SysFound,j)
+            PreviouslyFoundIterations.(j) = res.SysFound.(j);
+            res.SysFound = rmfield(res.SysFound,j);
+        end
+    end
+    options.PreviouslyFoundIterations = PreviouslyFoundIterations;
 
-% if ~res.UseInitialGuess
-%     x0 = ones(length(A),1);
-% end
-
-Y=[];
-for i= 1:length(res.SysFound)
-    [~,~,Y(:,i)] = Sys_Input(res.SysFound(i),Vary);
 end
+
+%Checks if Exp.ev is row or column vector
 if size(Exp.ev,1)<size(Exp.ev,2)
     constants.ev = Exp.ev';
 else
@@ -253,99 +173,20 @@ end
 constants.A = A;
 constants.A0 = A0;
 constants.ED = res.Eigensolver;
-params.method.constants = constants;
+options.constants = constants;
 
 
+Iterations = DMin(obj_fun,x0,options);
 
-% Set line search objective/merit function and derivatives - phi/gradphi
-switch res.Method
-    case "Newton"
-        if res.deflatelinesearch
-%             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx) Mu^2*(Jx'*Rx)'*(Jx'*Rx);
-            params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) Deflated_Gradient(objective_function,x,constants,PreviousMinima,DeflationParameters);
-            params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) (Jx'*Rx*gradMu+Mu*(Jx'*Jx+S))*(2*Mu*Jx'*Rx);
-%             params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*Mu*gradMu'*(Jx'*Rx)'*(Jx'*Rx)+ 2*Mu^2*(Jx'*Jx+S)*(Jx'*Rx);
 
-        else
-            %             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
-            params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters)  objective_function(x,constants);
-            params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
-            %cant line search on gradient as H may be rank deficient or
-            %just not posdef.
-%             params.linesearch.phi = @(objective_function,x,constants,DeflatedPts,DeflationParameters) Gradient(objective_function,x,constants,DeflatedPts,DeflationParameters);
-%             params.linesearch.gradphi = @(Rx,Jx,~,~,S) (Jx'*Jx+S)*(Jx'*Rx);
-
-        end
-
-        Fun= str2func('Deflated_Newton_Method');
-
-    case "Gauss-NewtonT1"
-        if res.deflatelinesearch
-            if isfield(varargin{1},"deflatelinesearch")
-                warning("There is no deflated line search method for the Type 1 Gauss-Newton method. Using an undeflated line search.")
-            end
-        end
-        %         params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
-        params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) objective_function(x,constants);
-        params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
-
-        Fun= str2func('Deflated_GaussNewton_Type1_Method');
-
-    case "Gauss-NewtonT2"
-        if res.deflatelinesearch
-            %             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)Mu^2*obj_at_x;
-            params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) deflation(PreviousMinima,x,DeflationParameters)^2*objective_function(x,constants);
-            params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*Mu*gradMu'*Rx'*Rx+ 2*(Jx'*Rx);
-        else
-            %             params.linesearch.phi_0=@(obj_at_x,Mu,Rx,Jx)obj_at_x;
-            params.linesearch.phi = @(objective_function,x,constants,PreviousMinima,DeflationParameters) objective_function(x,constants);
-            params.linesearch.gradphi = @(Rx,Jx,Mu,gradMu,S) 2*(Jx'*Rx);
-        end
-
-        Fun= str2func('Deflated_GaussNewton_Type2_Method');
-
-    otherwise
-        error('Please select a valid method - Newton/Gauss-NewtonT1/Gauss-NewtonT2')
-end
-%[x,NIter,flag,obj_at_x,nbytes,xs]
-% [SysOut, NIter, Flags, Iterates, FinalError]
-j=0;    Y = [];
-tic;
-for i=length(res.SysFound)+1:res.NMinima
-    if ~isempty(Y)&&any(all(abs(Y - x0)<1e-16))
-        warning('The intial vector is a deflated point, stopped deflations early')
-        break
+if res.IEPType == "Classic" %Need to fix this option
     end
-    [Y(:,i),NIter(i),Flags{i},FinalError{i},nbytes,Iterates{i}] = Fun(obj_fun,x0,Y,params);
-    if Flags{i} == "NaN"
-        warning("Method diverging to NaN values, stopped deflations early.")
-        break
-    end
-    if Flags{i} ~="Max Iterations reached"
-        j = j+1;
-        disp(['Currently found ',num2str(j),' minima in ',num2str(i),' iterations.'])
-    else
-        disp(['Currently found ',num2str(j),' minima in ',num2str(i),' iterations.'])
-    end
-end; toc
 
-
-if res.IEPType == "Classic"
-    Y=Y(1:end-1,:);
-end
 if res.Scaled
-    SysOut = Sys_Output(Y.*scale_x,Ops,SysFixed);
+    SysOut = Sys_Output([Iterations.DeflatedPoint].*scale_x,Ops,SysFixed);
 else
-    SysOut = Sys_Output(Y,Ops,SysFixed);
+    SysOut = Sys_Output([Iterations.DeflatedPoint],Ops,SysFixed);
 end
 warning('on','MATLAB:eigs:NotAllEigsConverged')
-end
-
-function f_out = Deflated_Gradient(objective_function,x,constants,PreviousMinima,DeflationParameters)
-[~,R,J] = objective_function(x,constants);
-f_out = deflation(PreviousMinima,x,DeflationParameters)^2*(J'*R)'*(J'*R);
-end
-function f_out = Gradient(objective_function,x,constants,DeflatedPts,DeflationParameters)
-[~,R,J] = objective_function(x,constants);
-f_out = (J'*R)'*(J'*R);
+SysOut = mergestructs(SysOut,Iterations);
 end
