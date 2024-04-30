@@ -93,15 +93,20 @@ function [SysOut] = INS_IEP(Sys0,Vary,Exp,varargin)
 %        steps - [ {1e-8} | positive scalar ]
 %ObjectiveTolerance - Stopping criterion based on value of objective
 %        function - [ {0} | positive scalar ]
-if nargin <3
+if nargin ==4
+    options = varargin{1};
+elseif nargin == 3
+    options = struct('NDeflations',1);  %Use a default value to avoid error
+else  
     error('Sys0, Vary and Exp are required inputs')
 end
+
 if ~isfield(Exp,"ev")
     error("Please provide the experimental eigenvalues, using Exp.ev")
 end
 
 [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary);
-options = varargin{1};
+
 
 if length(A{1})<1000
     defaultEigensolver = 'eig';
@@ -138,7 +143,7 @@ addParameter(IP,'IEPType',defaultIEPType)
 addParameter(IP,'SysFound',defaultSysFound)
 addParameter(IP,'Eigensolver',defaultEigensolver)
 addParameter(IP,'Scaled',defaultScaled,@islogical)
-addParameter(IP,'EigsNotConvergedWarning',true)
+addParameter(IP,'EigsNotConvergedWarning',false)
 
 if isempty(IEPOptions)
     IP.parse(Sys0,Vary,Exp)
