@@ -11,6 +11,10 @@ Sys.S=Sys1.S;
 Sys.B2 = [100,0,-1000,0,0];
 Sys.B4 = [-1,0,0,0,-1,0,0,0,0];
 Vary=Sys;
+Opt = [];
+Opt = struct('NDeflations',4,'Method','Gauss-NewtonT2','Linesearch','Quadratic',...
+    'IEPType','Classic','Verbose',false,'scaled',true,'c1',1e-6);
+[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
 %% Cr_n
 clear Sys Exp
 [Sys1,Exp]=Cr_Spin_Sys_3(4);
@@ -56,12 +60,12 @@ Vary = Sys;
 % J=1;
 
 
-
-Opt = struct('NMinima',3,'Method','Gauss-NewtonT1','Linesearch','Basic',...
-    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.0001,...
-    'deflatelinesearch',1,'IEPType','Difference','Verbose',0,'tau',0.5);
-[SysOut, NIter1, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt)
+Opt = struct('NDeflations',3);
+% Opt = struct('NMinima',3,'Method','Gauss-NewtonT1','Linesearch','Basic',...
+%     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
+%     'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.0001,...
+%     'deflatelinesearch',1,'IEPType','Difference','Verbose',0,'tau',0.5);
+[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
 
 SysOut.B2
 
@@ -104,12 +108,12 @@ clear Sys Vary
 [Sys,Vary,Exp]=Mn6_Sys;
 
 %%
-Opt = struct('Eigensolver','eig','NDeflations',4,'Method','Newton','Linesearch','No',...
-    'MaxIter',10,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',false,'epsilon',0.001,...
-    'deflatelinesearch',true,'IEPType','Difference','Verbose',true,'tau',0.5,"SysFound",SysFound);
+Opt = struct('Eigensolver','eig','NDeflations',10,'Method','Gauss-NewtonT2','Linesearch','Armijo',...
+    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',0,...
+    'ObjectiveTolerance',0,'Minalpha',1e-13,'Scaled',true,'epsilon',0.1,...
+    'IEPType','Difference','Verbose',false,'tau',0.5,'c1',1e-10,...
+    "MuLinesearch","No","DeflatedLinesearch","Armijo");
 [SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
-
 
 % SysOut.B2
 

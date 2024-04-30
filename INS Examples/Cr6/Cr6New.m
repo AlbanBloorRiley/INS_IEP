@@ -3,9 +3,9 @@ clear SysProblem SysModel Exp
 %Simulate experimental data
 rcm = 29979.2458;   
 meV = rcm*8.065;  
-N_electrons = 10;    %Number of Cr atoms in chain
+N_electrons = 6;    %Number of Cr atoms in chain
 N_eigenvalues = 21; 
-% rng(2)
+% rng(0)
 %% Set up Example Problem 
 
 S=1/2;  SysProblem.S = [S];    %set up Spins
@@ -24,7 +24,7 @@ Exp.ev=EE(1:N_eigenvalues) - EE(1);
 
 
 %% Set up model to be optimised
-magnitude = 0.5;
+magnitude = 0.1;
 SysModel.S = SysProblem.S;    %set up Spins
 SysModel.J = SysProblem.J.*(10.^((rand(1,length(SysProblem.J))-0.5)*2*magnitude));    %set up exchange terms
 
@@ -32,18 +32,22 @@ Vary = SysModel; %This will vary all non-zero parameters
 %% Solve problem using IEP method
 
 %Optimse over parameters given
-Opt = struct('NMinima',2,'Method','Gauss-NewtonT1','Linesearch','Basic',...
-    'MaxIter',600,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,...
-    'deflatelinesearch',1,'IEPType','Difference','Verbose',1,'tau',0.5);
+Opt = struct('NMinima',2,'Method','Newton','Linesearch','Basic',...
+    'MaxIter',100,'theta',2,'StepTolerance',1e-18,'GradientTolerance',1e-2,...
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',4,...
+    'deflatelinesearch',1,'IEPType','Difference','Verbose',1,'tau',0.9);
 
 [SysOut, NIter, Flags, Iters, FinalError]= INS_IEP(SysModel,Vary,Exp,Opt);
-SysModel.J
+% SysModel.J
 
-FinalError
+
+[minF,minI]= min([FinalError{:}])
+[SysModel.J(SysProblem.J~=0)',SysOut(minI).J(SysProblem.J~=0)',SysProblem.J(SysProblem.J~=0)']
 
 % SysOut.J
 % SysProblem.J
+% FinalError
+minF
 %% Solve problem using generic NLLS
 
 
@@ -55,13 +59,16 @@ NLLSR = @(x)NLLSresidual(x,constants,IEPType);
 % UB = 100*x0;
 LB = [];UB = [];
 smalleststep = 0.01;
-fittype = 'single';
-fittype = 'multi';
-numstarts = 3;
+
+numstarts = 2;
+
+if numstarts > 1; fittype = 'multi';else; fittype = 'single'; end
 problem = createOptimProblem('lsqnonlin','x0',x0,'objective',NLLSR,'lb',LB,'ub',UB);
-problem.options = optimoptions(@lsqnonlin,'Algorithm','trust-region-reflective','DiffMinChange',smalleststep);
+problem.options = optimoptions(@lsqnonlin,'Algorithm','trust-region-reflective','DiffMinChange',smalleststep,'SpecifyObjectiveGradient',true);
+problem.options = optimoptions(@lsqnonlin,'Algorithm','levenberg-marquardt','DiffMinChange',smalleststep,'SpecifyObjectiveGradient',true);
+
 clear allmins
-tic
+% tic
 switch fittype
     case 'single'
         [xmulti,f,output,flag] = lsqnonlin(problem);
@@ -70,7 +77,7 @@ switch fittype
         ms = MultiStart('PlotFcns',@gsplotbestf,'StartPointsToRun','bounds','Display','iter');
         [xmulti,f,flag,~,allmins] = run(ms,problem,numstarts);
 end
-toc
+% toc
 f
 
 
@@ -111,11 +118,11 @@ f
 
 
 %% 
-function r = NLLSresidual(x,constants,IEPType)
+function [r,J] = NLLSresidual(x,constants,IEPType)
 if IEPType == "Classic"
-    [~,r] = IEP_Evaluate_full(x,constants);
+    [~,r,J] = IEP_Evaluate_full(x,constants);
 elseif IEPType == "Difference"
-    [~,r] = IEP_Evaluate_diff(x,constants);
+    [~,r,J] = IEP_Evaluate_diff(x,constants);
 end
 end
 

@@ -1,53 +1,98 @@
 function [SysOut] = INS_IEP(Sys0,Vary,Exp,varargin)
 % INS_IEP Inelastic Neutron Scattering Inverse Eigenvalue Problem
-% SysOut =  INS_IEP(Sys) produces an easy spin syle Sys structure
-% containing the parameters found at a local minima of the error bewtween
-% eigenvalues these simulate and the prescribed experimental eigenvalues input.
+% SysOut =  INS_IEP(Sys0,Vary,Exp) produces an easyspin style Sys structure
+% containing the parameters that minimise difference in between the
+% eigenvalues simulated and the prescribed experimental eigenvalues input.
+% The function models closely the style and use of easyspin's esfit.
 %
-% The structure Sys, must contain the spin vector Sys.S and the
-% experimental eigenvalues Sys.ev.
+% The required inputs are Sys, Vary and Exp. Sys is used to specify the
+% model being used to simulate the system, using Spin, Zero Field Splittings and
+% Electron-electron spin-spin couplings, and gives the initial values for
+% all parameters of the model. Vary specifies which paramaters are to be
+% varied, and Exp contains the experimental data. All inputs conform to the
+% easyspin syntax unless explicitly stated.
 %
-% The structure should also indicate which Stevens operators are to be fit
-% (using Sys.B2,..,Sys.B6 etc. as done in easyspin)
-% and, if using a multiple spin system, which exchange terms to use -
-% either usung Sys.J xor Sys.ee. To indicate which are to be used make sure
-% that the appropriate entry in the structure is non-zero, if using an initial guess please
-% use this value. Make sure that no entries in the same field are
-% identically the same value, unless you wish them to be pinned - in which
-% case this is done by making the desired entries identically the same
-% value. All values must be given in MH.
+% Defining the Sys structure:
+% Spin - As in easy spin is defined Sys.S = S (1xN array of real)
+% Zero Field Splittings - These are given using the extended Stevens
+% operators, using easyspin's syntax for "High-order zero-field splittings"
+% Sys.B2,..,Sys.B12. Not all have to be used. Any entries with the same
+% value within the same column (representing the same operator across 
+% multiple spin centres) will be pinned. 
+% Electron-electron spin-spin couplings -  given by either using Sys.J 
+% (1xN array of real) or Sys.ee (Nx3 or 3Nx3 array of real) as in easyspin.
+% Note thot only one of these may be used at one time Note also that any
+% entries of J or diagonals of ee that are equal will be pinned, also any
+% symmetric ellements of ee that are equal to each others reciprical.
 %
-%[SysOut, NIter, Flags, Iters, FinalError] = INS_IEP(Sys) also produces
-%cell structures containing the Number of Iterations till 'convergence';
-% the type of 'convergence' achieved; all the iterations made until
-% 'convergence'; the finall error at 'convergence'.
+% Specifying Vary:
+% Vary should contain all the same fields of Sys (not including S), and any
+% entry that is non-zero specifies that it is a parameter to be varied,
+% using the initial value given in Sys. Note that parameters that are given
+% by Sys but are not to be varied will still be used, just as constants.
 %
-%Additional options: please pass these parameters as named optional
-%arguments
+% Experimental data:
+% Exp should contain the experimentally calculated eigenvalues saved as
+% Exp.ev. It can optionally also give the associated uncertainty of the
+% eigenvalues as Exp.evsd or uncertainty of the difference in eigenvalues
+% as Exp.evdsd. These two options come from the two different formulations
+% of the Inverse Eigenvalue Problem - where the residual is given as the
+% differnce in eigenvalues, or the difference in the difference between
+% adjacent eigenvalues. The specific formulation to be used is specified by
+% the option 'IEPType' as either 'Classic' or 'Difference' respectivly. 
 %
-%They are listed below as a tuple of
-%"Name of Parameter" - Defalut Value - description:
 %
-%'NMinima' - (1) - The number of local minima you wish to find, the output
-%Sys structures are given in an array, other outputs are in cell structures
-%'Method' - {('Newton'),'GaussNewtonT1', 'GaussNewtonT1'} - The optimisation method desired
-%'tol' - (1e-3) - The tolerence required for convergence
-%'MaxIter' - (10000) - The integer value  of Maximum iterations per deflation,
-%'Linesearch' - {('No','Basic', 'Armijo, 'Quadratic'} - line search method,
-%'p' - (2) - The deflation exponent, an integer value or 'exp',
-%'Eigensolver' - {'eig','eigs'} - The eigensolver desired, defalut
-%chosed addaptively
-%'A0' - zeros(n) - A single matrix shift to the hamiltonian, for example
-%the Hamiltonian given by previously calculated Stevens operators
-%'UseInitialGuess' - {true, (false)} - Set to true to use the input initial
-%guess' of parameters,
-%'c1' - 1e-4 - the armijo  line search parameter
-%'alphaint' - 1 - Initial value of the line search parameter each iteration
-%'tau' - 0.5 - The value of the decrease in the line search parameter.
-%'minalpha' - 1e-4 - The minimu value of the line search parameter.
-%deflatelinesearch' - true - Use deflated linesearch conditions or not.
-%'theta' - 1 - The value of the shift in the deflation operator.
-%'SysFound' - {([]),SysOut} - An array of structures of previously found local minima.
+%OPTIONAL PARAMETERS
+%IEP: 
+%IEPType - Defines which formulation of the IEP to use - [ Classic | 
+%       {Difference} ]
+%Eigensolver - Specifies which eigensolver to use - [ eig | eigs ] (default
+%       is decided based on the size of the matrices used)
+%Scaled - specifies if the parameters are scaled to the size of the initil
+%       values - [ true | {false} ]
+%EigsNotConvergedWarning - Specifies if a warning should be output of the
+%       eigensolver fails to converge for some of the eigenvalues - [ {true} |
+%       false ]
+%NUMERICAL:
+%NDeflations - The number of local minima you wish to find, the output -
+% [ {1} | positive integer ]
+%Method - The optimisation method desired - [ {Newton} | GaussNewtonT1 |
+%           GaussNewtonT2 ]
+%MaxIter - The integer value  of Maximum iterations per deflation -
+%           [ {1000} | positive integer ]
+%Linesearch - line search method - [ No | {Armijo} | Quadratic ]
+%theta - The deflation exponent - [ {2} | positive integer | exp ]
+%c1 - the armijo line search parameter - [ {1e-4} | positive scalar ]
+%alpha0 - Initial value of the line search parameter each iteration - [ 1
+%           | positive scalar ]
+%Tau - The value of the decrease in the line search parameter - [ {0.5} |
+%         scalar in [0,1] ]
+%Minalpha - The minimum value of the line search parameter - [ 1e-18 |
+%       positive scalar ]
+%Verbose - Output value of objective function and gradient at each
+%            iteration - [ true | {false} ]
+%Constants - Any constants the objective funtion provided requires - [ {}
+%        | struct ]
+%PreviouslyFoundIterations - A struct of prevously found points to be deflated
+%        - [ {} | l \times x matrix ], where x is the number of previous
+%        deflations
+%ConvergenceFlags - The flags that are considered to mean convergence - [
+%        {Objective less than tolerance} | {Gradient less than tolerance} |
+%       Step Size too small | Line search failed | Max Iterations reached |
+%        Divergence Detected | NaN ]
+%Sigma - The value of the shift of the deflation - [ {1} | scalar ]
+%SingleShift - Deflation shift should only be applied once [ true |
+%        {false} ]
+%Epsilon - Tolerence on the application of deflation or line search - [
+%        {0.01} | scalar in [0,1]]
+%NormWeighting - Weighting applied to the norms in calculation of
+%           deflation operators - [ {} | l \times l matrix ]
+%GradientTolerance - Stopping criterion based on gradient of function -
+%        [ {0} | positive scalar ]
+%StepTolerance - Stopping criterion based on difference of consecutive
+%        steps - [ {1e-8} | positive scalar ]
+%ObjectiveTolerance - Stopping criterion based on value of objective
+%        function - [ {0} | positive scalar ]
 if nargin <3
     error('Sys0, Vary and Exp are required inputs')
 end
@@ -64,6 +109,7 @@ else
     defaultEigensolver = 'eigs';
 end
 
+IEPOptions = [];
 IEPOptionFields = ["SysFound","Eigensolver",",EigsNotConvergedWarning","IEPType","Scaled"];
 for i = IEPOptionFields
     if isfield(options,i)
@@ -94,10 +140,14 @@ addParameter(IP,'Eigensolver',defaultEigensolver)
 addParameter(IP,'Scaled',defaultScaled,@islogical)
 addParameter(IP,'EigsNotConvergedWarning',true)
 
-IP.parse(Sys0,Vary,Exp,IEPOptions)
+if isempty(IEPOptions)
+    IP.parse(Sys0,Vary,Exp)
+else
+    IP.parse(Sys0,Vary,Exp,IEPOptions)
+end
 res = IP.Results;
 
-%Turns of the warining from eigs() when it fails to converge for some eigenvalues 
+%Turns of the warining from eigs() when it fails to converge for some eigenvalues
 if res.EigsNotConvergedWarning
     warning('off','MATLAB:eigs:NotAllEigsConverged')
 end
@@ -114,7 +164,7 @@ else
 end
 
 
-IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates"];
+IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates","GroundStateFound"];
 if isstruct(res.SysFound)
     for j = IterationFields
         if isfield(res.SysFound,j)
@@ -138,6 +188,14 @@ if res.IEPType == "Classic"
     obj_fun = @IEP_Evaluate_full;
     A{end+1} = speye(size(A{1}));
     x0(end+1)=1;
+    if isstruct(res.SysFound)%
+       if ~isfield(PreviouslyFoundIterations,"GroundStateFound")
+           error("Please provide the value of the ground state found for previously found systems")
+       end
+        for i = 1:length(PreviouslyFoundIterations)
+           PreviouslyFoundIterations(i).DeflatedPoint(end+1)=PreviouslyFoundIterations(i).GroundStateFound;
+       end
+    end
     if isfield(Exp,'evsd')
         if ~all(Exp.evsd)
             warning('If standard deviation is given for experimental eigenvalues, any zero values are set to 1.')
@@ -180,8 +238,11 @@ Iterations = DMin(obj_fun,x0,options);
 
 
 if res.IEPType == "Classic" %Need to fix this option
+    for i = 1:length(Iterations)
+        GroundStateFound(i).GroundStateFound = Iterations(i).DeflatedPoint(end);
+        Iterations(i).DeflatedPoint(end) = [];
     end
-
+end
 if res.Scaled
     SysOut = Sys_Output([Iterations.DeflatedPoint].*scale_x,Ops,SysFixed);
 else
@@ -189,4 +250,7 @@ else
 end
 warning('on','MATLAB:eigs:NotAllEigsConverged')
 SysOut = mergestructs(SysOut,Iterations);
+if res.IEPType == "Classic"
+    SysOut = mergestructs(SysOut,GroundStateFound);
+end
 end
