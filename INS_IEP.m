@@ -143,7 +143,7 @@ addParameter(IP,'IEPType',defaultIEPType)
 addParameter(IP,'SysFound',defaultSysFound)
 addParameter(IP,'Eigensolver',defaultEigensolver)
 addParameter(IP,'Scaled',defaultScaled,@islogical)
-addParameter(IP,'EigsNotConvergedWarning',false)
+addParameter(IP,'EigsNotConvergedWarning',true)
 
 if isempty(IEPOptions)
     IP.parse(Sys0,Vary,Exp)
