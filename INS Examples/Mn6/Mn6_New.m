@@ -32,12 +32,22 @@ J_S4_S5_2 = -0.4*meV; % MnIII - MnII, MnIII JT not involved. Rodolphe: Weak and 
 J_S5_S5   = -0.1*meV;  % MnII  - MnII.                        Rodoplhe: Very weak and AFM. Free value
 
 
+
 J_AB = J_S4_S4;
 J_A1 = J_S4_S5_1; J_A3 = J_S4_S5_1; J_B2 = J_S4_S5_1; J_B4 = J_S4_S5_1; %For these, the MnIII JT axis is involved. Can be FM or AFM
 J_A2 = J_S4_S5_2; J_A4 = J_S4_S5_2; J_B1 = J_S4_S5_2; J_B3 = J_S4_S5_2; %For these, the MnIII JT axis is NOT involved. Can only be AFM
 J_12 = J_S5_S5;   J_34 = J_S5_S5; 
 J_14 = 0;         J_23 = 0; %Assumed zero. Only interacts via a pivalate bridge.
 J_13 = 0;         J_24 = 0; %Assumed zero. No interaction pathway
+
+%Trial
+J_S4_S4   = -5*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
+J_S4_S5_1 = 0.1*meV;  % MnIII - MnII, MnIII JT involved.     Rodolphe: Weak, FM or AFM.   Free value
+J_S4_S5_2 = -0.3*meV; % MnIII - MnII, MnIII JT not involved. Rodolphe: Weak and AFM.      Free value
+J_S5_S5   = -0.05*meV;  % MnII  - MnII.  
+J_14 = -0.01;         J_23 = -0.001; %Assumed zero. Only interacts via a pivalate bridge.
+
+
 
 Sys.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 J_34].*(-2); %-2JS.S formalism
 
@@ -46,6 +56,7 @@ Sys.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 J
 % For scenario 1, these stay constant. Middle/green ones
 
 DIII = -0.029*meV; % MnIII anisotropy. Free Value 
+DIII = -0.028*meV; % MnIII anisotropy. Free Value 
 EIII = 0*DIII;   % MnIII rhombicity. For INS, assume 0.
 B20III = 3*DIII; B22III = EIII; %Converting to Stevens Operator formalism
 
@@ -77,7 +88,7 @@ Exp.ev = exp_eigs.*meV;
 %%
 
 Opt = struct('NDeflations',1,'Method','LP','Linesearch','Quadratic',...
-    'MaxIter',500,'StepTolerance',1e-6,'GradientTolerance',1e-8,...
+    'MaxIter',2000,'StepTolerance',1e-6,'GradientTolerance',1e-8,...
     'ObjectiveTolerance',1e-2,'Scaled',false,'epsilon',0.1,'MinAlpha',1e-18,...
     'IEPType','Classic','Verbose',true,'c1',1e-8,'SysFound',[],...
     'Regularisation',0,'LinearSolver','mldivide','Alpha0',1e-0);
@@ -86,7 +97,7 @@ SysOut = INS_IEP(Sys,Vary,Exp,Opt)
 
 %%       
 % INS-specific information. Magnetic form factors.
-MintSys = SysOut(1);
+MintSys = Sys(1);
 % MintSys = Sys;
 MintSys.FormFactor = {'Mn3', 'Mn3', 'Mn2', 'Mn2', 'Mn2', 'Mn2'};
 
@@ -102,7 +113,7 @@ MintSys.Coords = [24.60550  13.06674   7.07523; % A
 
 % Sim INS powder spectrum
 
-MintOpt.NumEigs = 100; %100 eigenvalues gives a good INS sim
+MintOpt.NumEigs = 33; %100 eigenvalues gives a good INS sim
 
 MintExp.SpectrumType = 'SE'; %INS intensity vs. energy
 
