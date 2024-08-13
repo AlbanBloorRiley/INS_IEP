@@ -37,7 +37,8 @@ else
         D = D1(1:length(constants.ev));
     end
     if any(isnan(D))
-        [Q,D] = eig(full(FormA(x,constants.A,constants.A0)),'vector');
+        warning("eigs() not converged, using eig()");
+%         [Q,D] = eig(full(FormA(x,constants.A,constants.A0)),'vector');
         D = D(1:length(constants.ev));
     end
 %     if (D-D1(length(D)))>1e-3

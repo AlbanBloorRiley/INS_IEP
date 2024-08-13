@@ -18,13 +18,17 @@ else
         D = D1(1:length(constants.ev));
     end
     if any(isnan(D))
-        D = eig(FormA(d,constants.A,constants.A0),'vector');
+        warning("eigs() not converged, using eig()");
+%         D = eig(FormA(d,constants.A,constants.A0),'vector');
         D = D(1:length(constants.ev));
     end
 %     if (D-D1(length(D)))>1e-3
 %         disp(D-D1(1:length(D)))
 %     end
 end
+% rcm = 29979.2458;    % reciprocal cm to MHz
+% meV = rcm*8.065;
+% D = D./meV;
 f = sqrt(sum(((D-constants.ev)./constants.eigenvalueSD).^2));
 if nargout>1
     varargout{1} = (D-constants.ev)./constants.eigenvalueSD;

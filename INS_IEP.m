@@ -1,4 +1,4 @@
-function [SysOut] = INS_IEP(Sys0,Vary,Exp,varargin)
+function [SysOut,options] = INS_IEP(Sys0,Vary,Exp,varargin)
 % INS_IEP Inelastic Neutron Scattering Inverse Eigenvalue Problem
 % SysOut =  INS_IEP(Sys0,Vary,Exp) produces an easyspin style Sys structure
 % containing the parameters that minimise difference in between the
@@ -94,9 +94,9 @@ function [SysOut] = INS_IEP(Sys0,Vary,Exp,varargin)
 %ObjectiveTolerance - Stopping criterion based on value of objective
 %        function - [ {0} | positive scalar ]
 if nargin ==4
-    options = varargin{1};
+    Opt = varargin{1};
 elseif nargin == 3
-    options = struct('NDeflations',1);  %Use a default value to avoid error
+    Opt = struct('NDeflations',1);  %Use a default value to avoid error
 else  
     error('Sys0, Vary and Exp are required inputs')
 end
@@ -117,9 +117,9 @@ end
 IEPOptions = [];
 IEPOptionFields = ["SysFound","Eigensolver",",EigsNotConvergedWarning","IEPType","Scaled"];
 for i = IEPOptionFields
-    if isfield(options,i)
-        IEPOptions.(i) = options.(i);
-        options = rmfield(options,i);
+    if isfield(Opt,i)
+        IEPOptions.(i) = Opt.(i);
+        Opt = rmfield(Opt,i);
     end
 end
 
@@ -159,14 +159,6 @@ end
 
 
 
-if res.Scaled
-    for i =1:length(scale_x)
-        A{i}=scale_x(i)*A{i};
-    end
-    x0=ones(length(scale_x),1);
-else
-    x0=scale_x;
-end
 
 
 IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates","GroundStateFound"];
@@ -177,7 +169,7 @@ if isstruct(res.SysFound)
             res.SysFound = rmfield(res.SysFound,j);
         end
     end
-    options.PreviouslyFoundIterations = PreviouslyFoundIterations;
+    Opt.PreviouslyFoundIterations = PreviouslyFoundIterations;
 
 end
 
@@ -191,8 +183,10 @@ end
 
 if res.IEPType == "Classic"
     obj_fun = @IEP_Evaluate_full;
+    
+    % x0(end+1)=1;
+    scale_x(end+1)= -eigs(FormA(scale_x,A,A0),1,'smallestreal');
     A{end+1} = speye(size(A{1}));
-    x0(end+1)=1;
     if isstruct(res.SysFound)%
        if ~isfield(PreviouslyFoundIterations,"GroundStateFound")
            error("Please provide the value of the ground state found for previously found systems")
@@ -233,13 +227,24 @@ elseif res.IEPType == "Difference"
 else
     error('Please use either the ''Classic'' or ''Difference'' options for IEPType')
 end
+
+if res.Scaled
+    for i =1:length(scale_x)
+        A{i}=scale_x(i)*A{i};
+    end
+    x0=ones(length(scale_x),1);
+else
+    x0=scale_x;
+end
+
+
 constants.A = A;
 constants.A0 = A0;
 constants.ED = res.Eigensolver;
-options.constants = constants;
+Opt.constants = constants;
 
 
-Iterations = DMin(obj_fun,x0,options);
+[Iterations,options] = DMin(obj_fun,x0,Opt);
 
 
 if res.IEPType == "Classic" %Need to fix this option
@@ -258,4 +263,15 @@ SysOut = mergestructs(SysOut,Iterations);
 if res.IEPType == "Classic"
     SysOut = mergestructs(SysOut,GroundStateFound);
 end
+
+
+
+options.Eigensolver = res.Eigensolver;
+options.EigsNotConvergedWarning = res.EigsNotConvergedWarning;
+options.Exp = res.Exp;
+options.IEPType = res.IEPType;
+options.Scaled = res.Scaled;
+options.Sys0_In = res.Sys0_In;
+options.SysFound = res.SysFound;
+options.Vary = res.Vary;
 end

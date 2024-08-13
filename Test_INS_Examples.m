@@ -3,18 +3,62 @@ rcm = 29979.2458;    % reciprocal cm to MHz
 kelvin = rcm*0.695;  % kelvin        to MHz
 meV = rcm*8.065;     % meV           to MHz
 Tesla = meV*0.116;   % Tesla         to MHz
-
+%% Mn12
+clear Sys Exp Opt
+[Sys1,Exp] = Mn12_Spin_Sys_3(1,1);
+Sys.S=Sys1.S;
+Sys.B2 = [-100,0,-4000,0,0];
+Sys.B4 = [-1,0,0,0,-1,0,0,0,0];
+Vary=Sys;
+Opt = struct('NDeflations',4,'Method','LP','Linesearch','Basic',...
+    'IEPType','Difference','Verbose',true,'epsilon',-inf,'theta',1,'MaxIter',1000);
+[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
 %% Mn12
 clear Sys Exp
 [Sys1,Exp] = Mn12_Spin_Sys_3(1,1);
 Sys.S=Sys1.S;
-Sys.B2 = [100,0,-1000,0,0];
+Sys.B2 = [-100,0,-4000,0,0];
 Sys.B4 = [-1,0,0,0,-1,0,0,0,0];
 Vary=Sys;
 Opt = [];
-Opt = struct('NDeflations',4,'Method','Gauss-NewtonT2','Linesearch','Quadratic',...
-    'IEPType','Classic','Verbose',false,'scaled',true,'c1',1e-6);
-[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
+Opt = struct('NDeflations',4,'Method','Good_GN','Linesearch','Armijo',...
+    'IEPType','Classic','Verbose',false,'scaled',false,'c1',1e-16);
+[SysOutGood]= INS_IEP(Sys,Vary,Exp,Opt)
+Opt = struct('NDeflations',4,'Method','Bad_GN','Linesearch','Armijo',...
+    'IEPType','Classic','Verbose',false,'scaled',false,'c1',1e-16);
+[SysOutBad]= INS_IEP(Sys,Vary,Exp,Opt)
+%
+clf
+f=figure(1);
+subplot(2,1,1)
+options.ShowLegend = true; options.ShowDeflations = 1:length(SysOutGood);
+PlotxConvergence(SysOutGood,options)
+% title('''Good''')
+grid on
+xlabel('k')
+ylabel('error')
+% xlim([0,150])
+hLegend = findobj(gcf, 'Type', 'Legend');
+
+lgnd = strcat(hLegend(1).String, string(newline), format_errs([SysOutGood.ErrorAtDeflatedPoint]));
+legend(lgnd,'location','eastoutside')
+
+subplot(2,1,2)
+options.ShowDeflations = 1:length(SysOutBad);
+PlotxConvergence(SysOutBad,options)
+hLegend = findobj(gcf, 'Type', 'Legend');
+
+lgnd = strcat(hLegend(1).String, string(newline), format_errs([SysOutBad.ErrorAtDeflatedPoint]));
+legend(lgnd,'location','eastoutside')
+% title('''Bad''')
+grid on
+xlabel('k')
+ylabel('error')
+% xlim([0,150])
+
+f.Units = 'centimeters';
+f.Position = [-50 10 20 18];
+
 %% Cr_n
 clear Sys Exp
 [Sys1,Exp]=Cr_Spin_Sys_3(4);
@@ -60,11 +104,11 @@ Vary = Sys;
 % J=1;
 
 
-Opt = struct('NDeflations',3);
-% Opt = struct('NMinima',3,'Method','Gauss-NewtonT1','Linesearch','Basic',...
-%     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-%     'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.0001,...
-%     'deflatelinesearch',1,'IEPType','Difference','Verbose',0,'tau',0.5);
+% Opt = struct('NDeflations',3,'verbose',true);
+Opt = struct('NDeflations',3,'Method','Good_GN','Linesearch','Basic',...
+    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
+    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',true,'epsilon',0.001,...
+    'IEPType','Difference','Verbose',true);
 [SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
 
 SysOut.B2
@@ -82,7 +126,7 @@ SysOut.B2
 
 %% Test 1
 clear Sys Sys1 Exp
-rng(0)
+rng(3)
 NumEigs = 100;
 Sys1.S = [2.5 2 2];
 B20I = 6*rcm;   B22I = 0.1*rcm;
@@ -100,15 +144,34 @@ Sys.B2 =[B22I 0 B20I 0 0; B22II 0 B20II 0 0; B22II 0 B20II 0 0];
 Sys.J = [J1 J1 J2];
 Vary = Sys;
 Exp.ev=ev;
+Opt = struct('NDeflations',2,'verbose',true,'Linesearch','Basic','Scaled',true);
+SysOut= INS_IEP(Sys,Vary,Exp,Opt)
+
+
+
+
+
+
+
+
+
+
+
 %%
 clear Sys
 [Sys,Vary,Exp]=Dy_Sys;
+warning('Off','MATLAB:nearlySingularMatrix')
+Opt = struct('Eigensolver','eig','NDeflations',10,'Method','Newton','Linesearch','Armijo',...
+    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-10,...
+    'ObjectiveTolerance',1e-6,'Minalpha',1e-18,'Scaled',true,'epsilon',0.1,...
+    'IEPType','Difference','Verbose',true);
+[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
+warning('On','MATLAB:nearlySingularMatrix')
 %%
 clear Sys Vary
 [Sys,Vary,Exp]=Mn6_Sys;
-
 %%
-Opt = struct('Eigensolver','eig','NDeflations',10,'Method','Gauss-NewtonT2','Linesearch','Armijo',...
+Opt = struct('Eigensolver','eig','NDeflations',10,'Method','Good_GN','Linesearch','Armijo',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',0,...
     'ObjectiveTolerance',0,'Minalpha',1e-13,'Scaled',true,'epsilon',0.1,...
     'IEPType','Difference','Verbose',false,'tau',0.5,'c1',1e-10,...
@@ -146,3 +209,14 @@ FinalError(idx)
 
 
 
+
+
+
+
+%%
+function ferrs = format_errs(errs)
+    ferrs = string([]);
+    for k = 1:length(errs)
+        ferrs(k) = sprintf('%0.1e', errs(k));
+    end
+end

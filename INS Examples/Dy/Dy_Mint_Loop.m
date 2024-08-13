@@ -54,41 +54,49 @@ Sys.B2 = [0 0 0 0 0 ; B22 0 B20 0 0 ; 0 0 0 0 0 ];
 % Sys.B2 = [0 0 0 0 0 ; 0 0 B20 0 0 ; 0 0 0 0 0 ];
 Sys.B4 = [0 0 0 0 0 0 0 0 0; 0 0 0 0 B40 0 0 0 0; 0 0 0 0 0 0 0 0 0];
 Sys.B6 = [0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 B60 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0];
-% Sys.J = [Jex1 0 Jex2];
+Sys.J = [Jex1 0 Jex2];
 % Vary.J = [1 0 1];
-Sys.ee = [diag([Jex1,Jex1,Jex1]);zeros(3);diag([Jex2,Jex2,Jex2])];
-% 
+% Sys.ee = [diag([Jex1,Jex1,Jex1]);zeros(3);diag([Jex2,Jex2,Jex2])];
+% % 
 % Sys.ee = [diag([Jex1,Jex1,Jex1+1]);zeros(3);diag([Jex2,Jex2,Jex2+1])];
-Vary.ee = [[1,0,1;0,1,0;1,0,1];zeros(3);[1,0,1;0,1,0;1,0,1]];
-
-Vary.B2 = [zeros(1,5) ; 1 0 1 0 0 ; zeros(1,5)];
-Vary.B4 = [zeros(1,9); 0 0 0 0 1 0 0 0 0; zeros(1,9)];
-Vary.B6 = [zeros(1,13); 0 0 0 0 0 0 1 0 0 0 0 0 0; zeros(1,13)];
-
+% Vary.ee = [[1,0,1;0,1,0;1,0,1];zeros(3);[1,0,1;0,1,0;1,0,1]];
+% Vary.ee = Sys.ee;
+% Vary.B2 = [zeros(1,5) ; 1 0 1 0 0 ; zeros(1,5)];
+% Vary.B4 = [zeros(1,9); 0 0 0 0 1 0 0 0 0; zeros(1,9)];
+% Vary.B6 = [zeros(1,13); 0 0 0 0 0 0 1 0 0 0 0 0 0; zeros(1,13)];
+Vary = Sys;
 %dint = round(dint,2);
 EE = [0;0;0.72;0.72;1.12;1.12;1.28;1.28].*meV;
 Exp.ev=EE;
 % Run whatever code you want to set up your Sys structure 
 % - inputing a nonzero value for all the parameters you wish to use.
 % [Sys,Vary,Exp]=Dy_Sys;
+%%
+% 
+warning('Off','MATLAB:nearlySingularMatrix')
+warning('Off','MATLAB:rankDeficientMatrix')
+    Opt = struct('Eigensolver','eig','NDeflations',8,'Method','Newton','Linesearch','Armijo',...
+    'MaxIter',2000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-10,...
+    'ObjectiveTolerance',1e-6,'Minalpha',1e-16,'Scaled',true,'epsilon',0.1,...
+    'IEPType','Difference','Verbose',false,'c1',0,'LinearSolver','lsqminnorm'...
+    ,'regularisation',1e-10);
+[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
 
-Opt = struct('NMinima',2,'Method','Newton','Linesearch','Basic',...
-    'MaxIter',1000,'theta',2,'StepTolerance',1e-3,'ObjectiveTolerance',1e-1,...
-    'GradientTolerance',1e-1,'Minalpha',1e-18,'Scaled',1,'epsilon',0,...
-    'deflatelinesearch',0,'IEPType','Classic','Verbose',1,'tau',0.5);
+% warning('On','MATLAB:nearlySingularMatrix')
+% warning('On','MATLAB:rankDeficientMatrix')
 
-[SysOut, NIter, Flags, Iters, FinalError] = INS_IEP(Sys,Vary,Exp,Opt)
 
 % adding (...,'SysFound',SysFound) to the end will start the loop as if
 % SysFound has already been found.
 %% Run this to simulate the INS Spectrum
 startminima= 1; %change this to start simulating at a differnt minima
 for k = startminima:size(SysOut,2)
+
 %     SysOut(k).B2 = Sysfixed.B2;
 %     SysOut(k).B4 = Sysfixed.B4;
 %     SysOut(k).B6 = Sysfixed.B6;
 %         if ~(SysOut.Flags{k} == "error<tol")&&~(Flags{k} == "Input Minima")
-    if (Flags{k}  == "Max Iterations reached")
+    if (SysOut(k).ConvergenceFlag  == "Max Iterations reached")
 %         continue
     end
 %     if SysOut(k).B2(2,3)>0
@@ -99,7 +107,7 @@ for k = startminima:size(SysOut,2)
     SysOut(k)
    
     k
-
+    %% 
     %50?
     %plot Experimental data
     hold on

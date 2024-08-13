@@ -55,12 +55,12 @@ Sys.ee = -2*[Jxx12 Jyy12 Jzz12; Jxx13 Jyy13 Jzz13; Jxx23 Jyy23 Jzz23].*meV;
 % g = 2;
 % Sys.g = [gDy g g]; %mean of g1 for radical 1 and g2 for radical 2
 
-H = sham(Sys,[0,0,0]); %magnetic field (mT) [x,y,z]
+H = ham(Sys,[0,0,0]); %magnetic field (mT) [x,y,z]
 [Vecs,E]=eig(H);
 EE = diag(E);
 Eigs = (EE-EE(1))./meV; %convert to meV with the lowest eig set to zero.
-figure;
-plot_eigenvectors(Vecs(1:12,1:16));
+% figure;
+% plot_eigenvectors(Vecs(1:12,1:16));
 % str = sprintf('B20 = %1.3f J1= %1.2f J2=%1.2f',B20,Jex1,Jex2);
 % title(str,'FontSize',16);
 
@@ -136,9 +136,9 @@ filename = 'DyHNN2_IofE_6A_1K_2theta_gt_30_bkgdsub=0p1.inx';
 Dy_6A1K = importdata([folder,filename]);
 filename = 'DyHNN2_IofE_6A_9K_2theta_gt_30_bkgdsub_0p1.inx';
 Dy_6A9K = importdata([folder,filename]);
-A= {Dy_6A1K,Dy_6A9K};
-
-Multiple_Plotter(A); %This function contains a code for "figure"
+% A= {Dy_6A1K,Dy_6A9K};
+% 
+% Multiple_Plotter(A); %This function contains a code for "figure"
 hold on;
 plot(Exp.Energy,cross_sect);
 xlim([0,2.5]); %1K
