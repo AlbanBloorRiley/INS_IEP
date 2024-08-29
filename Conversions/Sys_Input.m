@@ -48,6 +48,7 @@ if  any(contains(Sys0names,'J'))
     end
     SysFixed.J = zeros(size(Sys0.J));
     SysFixed.J(~logical((Vary.J))) = Sys0.J(~logical((Vary.J)));
+    Vary.J = logical(Vary.J);
     [TempOps, TempInt, TempA] = JOps(Sys0,Vary);
     Ops.J = TempOps.J;
     if size(TempInt,2)>1
@@ -59,7 +60,7 @@ if  any(contains(Sys0names,'J'))
 elseif any(contains(Sys0names,'ee'))    %Used Sys0.ee
     SysFixed.ee = zeros(size(Sys0.ee));
     SysFixed.ee(~logical((Vary.ee))) = Sys0.ee(~logical((Vary.ee)));
-
+    Vary.ee = logical(Vary.ee);   %Does this break anisotropy?
     [TempOps, TempInt, TempA] = eeOps(Sys0,Vary);
     Ops.ee = TempOps.ee;
     if size(TempInt,2)>1
@@ -69,7 +70,6 @@ elseif any(contains(Sys0names,'ee'))    %Used Sys0.ee
     end
     A = [A,TempA];
 end
-
 
 SysFixed.S = Sys0.S;
 A0=ham(SysFixed,[0 0 0],'sparse');
