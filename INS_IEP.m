@@ -179,9 +179,14 @@ if size(Exp.ev,1)<size(Exp.ev,2)
 else
     constants.ev = Exp.ev;
 end
-
-
+if isfield(Opt,"Method")&& Opt.Method == "LP"
+    if res.IEPType =="Difference"
+        warning("If using the Lift and Project method then the Classic IEP Type will be used")
+        res.IEPType = "Classic";
+    end
+end
 if res.IEPType == "Classic"
+
     obj_fun = @IEP_Evaluate_full;
     
     % x0(end+1)=1;
@@ -249,8 +254,15 @@ Opt.constants = constants;
 
 if res.IEPType == "Classic" %Need to fix this option
     for i = 1:length(Iterations)
-        GroundStateFound(i).GroundStateFound = Iterations(i).DeflatedPoint(end);
+        if res.Scaled
+            GroundStateFound(i).GroundStateFound = Iterations(i).DeflatedPoint(end)*scale_x(end);
+        else
+            GroundStateFound(i).GroundStateFound = Iterations(i).DeflatedPoint(end);
+        end
         Iterations(i).DeflatedPoint(end) = [];
+    end
+    if res.Scaled
+        scale_x(end)=[];
     end
 end
 if res.Scaled

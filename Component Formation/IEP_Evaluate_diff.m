@@ -23,16 +23,16 @@ if constants.ED =="eig"
     Q = Q(:,1:length(constants.ev));
 else
 
-    [Q,D1] = eigs(FormA(x,constants.A,constants.A0),max(length(constants.ev)+10,length(constants.A)),'smallestreal');
+    [Q,D1] = eigs(FormA(x,constants.A,constants.A0),length(constants.ev),'smallestreal');
     D1=diag(D1);
         D = (D1(1:length(constants.ev)));
     if any(isnan(D))
-        [Q,D1] = eigs(FormA(x,constants.A,constants.A0),max(length(constants.ev)+30,length(constants.A)),'smallestreal');
+        [Q,D1] = eigs(FormA(x,constants.A,constants.A0),length(constants.ev),'smallestreal','subspacedimension',2*min([length(constants.ev)+10,2*length(constants.ev),length(constants.A{1})]));
         D1=diag(D1);
         D = (D1(1:length(constants.ev)));
     end
     if any(isnan(D))
-        [Q,D1] = eigs(FormA(x,constants.A,constants.A0),max(2*length(constants.ev)+30,length(constants.A)),'smallestreal');
+        [Q,D1] = eigs(FormA(x,constants.A,constants.A0),length(constants.ev),'smallestreal','subspacedimension',2*min([max(length(constants.ev)+50,3*length(constants.ev)),length(constants.A{1})]));
         D1=diag(D1);
         D = D1(1:length(constants.ev));
     end

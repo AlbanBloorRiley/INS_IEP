@@ -48,7 +48,11 @@ if isstruct(SysFixed)
     ff = fieldnames(SysFixed);
     for  N= size(Y,2):-1:1
         for i = 1:length(ff)
+            if ~isfield(Sys_Out(N),ff{i})||isempty(Sys_Out(N).(ff{i}))
+                Sys_Out(N).(ff{i}) = SysFixed.(ff{i});
+            else
             Sys_Out(N).(ff{i})(logical(SysFixed.(ff{i}))) = SysFixed.(ff{i})(logical(SysFixed.(ff{i})));
+            end
         end
     end
 else
