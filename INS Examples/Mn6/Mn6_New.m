@@ -4,10 +4,9 @@ rcm = 29979.2458;    % reciprocal cm to MHz
 kelvin = rcm*0.695;  % kelvin        to MHz
 meV = rcm*8.065;     % meV           to MHz
 Tesla = meV*0.116;   % Tesla         to MHz
-SysOut1=[];
 % The measured eigenvalues are
-exp_eigs = [0.14153, 0.59095, 0.59095, 0.9428, 0.9428, 0.9428, 1.2285+0.59095,1.2285+0.59095, 1.5128+0.9428, 2.603, 2.86];
-exp_errs = [0.00016, 0.00011, 0.0003, sqrt(0.0016^2+0.00011^2), sqrt(0.0016^2+0.0003^2), 0.012, 0.02];
+% exp_eigs = [0.14153, 0.59095, 0.59095, 0.9428, 0.9428, 0.9428, 1.2285+0.59095,1.2285+0.59095, 1.5128+0.9428, 2.603, 2.86];
+% exp_errs = [0.00016, 0.00011, 0.0003, sqrt(0.0016^2+0.00011^2), sqrt(0.0016^2+0.0003^2), 0.012, 0.02];
 % exp_eigs = [0.14153, 0.59095, 0.9428, 1.2285+0.59095, 1.5128+0.9428, 2.86];
 % 0 meV, 1-fold
 % 0.1414(3) meV, 1-fold
@@ -18,8 +17,8 @@ exp_errs = [0.00016, 0.00011, 0.0003, sqrt(0.0016^2+0.00011^2), sqrt(0.0016^2+0.
 % 2.5218(16) meV, 2-fold if the above is 5-fold. 4-fold is the above is 3-fold
 % 2.603(12) meV, 1-fold
 % 2.86(2) meV, 2-fold
-  exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218];   %or
-% exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218];
+  % exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218];   %or
+exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218];
 
 
 % Here are some somewhat reasonable starting parameters
@@ -38,7 +37,7 @@ J_A1 = J_S4_S5_1; J_A3 = J_S4_S5_1; J_B2 = J_S4_S5_1; J_B4 = J_S4_S5_1; %For the
 J_A2 = J_S4_S5_2; J_A4 = J_S4_S5_2; J_B1 = J_S4_S5_2; J_B3 = J_S4_S5_2; %For these, the MnIII JT axis is NOT involved. Can only be AFM
 J_12 = J_S5_S5;   J_34 = J_S5_S5; 
 J_14 = -0.01.*meV;         J_23 = J_14; %Assumed zero. Only interacts via a pivalate bridge.
-J_13 = 0;         J_24 = 0; %Assumed zero. No interaction pathway
+J_13 = 0.001;         J_24 = J_13; %Assumed zero. No interaction pathway
 
 % %Trial
 % J_S4_S4   = -5*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
@@ -56,7 +55,6 @@ Sys.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 J
 % For scenario 1, these stay constant. Middle/green ones
 
 DIII = -0.029*meV; % MnIII anisotropy. Free Value 
-% DIII = -0.028*meV; % MnIII anisotropy. Free Value 
 EIII = 0*DIII;   % MnIII rhombicity. For INS, assume 0.
 B20III = 3*DIII; B22III = EIII; %Converting to Stevens Operator formalism
 
@@ -78,40 +76,50 @@ Sys.B2 = [B22III 0 B20III 0 0;
 %           0 0 0 0 0 0 0 0 0];
 
 %set the parameters to be varied
-Vary.B2= [0 0 1 0 0;
-          0 0 1 0 0;
-          0 0 1 0 0;
-          0 0 1 0 0;
-          0 0 1 0 0;
-          0 0 1 0 0];
-% Vary.B4= [0 0 0 0 1 0 0 0 0;
-%           0 0 0 0 1 0 0 0 0;
-%           0 0 0 0 0 0 0 0 0;
-%           0 0 0 0 0 0 0 0 0;
-%           0 0 0 0 0 0 0 0 0;
-%           0 0 0 0 0 0 0 0 0];
+Vary.B2= [0 0 0 0 0;
+          0 0 0 0 0;
+          0 0 0 0 0;
+          0 0 0 0 0;
+          0 0 0 0 0;
+          0 0 0 0 0];
+% Vary.B4= Sys.B4;
 % Vary.J = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]; 
-Vary.J = Sys.J;   Vary.J(1) = 0;
-
+Vary.J = Sys.J;   Vary.J(1) = 1;
+Vary.B2 = Sys.B2;
  % NumEigs = 12;    %Number of experimental eigenvalues to be fit
  % NumEigs = length(exp_eigs); 
 % Exp.ev = (exp_eigs(1:NumEigs)-exp_eigs(1)).*meV;%Add eigenvalues to be used to Sys
 Exp.ev = exp_eigs.*meV;
-
+%%
+[A,A0,x0,Ops,SysFixed] = Sys_Input(Sys,Vary);
+   INSOperators.A =A;   INSOperators.A0 =A0;    INSOperators.x0 =x0;    
+   INSOperators.Ops =Ops; INSOperators.SysFixed =SysFixed;
+   INSOperators.ev = Exp.ev; INSOperators.ED = 'eigs';
 %%
 
-Opt = struct('NDeflations',1,'Method','Good_GN','Linesearch','Quadratic',...
-    'MaxIter',1000,'StepTolerance',1e-6,'GradientTolerance',1e-8,...
-    'ObjectiveTolerance',1e-2,'Scaled',false,'epsilon',0.1,'MinAlpha',1e-18,...
-    'IEPType','Difference','Verbose',true,'c1',1e-8,'SysFound',[],...
-    'Regularisation',[],'LinearSolver','lsqminnorm','Alpha0',1e-0);
+[Sys.J]'
+Sys.B2
+Opt = struct('NDeflations',1,'Method','LM','Linesearch','Quadratic','INSOperators',INSOperators,...
+    'MaxIter',500,'StepTolerance',1e-14,'GradientTolerance',1e-8,...
+    'ObjectiveTolerance',1e-2,'Scaled' ,false,'epsilon',0.1,'MinAlpha',1e-12,...
+    'IEPType','Difference','Verbose',true,'c1',1e-10,'SysFound',[],...
+    'Regularisation',1e-8,'LinearSolver','lsqminnorm','Alpha0',1e3);
 
 [SysOut, options] = INS_IEP(Sys,Vary,Exp,Opt)
+% [SysOut1, options] = INS_IEP(SysOut,Vary,Exp,Opt)
+
+
 
 %%       
 % INS-specific information. Magnetic form factors.
-MintSys = SysOut(1);
-MintSys = Sys;
+MintSys = SysOut1(1);
+% MintSys = Sys;
+
+
+% MintSys.B2 = Sys.B2;
+% MintSys.J = Sys.J;
+
+
 MintSys.FormFactor = {'Mn3', 'Mn3', 'Mn2', 'Mn2', 'Mn2', 'Mn2'};
 
 % Metal ion coordinates for INS. Only relative positions are important.
@@ -126,7 +134,7 @@ MintSys.Coords = [24.60550  13.06674   7.07523; % A
 
 % Sim INS powder spectrum
 
-MintOpt.NumEigs = 100; %100 eigenvalues gives a good INS sim
+MintOpt.NumEigs = 30; %100 eigenvalues gives a good INS sim
 
 MintExp.SpectrumType = 'SE'; %INS intensity vs. energy
 
@@ -140,7 +148,7 @@ MintExp.Temperature = [1.5 5 10 30];
 
 % plotting INS sim
 
-f = figure;
+f = figure(1);
 subplot(2,1,1)
 plot(MintExp.Energy,cross_sect*1e-4,'linewidth',1.2)
 legend('1.5 K', '5 K', '10 K', '30 K')
@@ -173,6 +181,17 @@ ax = gca;
 ax.ColorOrder = colours;
 f.Units = 'centimeters';
 f.Position = [10 10 20 25];
+
+
+
+%%
+% [A,A0,x0,Ops,SysFixed] = Sys_Input(Sys,Vary);
+%    INSOperators.A =A;   INSOperators.A0 =A0;    INSOperators.x0 =x0;    
+%    INSOperators.Ops =Ops; INSOperators.SysFixed =SysFixed;
+%    INSOperators.ev = Exp.ev'; INSOperators.ED = 'eigs';
+[~,~,x,~,~] = Sys_Input(SysOut,Vary);
+IEP_Evaluate_diff(x,INSOperators)
+
 
 
 

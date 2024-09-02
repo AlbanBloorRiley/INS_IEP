@@ -100,13 +100,21 @@ elseif nargin == 3
 else  
     error('Sys0, Vary and Exp are required inputs')
 end
-
 if ~isfield(Exp,"ev")
     error("Please provide the experimental eigenvalues, using Exp.ev")
 end
 
-[A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary);
-
+if isfield(Opt,'INSOperators')&&isfield(Opt.INSOperators,'A') &&isfield(Opt.INSOperators,'A0')...
+   &&isfield(Opt.INSOperators,'x0')&&isfield(Opt.INSOperators,'Ops')&&isfield(Opt.INSOperators,'SysFixed')
+    A =        Opt.INSOperators.A;
+    A0 =       Opt.INSOperators.A0;
+    scale_x =  Opt.INSOperators.x0;
+    Ops =      Opt.INSOperators.Ops;
+    SysFixed = Opt.INSOperators.SysFixed;
+    Opt = rmfield(Opt,'INSOperators');
+else
+    [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary);
+end
 
 if length(A{1})<1000
     defaultEigensolver = 'eig';
@@ -144,6 +152,8 @@ addParameter(IP,'SysFound',defaultSysFound)
 addParameter(IP,'Eigensolver',defaultEigensolver)
 addParameter(IP,'Scaled',defaultScaled,@islogical)
 addParameter(IP,'EigsNotConvergedWarning',true)
+% addParameter(IP,'INSOperators',[])
+
 
 if isempty(IEPOptions)
     IP.parse(Sys0,Vary,Exp)
@@ -151,6 +161,8 @@ else
     IP.parse(Sys0,Vary,Exp,IEPOptions)
 end
 res = IP.Results;
+
+
 
 %Turns of the warining from eigs() when it fails to converge for some eigenvalues
 if res.EigsNotConvergedWarning
