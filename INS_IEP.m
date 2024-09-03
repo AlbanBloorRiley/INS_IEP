@@ -114,6 +114,9 @@ if isfield(Opt,'INSOperators')&&isfield(Opt.INSOperators,'A') &&isfield(Opt.INSO
     Opt = rmfield(Opt,'INSOperators');
 else
     [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary);
+    if isfield(Opt,'INSOperators')
+        Opt = rmfield(Opt,'INSOperators');
+    end
 end
 
 if length(A{1})<1000
@@ -123,7 +126,7 @@ else
 end
 
 IEPOptions = [];
-IEPOptionFields = ["SysFound","Eigensolver",",EigsNotConvergedWarning","IEPType","Scaled"];
+IEPOptionFields = ["SysFound","Eigensolver",",EigsNotConvergedWarning","IEPType","Scaled","GroundStateFound"];
 for i = IEPOptionFields
     if isfield(Opt,i)
         IEPOptions.(i) = Opt.(i);
@@ -152,6 +155,7 @@ addParameter(IP,'SysFound',defaultSysFound)
 addParameter(IP,'Eigensolver',defaultEigensolver)
 addParameter(IP,'Scaled',defaultScaled,@islogical)
 addParameter(IP,'EigsNotConvergedWarning',true)
+addParameter(IP,'GroundStateFound',[])
 % addParameter(IP,'INSOperators',[])
 
 
@@ -202,7 +206,11 @@ if res.IEPType == "Classic"
     obj_fun = @IEP_Evaluate_full;
     
     % x0(end+1)=1;
-    scale_x(end+1)= -eigs(FormA(scale_x,A,A0),1,'smallestreal');
+    if isempty(res.GroundStateFound)
+        scale_x(end+1)= -eigs(FormA(scale_x,A,A0),1,'smallestreal');
+    else
+        scale_x(end+1)= res.GroundStateFound;
+    end
     A{end+1} = speye(size(A{1}));
     if isstruct(res.SysFound)%
        if ~isfield(PreviouslyFoundIterations,"GroundStateFound")

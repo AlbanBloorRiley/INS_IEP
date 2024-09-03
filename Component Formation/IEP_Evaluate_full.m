@@ -1,4 +1,9 @@
 function [f,varargout] = IEP_Evaluate_full(d,constants)
+
+if ~isfield(constants,'eigenvalueDifferenceSD')
+    constants.eigenvalueSD = ones(length(constants.ev),1);
+end
+
 if constants.ED =="eig"
     [Q,D] = eig(full(FormA(d,constants.A,constants.A0)),'vector');
     D = D(1:length(constants.ev));
