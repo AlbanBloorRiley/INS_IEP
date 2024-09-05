@@ -177,16 +177,28 @@ end
 
 
 
-IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates","GroundStateFound"];
+
+IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates"];
 if isstruct(res.SysFound)
+
     for j = IterationFields
         if isfield(res.SysFound,j)
             PreviouslyFoundIterations.(j) = res.SysFound.(j);
             res.SysFound = rmfield(res.SysFound,j);
         end
     end
-    Opt.PreviouslyFoundIterations = PreviouslyFoundIterations;
 
+    if isfield(res.SysFound,"GroundStateFound")&&res.IEPType == "Classic"
+        if isfield(res.SysFound,"GroundStateFound")
+            PreviouslyFoundIterations.DeflatedPoint(end+1) =  res.SysFound.GroundStateFound;
+            % res.SysFound = rmfield(res.SysFound,'GroundStateFound')
+        elseif ~isempty(res.GroundStateFound)
+            PreviouslyFoundIterations.DeflatedPoint(end+1) =  res.GroundStateFound;
+        else
+            error("Ground state of previous SysFound must be provided")
+        end
+    end
+    Opt.PreviouslyFoundIterations = PreviouslyFoundIterations;
 end
 
 %Checks if Exp.ev is row or column vector
@@ -212,14 +224,14 @@ if res.IEPType == "Classic"
         scale_x(end+1)= res.GroundStateFound;
     end
     A{end+1} = speye(size(A{1}));
-    if isstruct(res.SysFound)%
-       if ~isfield(PreviouslyFoundIterations,"GroundStateFound")
-           error("Please provide the value of the ground state found for previously found systems")
-       end
-        for i = 1:length(PreviouslyFoundIterations)
-           PreviouslyFoundIterations(i).DeflatedPoint(end+1)=PreviouslyFoundIterations(i).GroundStateFound;
-       end
-    end
+    % if isstruct(res.SysFound)%
+    %    if ~isfield(PreviouslyFoundIterations,"GroundStateFound")
+    %        error("Please provide the value of the ground state found for previously found systems")
+    %    end
+    %     for i = 1:length(PreviouslyFoundIterations)
+    %        PreviouslyFoundIterations(i).DeflatedPoint(end+1)=PreviouslyFoundIterations(i).GroundStateFound;
+    %    end
+    % end
     if isfield(Exp,'evsd')
         if ~all(Exp.evsd)
             warning('If standard deviation is given for experimental eigenvalues, any zero values are set to 1.')
