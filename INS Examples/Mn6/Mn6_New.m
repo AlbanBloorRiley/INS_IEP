@@ -17,8 +17,8 @@ Tesla = meV*0.116;   % Tesla         to MHz
 % 2.5218(16) meV, 2-fold if the above is 5-fold. 4-fold is the above is 3-fold
 % 2.603(12) meV, 1-fold
 % 2.86(2) meV, 2-fold
-  % exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218];   %or
-exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218];
+  exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218]';   %or
+% exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]';
 
 
 % Here are some somewhat reasonable starting parameters
@@ -28,7 +28,7 @@ Sys.S = [2 2 5/2 5/2 5/2 5/2]; % MnIII has S = 2, MnII has S = 5/2
 J_S4_S4   = -5*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
 J_S4_S5_1 = 0.41*meV;  % MnIII - MnII, MnIII JT involved.     Rodolphe: Weak, FM or AFM.   Free value
 J_S4_S5_2 = -0.4*meV; % MnIII - MnII, MnIII JT not involved. Rodolphe: Weak and AFM.      Free value
-J_S5_S5   = -0.1*meV;  % MnII  - MnII.                        Rodoplhe: Very weak and AFM. Free value
+J_S5_S5   = -0.0*meV;  % MnII  - MnII.                        Rodoplhe: Very weak and AFM. Free value
 
 
 
@@ -36,8 +36,8 @@ J_AB = J_S4_S4;
 J_A1 = J_S4_S5_1; J_A3 = J_S4_S5_1; J_B2 = J_S4_S5_1; J_B4 = J_S4_S5_1; %For these, the MnIII JT axis is involved. Can be FM or AFM
 J_A2 = J_S4_S5_2; J_A4 = J_S4_S5_2; J_B1 = J_S4_S5_2; J_B3 = J_S4_S5_2; %For these, the MnIII JT axis is NOT involved. Can only be AFM
 J_12 = J_S5_S5;   J_34 = J_S5_S5; 
-J_14 = -0.01.*meV;         J_23 = J_14; %Assumed zero. Only interacts via a pivalate bridge.
-J_13 = 0.001;         J_24 = J_13; %Assumed zero. No interaction pathway
+J_14 = -0.00.*meV;         J_23 = J_14; %Assumed zero. Only interacts via a pivalate bridge.
+J_13 = -0.00.*meV;         J_24 = J_13; %Assumed zero. No interaction pathway
 
 % %Trial
 % J_S4_S4   = -5*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
@@ -58,7 +58,7 @@ DIII = -0.029*meV; % MnIII anisotropy. Free Value
 EIII = 0*DIII;   % MnIII rhombicity. For INS, assume 0.
 B20III = 3*DIII; B22III = EIII; %Converting to Stevens Operator formalism
 
-DII = -0.001*meV; % MnII anisotropy. For INS, assume 0. 
+DII = -0.00*meV; % MnII anisotropy. For INS, assume 0. 
 EII = DII*0;      % MnII rhombicity. For INS, assume 0.
 B20II = 3*DII; B22II = EII; %Converting to Stevens Operator formalism
 
@@ -68,8 +68,8 @@ Sys.B2 = [B22III 0 B20III 0 0;
           B22II 0 B20II 0 0;
           B22II 0 B20II 0 0;
           B22II 0 B20II 0 0];
-% Sys.B4=  [0 0 0 0 0.01*meV 0 0 0 0;
-%           0 0 0 0 0.01*meV 0 0 0 0;
+% Sys.B4=  [0 0 0 0 -0.01*meV 0 0 0 0;
+%           0 0 0 0 -0.01*meV 0 0 0 0;
 %           0 0 0 0 0 0 0 0 0;
 %           0 0 0 0 0 0 0 0 0;
 %           0 0 0 0 0 0 0 0 0;
@@ -84,7 +84,7 @@ Vary.B2= [0 0 0 0 0;
           0 0 0 0 0];
 % Vary.B4= Sys.B4;
 % Vary.J = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]; 
-Vary.J = Sys.J;   Vary.J(1) = 1;
+Vary.J = Sys.J;   Vary.J(1) = 0;
 Vary.B2 = Sys.B2;
  % NumEigs = 12;    %Number of experimental eigenvalues to be fit
  % NumEigs = length(exp_eigs); 
@@ -94,26 +94,34 @@ Exp.ev = exp_eigs.*meV;
 [A,A0,x0,Ops,SysFixed] = Sys_Input(Sys,Vary);
    INSOperators.A =A;   INSOperators.A0 =A0;    INSOperators.x0 =x0;    
    INSOperators.Ops =Ops; INSOperators.SysFixed =SysFixed;
-   INSOperators.ev = Exp.ev; INSOperators.ED = 'eigs';
+   INSOperators.ED = 'eigs';
 %%
 
-[Sys.J]'
-Sys.B2
-Opt = struct('NDeflations',1,'Method','LM','Linesearch','Quadratic','INSOperators',INSOperators,...
-    'MaxIter',500,'StepTolerance',1e-14,'GradientTolerance',1e-8,...
-    'ObjectiveTolerance',1e-2,'Scaled' ,false,'epsilon',0.1,'MinAlpha',1e-12,...
-    'IEPType','Difference','Verbose',true,'c1',1e-10,'SysFound',[],...
-    'Regularisation',1e-8,'LinearSolver','lsqminnorm','Alpha0',1e3);
+% [Sys.J]'
+% Sys.B2
+Scaled= false;
+StepTol = 1e-1;    if Scaled;StepTol = StepTol/1e5;end
 
-[SysOut, options] = INS_IEP(Sys,Vary,Exp,Opt)
-% [SysOut1, options] = INS_IEP(SysOut,Vary,Exp,Opt)
+% GroundStateFound = SysOut.GroundStateFound;
+GroundStateFound = [];
+Opt = struct('NDeflations',1,'Method','Good_GN','Linesearch','Quadratic','INSOperators',INSOperators,...
+    'MaxIter',100,'StepTolerance',StepTol,'GradientTolerance',1e-0,...
+    'ObjectiveTolerance',1e-1,'Scaled' ,Scaled,'epsilon',0.1,'MinAlpha',1e-6,...
+    'IEPType','Difference','Verbose',true,'c1',1e-10,'SysFound',[],...
+    'Regularisation',1e-8,'LinearSolver','lsqminnorm','Alpha0',1e0,...
+    'GroundStateFound',GroundStateFound);
+
+[SysOut, options] = INS_IEP(Sys,Vary,Exp,Opt);
+% SysOut
+% [SysOut1, options1] = INS_IEP(SysOut,Vary,Exp,Opt);
+
 
 
 
 %%       
 % INS-specific information. Magnetic form factors.
-MintSys = SysOut1(1);
-% MintSys = Sys;
+% MintSys = SysOut(2);
+MintSys = Sys;
 
 
 % MintSys.B2 = Sys.B2;
@@ -163,8 +171,9 @@ g=[0.4660 0.6740 0.1880];
 colours = [b;y;g;r];
 ax = gca;
 ax.ColorOrder = colours;
+%%
+ subplot(2,1,2)
 
-subplot(2,1,2)
 load("Sys0_Sim.mat")
 plot(MintExp.Energy,cross_sect_Sys0*1e-4,'linewidth',1.2)
 legend('1.5 K', '5 K', '10 K', '30 K')
@@ -189,8 +198,24 @@ f.Position = [10 10 20 25];
 %    INSOperators.A =A;   INSOperators.A0 =A0;    INSOperators.x0 =x0;    
 %    INSOperators.Ops =Ops; INSOperators.SysFixed =SysFixed;
 %    INSOperators.ev = Exp.ev'; INSOperators.ED = 'eigs';
+
 [~,~,x,~,~] = Sys_Input(SysOut,Vary);
-IEP_Evaluate_diff(x,INSOperators)
+% [~,~,x,~,~] = Sys_Input(MintSys,Vary);
+%%
+EvaluateINSOperators = INSOperators;
+EvaluateINSOperators.ev = Exp.ev;
+EvaluateINSOperators.A =options.constants.A;
+if options.IEPType=="Difference"
+    IEP_Evaluate_diff(x,EvaluateINSOperators)
+elseif options.IEPType=="Classic"
+    xC = x;
+    xC(end+1) = SysOut.GroundStateFound;
+    EvaluateINSOperators.A = EvaluateINSOperators.A;
+    EvaluateINSOperators.A{end+1} = speye(size(EvaluateINSOperators.A{1}));
+    IEP_Evaluate_full(xC,EvaluateINSOperators)
+end
+
+
 
 
 
@@ -233,3 +258,16 @@ norm([Eigs(1:length(Exp.ev)),Exp.ev'./meV])
 % plot(Exp.Temperature, chi,'o')
 % xlabel('T [K]')
 % ylabel('\chi [cm^3/mol]')
+
+
+
+% 0.01*meV is acceptable error
+%
+%Don't use any more parameters
+%Fit intensity  - meet mike
+%Range on each of the parameters
+%
+% 1% of teh magnitude of the value
+
+
+[0,0.8]
