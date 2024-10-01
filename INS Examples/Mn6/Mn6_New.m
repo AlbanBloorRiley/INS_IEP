@@ -18,7 +18,8 @@ Tesla = meV*0.116;   % Tesla         to MHz
 % 2.603(12) meV, 1-fold
 % 2.86(2) meV, 2-fold
   exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218]';   %or
-% exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]';
+% 1.4276e+05
+  % exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]';
 
 
 % Here are some somewhat reasonable starting parameters
@@ -85,6 +86,7 @@ Vary.B2= [0 0 0 0 0;
 % Vary.B4= Sys.B4;
 % Vary.J = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]; 
 Vary.J = Sys.J;   Vary.J(1) = 0;
+% Vary.J([3,5,6,8])=0;
 Vary.B2 = Sys.B2;
  % NumEigs = 12;    %Number of experimental eigenvalues to be fit
  % NumEigs = length(exp_eigs); 
@@ -97,19 +99,18 @@ Exp.ev = exp_eigs.*meV;
    INSOperators.ED = 'eigs';
 %%
 
-% [Sys.J]'
-% Sys.B2
-Scaled= false;
+
+Scaled= true;
 StepTol = 1e-1;    if Scaled;StepTol = StepTol/1e5;end
 
 % GroundStateFound = SysOut.GroundStateFound;
 GroundStateFound = [];
-Opt = struct('NDeflations',1,'Method','Good_GN','Linesearch','Quadratic','INSOperators',INSOperators,...
-    'MaxIter',100,'StepTolerance',StepTol,'GradientTolerance',1e-0,...
+Opt = struct('NDeflations',1,'Method','LM','Linesearch','Quadratic','INSOperators',INSOperators,...
+    'MaxIter',300,'StepTolerance',StepTol,'GradientTolerance',1e-0,...
     'ObjectiveTolerance',1e-1,'Scaled' ,Scaled,'epsilon',0.1,'MinAlpha',1e-6,...
     'IEPType','Difference','Verbose',true,'c1',1e-10,'SysFound',[],...
-    'Regularisation',1e-8,'LinearSolver','lsqminnorm','Alpha0',1e0,...
-    'GroundStateFound',GroundStateFound);
+    'Regularisation',1e-8,'LinearSolver','lsqminnorm','Alpha0',1e-20,...
+    'GroundStateFound',GroundStateFound,'MaxStepSize',1000);
 
 [SysOut, options] = INS_IEP(Sys,Vary,Exp,Opt);
 % SysOut
@@ -120,8 +121,9 @@ Opt = struct('NDeflations',1,'Method','Good_GN','Linesearch','Quadratic','INSOpe
 
 %%       
 % INS-specific information. Magnetic form factors.
-% MintSys = SysOut(2);
-MintSys = Sys;
+for i = 1:1
+MintSys = SysOut(i);
+% MintSys = Sys;
 
 
 % MintSys.B2 = Sys.B2;
@@ -142,7 +144,6 @@ MintSys.Coords = [24.60550  13.06674   7.07523; % A
 
 % Sim INS powder spectrum
 
-MintOpt.NumEigs = 30; %100 eigenvalues gives a good INS sim
 
 MintExp.SpectrumType = 'SE'; %INS intensity vs. energy
 
@@ -152,11 +153,17 @@ MintExp.Energy = linspace(-Ei*0.8,Ei*0.8,1000); %calculating the spectrum in the
 MintExp.Q = 0.1:0.01:2.5; %Q-range which the simulation integrates over.
 MintExp.Temperature = [1.5 5 10 30];
 %
+MintOpt.NumEigs = 50; %100 eigenvalues gives a good INS sim
+try
 [cross_sect] = mint(MintSys,MintExp,MintOpt);
+catch
+MintOpt.NumEigs = 300; %100 eigenvalues gives a good INS sim
+[cross_sect] = mint(MintSys,MintExp,MintOpt);
+end 
 
 % plotting INS sim
 
-f = figure(1);
+f = figure(i);
 subplot(2,1,1)
 plot(MintExp.Energy,cross_sect*1e-4,'linewidth',1.2)
 legend('1.5 K', '5 K', '10 K', '30 K')
@@ -171,7 +178,7 @@ g=[0.4660 0.6740 0.1880];
 colours = [b;y;g;r];
 ax = gca;
 ax.ColorOrder = colours;
-%%
+%
  subplot(2,1,2)
 
 load("Sys0_Sim.mat")
@@ -190,50 +197,50 @@ ax = gca;
 ax.ColorOrder = colours;
 f.Units = 'centimeters';
 f.Position = [10 10 20 25];
-
-
-
-%%
-% [A,A0,x0,Ops,SysFixed] = Sys_Input(Sys,Vary);
-%    INSOperators.A =A;   INSOperators.A0 =A0;    INSOperators.x0 =x0;    
-%    INSOperators.Ops =Ops; INSOperators.SysFixed =SysFixed;
-%    INSOperators.ev = Exp.ev'; INSOperators.ED = 'eigs';
-
-[~,~,x,~,~] = Sys_Input(SysOut,Vary);
-% [~,~,x,~,~] = Sys_Input(MintSys,Vary);
-%%
-EvaluateINSOperators = INSOperators;
-EvaluateINSOperators.ev = Exp.ev;
-EvaluateINSOperators.A =options.constants.A;
-if options.IEPType=="Difference"
-    IEP_Evaluate_diff(x,EvaluateINSOperators)
-elseif options.IEPType=="Classic"
-    xC = x;
-    xC(end+1) = SysOut.GroundStateFound;
-    EvaluateINSOperators.A = EvaluateINSOperators.A;
-    EvaluateINSOperators.A{end+1} = speye(size(EvaluateINSOperators.A{1}));
-    IEP_Evaluate_full(xC,EvaluateINSOperators)
 end
 
 
-
-
-
-
-%%
-tic %to time Hamiltonian diagonalisation
-H = ham(MintSys, [0 0 0],'sparse'); %setting up Hamiltonian
-[Vecs,E]=eigs(H,MintOpt.NumEigs,'smallestreal'); %Diagonalising Hamiltonian
-toc %to time Hamiltonian diagonalisation
-EE = diag(E);
-%Vecs = Vecs(:,idx);
-Eigs = (EE-min(EE))./meV; %convert to meV and set lowest eigenvalue to 0.
-% Eigs % print lowest eigenvalues to command window
-[Eigs(1:length(Exp.ev))*meV,Exp.ev']
-norm([Eigs(1:length(Exp.ev))*meV,Exp.ev'])
-[Eigs(1:length(Exp.ev)),Exp.ev'./meV]
-norm([Eigs(1:length(Exp.ev)),Exp.ev'./meV])
-
+% %%
+% % [A,A0,x0,Ops,SysFixed] = Sys_Input(Sys,Vary);
+% %    INSOperators.A =A;   INSOperators.A0 =A0;    INSOperators.x0 =x0;    
+% %    INSOperators.Ops =Ops; INSOperators.SysFixed =SysFixed;
+% %    INSOperators.ev = Exp.ev'; INSOperators.ED = 'eigs';
+% 
+% [~,~,x,~,~] = Sys_Input(SysOut,Vary);
+% % [~,~,x,~,~] = Sys_Input(MintSys,Vary);
+% %%
+% EvaluateINSOperators = INSOperators;
+% EvaluateINSOperators.ev = Exp.ev;
+% EvaluateINSOperators.A =options.constants.A;
+% if options.IEPType=="Difference"
+%     IEP_Evaluate_diff(x,EvaluateINSOperators)
+% elseif options.IEPType=="Classic"
+%     xC = x;
+%     xC(end+1) = SysOut.GroundStateFound;
+%     EvaluateINSOperators.A = EvaluateINSOperators.A;
+%     EvaluateINSOperators.A{end+1} = speye(size(EvaluateINSOperators.A{1}));
+%     IEP_Evaluate_full(xC,EvaluateINSOperators)
+% end
+% 
+% 
+% 
+% 
+% 
+% 
+% %%
+% tic %to time Hamiltonian diagonalisation
+% H = ham(MintSys, [0 0 0],'sparse'); %setting up Hamiltonian
+% [Vecs,E]=eigs(H,MintOpt.NumEigs,'smallestreal'); %Diagonalising Hamiltonian
+% toc %to time Hamiltonian diagonalisation
+% EE = diag(E);
+% %Vecs = Vecs(:,idx);
+% Eigs = (EE-min(EE))./meV; %convert to meV and set lowest eigenvalue to 0.
+% % Eigs % print lowest eigenvalues to command window
+% [Eigs(1:length(Exp.ev))*meV,Exp.ev']
+% norm([Eigs(1:length(Exp.ev))*meV,Exp.ev'])
+% [Eigs(1:length(Exp.ev)),Exp.ev'./meV]
+% norm([Eigs(1:length(Exp.ev)),Exp.ev'./meV])
+% 
 
 
 
