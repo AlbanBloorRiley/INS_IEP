@@ -38,9 +38,9 @@ f = sqrt(sum(((D-constants.ev)./constants.eigenvalueSD).^2));
 if nargout>1
     varargout{1} = (D-constants.ev)./constants.eigenvalueSD;
 end
-if nargout>1
+if nargout>2
     varargout{2} =  FormJ_Lambda(Q,constants.A);
 end
-if nargout>1
+if nargout>3
     varargout{3} = FormH_Lambda(Q,constants.A,D,constants.ev);
 end
