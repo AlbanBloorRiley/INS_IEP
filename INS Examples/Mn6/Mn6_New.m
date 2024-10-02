@@ -18,7 +18,7 @@ Tesla = meV*0.116;   % Tesla         to MHz
 % 2.603(12) meV, 1-fold
 % 2.86(2) meV, 2-fold
   exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218]';   %or
-% 1.4276e+05
+% Difference: 1.4276e+05; Classic: 
   % exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]';
 
 
@@ -198,7 +198,30 @@ ax.ColorOrder = colours;
 f.Units = 'centimeters';
 f.Position = [10 10 20 25];
 end
+%% Save a Sys struct
+DoSave = true;
+SysFound = SysOut;
+OptionsFound = options;
+[name,val] = nextname(strcat("INS_IEP/INS Examples/Mn6/Sys Found Values/",sprintf('%0.4e',SysFound.ErrorAtDeflatedPoint)),'HZ_1','.mat');
+if val>1
+    for i = 1:val-1
+        PreviousSaves = load(strcat("INS_IEP/INS Examples/Mn6/Sys Found Values/",sprintf('%0.4e',SysFound.ErrorAtDeflatedPoint),'HZ_',num2str(i),'.mat'));
+        if isequal(SysFound,PreviousSaves.SysFound)&&isequal(OptionsFound,PreviousSaves.OptionsFound)
+            warning("Sys already found and saved");
+            DoSave = false;
+            break
+        end
+    end
+end
+if DoSave
+    save(strcat("INS_IEP/INS Examples/Mn6/Sys Found Values/",name),'SysFound','OptionsFound')
+end
 
+
+
+
+
+%%
 
 % %%
 % % [A,A0,x0,Ops,SysFixed] = Sys_Input(Sys,Vary);
@@ -277,4 +300,4 @@ end
 % 1% of teh magnitude of the value
 
 
-[0,0.8]
+% [0,0.8]
