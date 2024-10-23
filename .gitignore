@@ -2,3 +2,7 @@
 INS_get_objfun.m
 *.asv
 INS_IEP1.m
+/INS Examples/Mn6/Mn_6 pictures
+mint/.DS_Store
+mint/mint_manual.pdf
+mint/mint_short.m
