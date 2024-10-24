@@ -18,7 +18,7 @@ Tesla = meV*0.116;   % Tesla         to MHz
 % 2.603(12) meV, 1-fold
 % 2.86(2) meV, 2-fold
   exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218]';   %or
-% Difference: 1.4276e+05; Classic: 
+% Difference: 1.4276e+05; Classic: 4.662164e+05
   % exp_eigs = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]';
 
 
@@ -26,10 +26,10 @@ Tesla = meV*0.116;   % Tesla         to MHz
 clear Sys Exp Vary
 Sys.S = [2 2 5/2 5/2 5/2 5/2]; % MnIII has S = 2, MnII has S = 5/2
 
-J_S4_S4   = -5*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
+J_S4_S4   = -7*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
 J_S4_S5_1 = 0.41*meV;  % MnIII - MnII, MnIII JT involved.     Rodolphe: Weak, FM or AFM.   Free value
 J_S4_S5_2 = -0.4*meV; % MnIII - MnII, MnIII JT not involved. Rodolphe: Weak and AFM.      Free value
-J_S5_S5   = -0.0*meV;  % MnII  - MnII.                        Rodoplhe: Very weak and AFM. Free value
+J_S5_S5   = -0.1*meV;  % MnII  - MnII.                        Rodoplhe: Very weak and AFM. Free value
 
 
 
@@ -92,6 +92,38 @@ Vary.B2 = Sys.B2;
  % NumEigs = length(exp_eigs); 
 % Exp.ev = (exp_eigs(1:NumEigs)-exp_eigs(1)).*meV;%Add eigenvalues to be used to Sys
 Exp.ev = exp_eigs.*meV;
+
+%Mint Setup 
+FormFactor = {'Mn3', 'Mn3', 'Mn2', 'Mn2', 'Mn2', 'Mn2'};
+% Metal ion coordinates for INS. Only relative positions are important.
+Coords = [24.60550  13.06674   7.07523; % A
+              22.27025  11.49336   6.95626; % B
+              21.99544  13.57222   9.30268; % 1
+              24.62949  10.95050   9.41655; % 2
+              24.24486  10.55088   4.68547; % 3
+              22.84040  14.03029   4.66904; % 4
+              ];
+
+% Sim INS powder spectrum
+MintExp.SpectrumType = 'SE'; %INS intensity vs. energy
+
+Ei = 4; %Incident neutron energy in meV
+MintExp.lwfwhm = 0.02*Ei/2.355; %calculated line width full-width-at-half-max, 2 % of incident energy
+% MintExp.lwfwhm = 0.05;
+MintExp.Energy = linspace(-Ei*0.8,Ei*0.8,1000); %calculating the spectrum in the interval -0.8*Ei to 0.8*Ei
+MintExp.Q = 0.1:0.01:2.5; %Q-range which the simulation integrates over.
+MintExp.Temperature = [1.5 5 10 30];
+
+MintOpt.NumEigs = 100; %100 eigenvalues gives a good INS sim
+
+
+b =[0 0.4470 0.7410];
+r=[0.8500 0.3250 0.0980];
+y=[0.9290 0.6940 0.1250];
+g=[0.4660 0.6740 0.1880];
+colours = [b;y;g;r];
+
+
 %%
 [A,A0,x0,Ops,SysFixed] = Sys_Input(Sys,Vary);
    INSOperators.A =A;   INSOperators.A0 =A0;    INSOperators.x0 =x0;    
@@ -99,18 +131,18 @@ Exp.ev = exp_eigs.*meV;
    INSOperators.ED = 'eigs';
 %%
 
-
+regulariser = @(NIter) 1e-4/NIter;
 Scaled= true;
-StepTol = 1e-1;    if Scaled;StepTol = StepTol/1e5;end
+StepTol = 1e-2;    if Scaled;StepTol = StepTol/1e4;end
 
 % GroundStateFound = SysOut.GroundStateFound;
 GroundStateFound = [];
-Opt = struct('NDeflations',1,'Method','LM','Linesearch','Quadratic','INSOperators',INSOperators,...
-    'MaxIter',300,'StepTolerance',StepTol,'GradientTolerance',1e-0,...
-    'ObjectiveTolerance',1e-1,'Scaled' ,Scaled,'epsilon',0.1,'MinAlpha',1e-6,...
-    'IEPType','Difference','Verbose',true,'c1',1e-10,'SysFound',[],...
-    'Regularisation',1e-8,'LinearSolver','lsqminnorm','Alpha0',1e-20,...
-    'GroundStateFound',GroundStateFound,'MaxStepSize',1000);
+Opt = struct('NDeflations',1,'Method','Good_GN','Linesearch','Quadratic','INSOperators',INSOperators,...
+    'MaxIter',500,'StepTolerance',StepTol,'GradientTolerance',1e-0,...
+    'ObjectiveTolerance',1e-1,'Scaled' ,Scaled,'epsilon',0.1,'MinAlpha',1e-3,...
+    'IEPType','Difference','Verbose',true,'c1',1e-8,'SysFound',[],...
+    'Regularisation',regulariser,'LinearSolver','lsqminnorm','Alpha0',1e0,...
+    'GroundStateFound',GroundStateFound);
 
 [SysOut, options] = INS_IEP(Sys,Vary,Exp,Opt);
 % SysOut
@@ -121,80 +153,113 @@ Opt = struct('NDeflations',1,'Method','LM','Linesearch','Quadratic','INSOperator
 
 %%       
 % INS-specific information. Magnetic form factors.
-for i = 1:1
-MintSys = SysOut(i);
-% MintSys = Sys;
+for i = 1:length(SysOut)
+    % MintSys = SysOut(i);
+    % MintSys = Sys;
 
 
-% MintSys.B2 = Sys.B2;
-% MintSys.J = Sys.J;
+    MintSys.FormFactor = FormFactor;
+    MintSys.Coords = Coords;
+    if ~exist('MintSysPrev','var') || ~isequal(MintSys,MintSysPrev)
+        clear MintOpt Eigs Vecs
+    else
+        if exist('Eigs','var');MintOpt.Eigs = Eigs;end
+        if exist('Vecs','var');MintOpt.Vecs = Vecs;end
+    end
+
+    MintOpt.NumEigs = length(Exp.ev);
 
 
-MintSys.FormFactor = {'Mn3', 'Mn3', 'Mn2', 'Mn2', 'Mn2', 'Mn2'};
-
-% Metal ion coordinates for INS. Only relative positions are important.
-MintSys.Coords = [24.60550  13.06674   7.07523; % A
-              22.27025  11.49336   6.95626; % B
-              21.99544  13.57222   9.30268; % 1
-              24.62949  10.95050   9.41655; % 2
-              24.24486  10.55088   4.68547; % 3
-              22.84040  14.03029   4.66904; % 4
-              ];
-
-
-% Sim INS powder spectrum
+    [cross_sect,Eigs,Vecs,I_nm] = mint(MintSys,MintExp,MintOpt);
+    MintSysPrev = MintSys;
+    figure(i+1)
+    plotmint(cross_sect, MintExp, colours)
+end
+%%
+Kb=8.6170e-2;
+T = MintExp.Temperature;
+% T = 1.5;
+MintExp.InitialStates = 1:MintOpt.NumEigs;
+MintExp.FinalStates = 1:MintOpt.NumEigs;
 
 
-MintExp.SpectrumType = 'SE'; %INS intensity vs. energy
+IT=zeros(MintOpt.NumEigs,MintOpt.NumEigs,numel(T));
+for temp_index = 1:numel(T)
+    part=sum(exp(-Eigs./T(temp_index)/Kb));  % (partition function)
+    for bra=MintExp.InitialStates
+        for ket=MintExp.FinalStates
+            IT(bra,ket,temp_index)=I_nm(bra,ket) * exp(-Eigs(bra)./T(temp_index)/Kb)/part;        
+        end             
+    end
 
-Ei = 4; %Incident neutron energy in meV
-MintExp.lwfwhm = 0.02*Ei/2.355; %calculated line width full-width-at-half-max, 2 % of incident energy
-MintExp.Energy = linspace(-Ei*0.8,Ei*0.8,1000); %calculating the spectrum in the interval -0.8*Ei to 0.8*Ei
-MintExp.Q = 0.1:0.01:2.5; %Q-range which the simulation integrates over.
-MintExp.Temperature = [1.5 5 10 30];
-%
-MintOpt.NumEigs = 50; %100 eigenvalues gives a good INS sim
-try
-[cross_sect] = mint(MintSys,MintExp,MintOpt);
-catch
-MintOpt.NumEigs = 300; %100 eigenvalues gives a good INS sim
-[cross_sect] = mint(MintSys,MintExp,MintOpt);
-end 
+end
+IT = real(IT);
+IT(IT<1e-16)=0;
 
-% plotting INS sim
 
-f = figure(i);
+transitionI =    @(I) I(1,2);
+transitionII =  @(I) sum(I(1,[3,4]));
+transitioni =   @(I) sum(I(2,[5,6,7]));
+transitionii =  @(I) sum(sum(I([3,4],[5,6,7])));
+transitioniii = @(I) sum(sum(I([3,4],[8,9])));
+
+
+%T = 5
+temp_index = 2;
+ITtemp = IT(:,:,temp_index)*(108.1/IT(1,2,temp_index));
+
+ExperimentalInt =[108.1;36.1;86.8;38.2;59.7];
+SimulatedInt = [transitionI(ITtemp);transitionii(ITtemp);transitionII(ITtemp) ;transitioniii(ITtemp); transitioni(ITtemp)];
+Transition = ["I";"ii";"II";"iii";"i"];
+Temp5K = table(Transition,SimulatedInt,ExperimentalInt)
+
+%%
+%T = 1.5(6)
+temp_index = 1;
+ITtemp = IT(:,:,temp_index)*(196.2/IT(1,2,temp_index));
+ExperimentalInt = [196.2;167.0;4.5;55.6];
+SimulatedInt = [transitionI(ITtemp);transitionII(ITtemp) ;transitioniii(ITtemp); transitioni(ITtemp)];
+Transition = ["I";"II";"iii";"i"];
+Temp1point6K = table(Transition,SimulatedInt,ExperimentalInt)
+
+
+
+
+
+% transitionI =    @(I,temp_index) I(1,2,temp_index);
+% transitionTII =  @(I,temp_index) sum(I(1,[3,4],temp_index));
+% transitionTi =   @(I,temp_index) sum(I(2,[5,6,7],temp_index));
+% transitionTii =  @(I,temp_index) sum(sum(I([3,4],[5,6,7],temp_index)));
+% transitionTiii = @(I,temp_index) sum(sum(I([3,4],[8,9],temp_index)));
+
+%%
+cross_sect=zeros(numel(T),length(E_transfer));
+for temp_index = 1:numel(T)
+    part=sum(exp(-Eigs./T(temp_index)/Kb));  % (partition function)
+    for bra=MintExp.InitialStates
+        for ket=MintExp.FinalStates
+            cross_sect(temp_index,:)=cross_sect(temp_index,:)+I_nm(bra,ket) .* exp(-Eigs(bra)./T(temp_index)/Kb)/part ...
+                .* exp(-((E_transfer-Eigs(ket)+Eigs(bra)).^2 )./(2*sigma^2))/sqrt(2*pi*sigma);   %Boltzman factor ('normalising' to thermal poopulation)
+        end              % this bit interpolates, to give width (Gaussian) 
+    end
+end
+
+
+
+%% plotting INS sim
+function plotmint(cross_sect, MintExp, colours)
 subplot(2,1,1)
 plot(MintExp.Energy,cross_sect*1e-4,'linewidth',1.2)
 legend('1.5 K', '5 K', '10 K', '30 K')
-xlim([0 1.5])
-xlabel('E [meV]')
-ylabel('Signal')
-title('New Sim')
-b =[0 0.4470 0.7410];
-r=[0.8500 0.3250 0.0980];
-y=[0.9290 0.6940 0.1250];
-g=[0.4660 0.6740 0.1880];
-colours = [b;y;g;r];
-ax = gca;
-ax.ColorOrder = colours;
+xlim([0 1.5]);xlabel('E [meV]');ylabel('Signal');title('New Sim')
+ax = gca;;ax.ColorOrder = colours;
 %
  subplot(2,1,2)
-
 load("Sys0_Sim.mat")
 plot(MintExp.Energy,cross_sect_Sys0*1e-4,'linewidth',1.2)
 legend('1.5 K', '5 K', '10 K', '30 K')
-xlim([0 1.5])
-xlabel('E [meV]')
-ylabel('Signal')
-title('Old Sim')
-b =[0 0.4470 0.7410];
-r=[0.8500 0.3250 0.0980];
-y=[0.9290 0.6940 0.1250];
-g=[0.4660 0.6740 0.1880];
-colours = [b;y;g;r];
-ax = gca;
-ax.ColorOrder = colours;
+xlim([0 1.5]);xlabel('E [meV]');ylabel('Signal');title('Old Sim')
+ax = gca;;ax.ColorOrder = colours;
 f.Units = 'centimeters';
 f.Position = [10 10 20 25];
 end
