@@ -1,4 +1,4 @@
-function [cross_sect,Eigs,Vecs] = mint(Sys,Exp,Opt)
+function [cross_sect,Eigs,Vecs,I_nm] = mint(Sys,Exp,Opt)
 % MINT - Simulate the inelastic neutron scattering of magnetic ions and molecules.
 %
 % [cross_sect,Eigs,Vecs] = mint(Sys,Exp,Opt)
@@ -59,15 +59,53 @@ function [cross_sect,Eigs,Vecs] = mint(Sys,Exp,Opt)
 % web('https://www.mlbakerlab.co.uk')">the M. L. Baker lab Web site</a>.
 % 
 tic
-disp('**************mint: simulate INS spectra*****************')
-disp('    Michael L. Baker (michael.baker@manchester.ac.uk)')
-disp('*********************************************************')
+
 % some useful constants and conversions
 rcm = 29979.2458;   %rcm    to MHz
 meV = rcm*8.065;    %meV    to MHz
 Kb  = 8.6170e-2;    % in meV/K
 % *********
+% Albans options
 
+if exist('Opt','var') && isfield(Opt,'ShowMessages') && Opt.ShowMessages 
+    verbose = true;
+else 
+    verbose = false;
+end
+
+
+if exist('Opt','var') && isfield(Opt,'Eigs') && isfield(Opt,'Vecs') && length(Opt.Eigs)>=Opt.NumEigs
+    Eigs = Opt.Eigs; Vecs = Opt.Vecs;
+    if length(Eigs)~=size(Vecs,2) 
+        error('Please input the corresponding eigenvectors to the given eigenvalues')
+    end
+    disp('Using supplied eigenvalues and eigenvectors')
+else
+    disp('Hamiltonian Diagonalization in progress...')
+if exist('Opt','var') && isfield(Opt,'NumEigs')
+    H = ham(Sys,[0,0,0],'sparse');
+    
+    [Vecs,E]=eigs(H,Opt.NumEigs,'smallestreal');
+    [~,lw] = lastwarn;
+    if lw=='MATLAB:eigs:NotAllEigsConverged'
+     [Vecs,E]=eigs(H,Opt.NumEigs,'smallestreal','subspacedimension',3*(Opt.NumEigs+20));
+    end
+else
+    H = ham(Sys,[0,0,0]);
+    [Vecs,E]=eig(H);
+end
+EE = diag(E);
+Eigs = (EE-EE(1))./meV; %convert to meV
+disp('Diagonalization done.')
+end
+
+
+
+if verbose
+disp('**************mint: simulate INS spectra*****************')
+disp('    Michael L. Baker (michael.baker@manchester.ac.uk)')
+disp('*********************************************************')
+end
 % some user input error checks and corrections
 if ~isfield(Exp,'SpectrumType')
     % assume energy spectrum
@@ -121,18 +159,7 @@ for ii=1:numel(Sys.S)
     end
 end
 
-disp('Hamiltonian Diagonalization in progress...')
 
-if exist('Opt','var') && isfield(Opt,'NumEigs')
-    H = ham(Sys,[0,0,0],'sparse');
-    [Vecs,E]=eigs(H,Opt.NumEigs,'smallestreal');
-else
-    H = ham(Sys,[0,0,0]);
-    [Vecs,E]=eig(H);
-end
-EE = diag(E);
-Eigs = (EE-EE(1))./meV; %convert to meV
-disp('Diagonalization done.')
 
 % if Inital and Final states are not given estimate them based on
 % population and energy spectrum range
@@ -145,12 +172,14 @@ if ~isfield(Exp,'InitialStates')
     populated_indexes = find(pop > 0.005);
     
     if populated_indexes(end) < max(Exp.InitialStates)
+        if verbose
         disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         disp(['Only the first ',num2str(populated_indexes(end)),' states have a population '])
         disp(['greater than 0.5% at ',num2str(max(Exp.Temperature)),' K.'])
         disp(['If there are more than ', num2str(populated_indexes(end)),' states the calculation'])
         disp(['will be sped up by reducing to Exp.InitialStates = 1:',num2str(populated_indexes(end))])
         disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+        end
         Exp.InitialStates = 1:populated_indexes(end);
     elseif numel(Exp.InitialStates) > numel(Eigs)
         disp(['total number of states = ',num2str(numel(Eigs))])
@@ -166,37 +195,38 @@ if ~isfield(Exp,'FinalStates')
     % first final state is set to be greater than zero energy transfer
     final_state_index1 = find(Eigs ~= 0,1,'first');
     Exp.FinalStates = final_state_index1:final_state_index2;
+    if verbose
     disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
     disp('Transition final states evaluated are')
     disp(['Exp.FinalStates = ',num2str(final_state_index1),':',num2str(final_state_index2)])
     disp('%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
+    end
 elseif exist('Opt','var') && isfield(Opt,'NumEigs')
     % cut down final states to match reduced NumEigs if required
     if max(Exp.FinalStates) > Opt.NumEigs
         Exp.FinalStates = Exp.FinalStates(find(Exp.FinalStates <= Opt.NumEigs));
     end
 end
-
-disp('Computing <n|s|m> for all spin operators...')
+if verbose; disp('Computing <n|s|m> for all spin operators...');end
 [Sx_rot,Sy_rot,Sz_rot] = bra_n_s_m_ket(Sys,Vecs);
-disp('<n|s|m> done.')
+if verbose; disp('<n|s|m> done.');end
 
 switch Exp.SpectrumType
     case 'SE'
-        disp('Calculating S(Energy)...')
-        [cross_sect] = SE(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot);
-        disp('S(Energy) done.')
+        if verbose;disp('Calculating S(Energy)...');end
+        [cross_sect, I_nm] = SE(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot);
+        if verbose; disp('S(Energy) done.'); end
     case 'SQE'
         disp('Calculating S(Q,Energy)...')
-        [cross_sect] = SQE(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot);
+        [cross_sect, I_nm] = SQE(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot);
         disp('S(Q,Energy) done.')
     case 'SQ'
         disp('Calculating S(Q)...')
-        [cross_sect] = SQ(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot);
+        [cross_sect, I_nm] = SQ(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot);
         disp('S(Q) done.')
     case 'SQxyz'
         disp('Calculating S(Qxyz)...')
-        [cross_sect] = SQxyz(Sys,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot);
+        [cross_sect, I_nm] = SQxyz(Sys,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot);
         disp('S(Qxyz) done.')
     otherwise
         disp('requested spectrum type is not recognised')
@@ -215,7 +245,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [cross_sect] = SQ(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
+function [cross_sect, I_nm] = SQ(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
 
 Kb=8.6170e-2;              % meV per K
 T=Exp.Temperature;
@@ -280,14 +310,18 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [cross_sect] = SE(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
-
+function [cross_sect, I_nm] = SE(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot,varargin)
+if isempty(varargin)
+    verbose = false;
+else
+    verbose = varargin{1};
+end
 Kb=8.6170e-2; % meV per K
 T=Exp.Temperature;
 E_transfer = Exp.Energy;
 sigma=Exp.lwfwhm/2.35;
 I_nm=zeros(numel(Eigs),numel(Eigs));
-disp(' Calculating transition matrix elements')
+if verbose; disp(' Calculating transition matrix elements'); end
 for Q=Exp.Q
     
     s=Q/4/pi;
@@ -324,28 +358,29 @@ for Q=Exp.Q
         end
     end
 end
-disp(' Calculating INS cross section')
+if verbose;disp(' Calculating INS cross section');end
 cross_sect=zeros(numel(T),length(E_transfer));
 for temp_index = 1:numel(T)
-    part=sum(exp(-Eigs./T(temp_index)/Kb));
+    part=sum(exp(-Eigs./T(temp_index)/Kb));  % (partition function)
     for bra=Exp.InitialStates
         for ket=Exp.FinalStates
             cross_sect(temp_index,:)=cross_sect(temp_index,:)+I_nm(bra,ket) .* exp(-Eigs(bra)./T(temp_index)/Kb)/part ...
-                .* exp(-( (E_transfer-Eigs(ket)+Eigs(bra)).^2 )./(2*sigma^2))/sqrt(2*pi*sigma);
-        end
+                .* exp(-( (E_transfer-Eigs(ket)+Eigs(bra)).^2 )./(2*sigma^2))/sqrt(2*pi*sigma);   %Boltzman factor ('normalising' to thermal poopulation)
+        end              % this bit interpolates, to give width (Gaussian) 
     end
 end
+
 
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [cross_sect] = SQE(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
+function [cross_sect, I_nm] = SQE(R_relative,abs_R,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
 
 Kb=8.6170e-2; % meV per K
 T=Exp.Temperature(1);
 E_transfer = Exp.Energy;
-sigma=Exp.lwfwhm/2.35;
+sigma=Exp.lwfwhm/2.355;
 
 I_nm=zeros(numel(Eigs),numel(Eigs),numel(Exp.Q));
 
@@ -401,7 +436,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [cross_sect] = SE_ave(Sys,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
+function [cross_sect, I_nm] = SE_ave(Sys,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
 error('the numerical intergration method is inaccurate')
 % Q vectors
 phi_steps = 5;
@@ -435,7 +470,7 @@ end
 s=modQ/4/pi;
 
 % I_nm
-I_nm=zeros(numel(Eigs),numel(Eigs));
+I_nm=zeros(numel(Eigs),numel(Eigs));   % Export this
 for ii=1:numel(Sys.S)
     for jj=1:numel(Sys.S)
         for kk=1:numel(Qxyz(:,1))
@@ -460,12 +495,12 @@ Exp.FinalStates = 1:numel(Eigs);
 
 cross_sect=zeros(numel(T),length(E_transfer));
 for temp_index = 1:numel(T)
-    part=sum(exp(-Eigs./T(temp_index)/Kb));
+    part=sum(exp(-Eigs./T(temp_index)/Kb));    % (partition function)
     for bra=Exp.InitialStates
         for ket=Exp.FinalStates
             cross_sect(temp_index,:)=cross_sect(temp_index,:)+I_nm(bra,ket) .* exp(-Eigs(bra)./T(temp_index)/Kb)/part ...
-                * exp(-( (E_transfer-Eigs(ket)+Eigs(bra)).^2 )./(2*sigma^2))/sqrt(2*pi*sigma);
-        end
+                * exp(-( (E_transfer-Eigs(ket)+Eigs(bra)).^2 )./(2*sigma^2))/sqrt(2*pi*sigma);  %Boltzman factor ('normalising' to thermal poopulation)
+        end              % this bit interpolates, to give width (Gaussian) 
     end
 end
 
@@ -474,7 +509,7 @@ end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [cross_sect] = SQxyz(Sys,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
+function [cross_sect, I_nm] = SQxyz(Sys,Exp,Fj0,Eigs,Sx_rot,Sy_rot,Sz_rot)
 
 bra=Exp.InitialStates;
 ket=Exp.FinalStates;
