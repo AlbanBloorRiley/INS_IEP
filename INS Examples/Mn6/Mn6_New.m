@@ -247,23 +247,7 @@ end
 
 
 
-%% plotting INS sim
-function plotmint(cross_sect, MintExp, colours)
-subplot(2,1,1)
-plot(MintExp.Energy,cross_sect*1e-4,'linewidth',1.2)
-legend('1.5 K', '5 K', '10 K', '30 K')
-xlim([0 1.5]);xlabel('E [meV]');ylabel('Signal');title('New Sim')
-ax = gca;;ax.ColorOrder = colours;
-%
- subplot(2,1,2)
-load("Sys0_Sim.mat")
-plot(MintExp.Energy,cross_sect_Sys0*1e-4,'linewidth',1.2)
-legend('1.5 K', '5 K', '10 K', '30 K')
-xlim([0 1.5]);xlabel('E [meV]');ylabel('Signal');title('Old Sim')
-ax = gca;;ax.ColorOrder = colours;
-f.Units = 'centimeters';
-f.Position = [10 10 20 25];
-end
+
 %% Save a Sys struct
 DoSave = true;
 SysFound = SysOut;
@@ -288,6 +272,23 @@ end
 
 
 %%
+%% plotting INS sim
+function plotmint(cross_sect, MintExp, colours)
+subplot(2,1,1)
+plot(MintExp.Energy,cross_sect*1e-4,'linewidth',1.2)
+legend('1.5 K', '5 K', '10 K', '30 K')
+xlim([0 1.5]);xlabel('E [meV]');ylabel('Signal');title('New Sim')
+ax = gca;;ax.ColorOrder = colours;
+%
+ subplot(2,1,2)
+load("Sys0_Sim.mat")
+plot(MintExp.Energy,cross_sect_Sys0*1e-4,'linewidth',1.2)
+legend('1.5 K', '5 K', '10 K', '30 K')
+xlim([0 1.5]);xlabel('E [meV]');ylabel('Signal');title('Old Sim')
+ax = gca;;ax.ColorOrder = colours;
+f.Units = 'centimeters';
+f.Position = [10 10 20 25];
+end
 
 % %%
 % % [A,A0,x0,Ops,SysFixed] = Sys_Input(Sys,Vary);
