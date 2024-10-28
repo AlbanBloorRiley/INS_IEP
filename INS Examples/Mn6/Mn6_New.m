@@ -131,15 +131,16 @@ colours = [b;y;g;r];
    INSOperators.ED = 'eigs';
 %%
 
-regulariser = @(NIter) 1e-4/NIter;
-Scaled= true;
-StepTol = 1e-2;    if Scaled;StepTol = StepTol/1e4;end
+regulariser = @(NIter) 1e-5/NIter;
+regulariser = @(NIter,X)max(max(X.J))/max(max(diag(diag(X.J'*X.J))))/sqrt(NIter);
+Scaled= false;
+StepTol = 1e-2;    if Scaled;StepTol = StepTol/1e3;end
 
 % GroundStateFound = SysOut.GroundStateFound;
 GroundStateFound = [];
 Opt = struct('NDeflations',1,'Method','Good_GN','Linesearch','Quadratic','INSOperators',INSOperators,...
     'MaxIter',500,'StepTolerance',StepTol,'GradientTolerance',1e-0,...
-    'ObjectiveTolerance',1e-1,'Scaled' ,Scaled,'epsilon',0.1,'MinAlpha',1e-3,...
+    'ObjectiveTolerance',1e-1,'Scaled' ,Scaled,'epsilon',0.1,'MinAlpha',1e-1,...
     'IEPType','Difference','Verbose',true,'c1',1e-8,'SysFound',[],...
     'Regularisation',regulariser,'LinearSolver','lsqminnorm','Alpha0',1e0,...
     'GroundStateFound',GroundStateFound);
@@ -154,7 +155,7 @@ Opt = struct('NDeflations',1,'Method','Good_GN','Linesearch','Quadratic','INSOpe
 %%       
 % INS-specific information. Magnetic form factors.
 for i = 1:length(SysOut)
-    % MintSys = SysOut(i);
+    MintSys = SysOut(i);
     % MintSys = Sys;
 
 
