@@ -156,6 +156,8 @@ addParameter(IP,'Eigensolver',defaultEigensolver)
 addParameter(IP,'Scaled',defaultScaled,@islogical)
 addParameter(IP,'EigsNotConvergedWarning',true)
 addParameter(IP,'GroundStateFound',[])
+addParameter(IP,'OrthogonaliseBasis',true,@islogical)
+
 % addParameter(IP,'INSOperators',[])
 
 
@@ -166,6 +168,17 @@ else
 end
 res = IP.Results;
 
+% if res.OrthogonaliseBasis
+%     C=sparse(length(A{1})^2,length(A));
+%     for i = 1:length(A)
+%         C(:,i) = reshape(A{i},[],1);
+%     end
+%     % Q = sparse(orth(full(C)));
+%     [Q,R] = qr(C,"econ");
+%     for i = 1:length(A)
+%         A{i} = reshape(Q(:,i),length(A{i}),[]);
+%     end
+% end
 
 
 %Turns of the warining from eigs() when it fails to converge for some eigenvalues
@@ -183,7 +196,9 @@ if isstruct(res.SysFound)
 
     for j = IterationFields
         if isfield(res.SysFound,j)
-            PreviouslyFoundIterations.(j) = res.SysFound.(j);
+            for i = 1:length(SysFound)
+                PreviouslyFoundIterations(i).(j) = res.SysFound(i).(j);
+            end
             res.SysFound = rmfield(res.SysFound,j);
         end
     end
@@ -279,6 +294,23 @@ constants.A = A;
 constants.A0 = A0;
 constants.ED = res.Eigensolver;
 Opt.constants = constants;
+
+if isfield(Opt,"Method")&& Opt.Method == "LP"
+    Opt.Method = "GradientDescent";
+    B = zeros(length(A));
+    for i = 1:(length(A))
+        for j = 1:(length(A))
+            B(i,j) = sum(sum(A{j}'.*A{i}));
+        end
+    end
+    if isfield(Opt,"ScalingMatrix")
+        Opt.ScalingMatrix = Opt.ScalingMatrix*inv(B);
+    else
+        Opt.ScalingMatrix = inv(B);
+    end
+end
+
+
 
 
 [Iterations,options] = DMin(obj_fun,x0,Opt);
