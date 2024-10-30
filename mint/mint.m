@@ -87,7 +87,7 @@ if exist('Opt','var') && isfield(Opt,'NumEigs')
     
     [Vecs,E]=eigs(H,Opt.NumEigs,'smallestreal');
     [~,lw] = lastwarn;
-    if lw=='MATLAB:eigs:NotAllEigsConverged'
+    if ~isempty(lw)&&lw=='MATLAB:eigs:NotAllEigsConverged'
      [Vecs,E]=eigs(H,Opt.NumEigs,'smallestreal','subspacedimension',3*(Opt.NumEigs+20));
     end
 else
