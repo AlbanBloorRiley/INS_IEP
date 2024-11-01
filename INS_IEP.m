@@ -1,4 +1,4 @@
-function [SysOut,options] = INS_IEP(Sys0,Vary,Exp,varargin)
+function [SysOut,options,params] = INS_IEP(Sys0,Vary,Exp,varargin)
 % INS_IEP Inelastic Neutron Scattering Inverse Eigenvalue Problem
 % SysOut =  INS_IEP(Sys0,Vary,Exp) produces an easyspin style Sys structure
 % containing the parameters that minimise difference in between the
@@ -222,12 +222,12 @@ if size(Exp.ev,1)<size(Exp.ev,2)
 else
     constants.ev = Exp.ev;
 end
-if isfield(Opt,"Method")&& Opt.Method == "LP"
-    if res.IEPType =="Difference"
-        warning("If using the Lift and Project method then the Classic IEP Type will be used")
-        res.IEPType = "Classic";
-    end
-end
+% if isfield(Opt,"Method")&& Opt.Method == "LP"
+%     if res.IEPType =="Difference"
+%         warning("If using the Lift and Project method then the Classic IEP Type will be used")
+%         res.IEPType = "Classic";
+%     end
+% end
 if res.IEPType == "Classic"
 
     obj_fun = @IEP_Evaluate_full;
@@ -311,9 +311,15 @@ if isfield(Opt,"Method")&& Opt.Method == "LP"
 end
 
 
+    try
+       [Iterations,options,params] = DMin(obj_fun,x0,Opt);
+    catch ME
+        msg = getReport(ME);
+        warning(msg)
+        % stopearly = true;
+    end
 
 
-[Iterations,options] = DMin(obj_fun,x0,Opt);
 
 
 if res.IEPType == "Classic" %Need to fix this option
