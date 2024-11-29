@@ -1,4 +1,4 @@
-function [SysOut,options,params] = INS_IEP(Sys0,Vary,Exp,varargin)
+function [SysOut,options,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,varargin)
 % INS_IEP Inelastic Neutron Scattering Inverse Eigenvalue Problem
 % SysOut =  INS_IEP(Sys0,Vary,Exp) produces an easyspin style Sys structure
 % containing the parameters that minimise difference in between the
@@ -304,9 +304,9 @@ if isfield(Opt,"Method")&& Opt.Method == "LP"
         end
     end
     if isfield(Opt,"ScalingMatrix")
-        Opt.ScalingMatrix = Opt.ScalingMatrix*inv(B);
+        Opt.ScalingMatrix = Opt.ScalingMatrix*2*inv(B);
     else
-        Opt.ScalingMatrix = inv(B);
+        Opt.ScalingMatrix = 2*inv(B);
     end
 end
 
