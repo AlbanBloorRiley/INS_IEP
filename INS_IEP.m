@@ -17,9 +17,9 @@ function [SysOut,options,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,vara
 % Zero Field Splittings - These are given using the extended Stevens
 % operators, using easyspin's syntax for "High-order zero-field splittings"
 % Sys.B2,..,Sys.B12. Not all have to be used. Any entries with the same
-% value within the same column (representing the same operator across 
-% multiple spin centres) will be pinned. 
-% Electron-electron spin-spin couplings -  given by either using Sys.J 
+% value within the same column (representing the same operator across
+% multiple spin centres) will be pinned.
+% Electron-electron spin-spin couplings -  given by either using Sys.J
 % (1xN array of real) or Sys.ee (Nx3 or 3Nx3 array of real) as in easyspin.
 % Note thot only one of these may be used at one time Note also that any
 % entries of J or diagonals of ee that are equal will be pinned, also any
@@ -39,12 +39,12 @@ function [SysOut,options,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,vara
 % of the Inverse Eigenvalue Problem - where the residual is given as the
 % differnce in eigenvalues, or the difference in the difference between
 % adjacent eigenvalues. The specific formulation to be used is specified by
-% the option 'IEPType' as either 'Classic' or 'Difference' respectivly. 
+% the option 'IEPType' as either 'Classic' or 'Difference' respectivly.
 %
 %
 %OPTIONAL PARAMETERS
-%IEP: 
-%IEPType - Defines which formulation of the IEP to use - [ Classic | 
+%IEP:
+%IEPType - Defines which formulation of the IEP to use - [ Classic |
 %       {Difference} ]
 %Eigensolver - Specifies which eigensolver to use - [ eig | eigs ] (default
 %       is decided based on the size of the matrices used)
@@ -97,7 +97,7 @@ if nargin ==4
     Opt = varargin{1};
 elseif nargin == 3
     Opt = struct('NDeflations',1);  %Use a default value to avoid error
-else  
+else
     error('Sys0, Vary and Exp are required inputs')
 end
 if ~isfield(Exp,"ev")
@@ -105,7 +105,7 @@ if ~isfield(Exp,"ev")
 end
 
 if isfield(Opt,'INSOperators')&&isfield(Opt.INSOperators,'A') &&isfield(Opt.INSOperators,'A0')...
-   &&isfield(Opt.INSOperators,'x0')&&isfield(Opt.INSOperators,'Ops')&&isfield(Opt.INSOperators,'SysFixed')
+        &&isfield(Opt.INSOperators,'x0')&&isfield(Opt.INSOperators,'Ops')&&isfield(Opt.INSOperators,'SysFixed')
     A =        Opt.INSOperators.A;
     A0 =       Opt.INSOperators.A0;
     scale_x =  Opt.INSOperators.x0;
@@ -196,7 +196,7 @@ if isstruct(res.SysFound)
 
     for j = IterationFields
         if isfield(res.SysFound,j)
-            for i = 1:length(SysFound)
+            for i = 1:length(res.SysFound)
                 PreviouslyFoundIterations(i).(j) = res.SysFound(i).(j);
             end
             res.SysFound = rmfield(res.SysFound,j);
@@ -231,7 +231,7 @@ end
 if res.IEPType == "Classic"
 
     obj_fun = @IEP_Evaluate_full;
-    
+
     % x0(end+1)=1;
     if isempty(res.GroundStateFound)
         scale_x(end+1)= -eigs(FormA(scale_x,A,A0),1,'smallestreal');
@@ -311,13 +311,13 @@ if isfield(Opt,"Method")&& Opt.Method == "LP"
 end
 
 
-    try
-       [Iterations,options,params] = DMin(obj_fun,x0,Opt);
-    catch ME
-        msg = getReport(ME);
-        warning(msg)
-        % stopearly = true;
-    end
+try
+    [Iterations,options,params] = DMin(obj_fun,x0,Opt);
+catch ME
+    msg = getReport(ME);
+    warning(msg)
+    % stopearly = true;
+end
 
 
 
