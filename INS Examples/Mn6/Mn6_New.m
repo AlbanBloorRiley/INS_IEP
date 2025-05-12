@@ -26,10 +26,17 @@ Tesla = meV*0.116;   % Tesla         to MHz
 clear Sys Exp Vary
 Sys.S = [2 2 5/2 5/2 5/2 5/2]; % MnIII has S = 2, MnII has S = 5/2
 
-J_S4_S4   = -7*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
+J_S4_S4   = -5*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
 J_S4_S5_1 = 0.41*meV;  % MnIII - MnII, MnIII JT involved.     Rodolphe: Weak, FM or AFM.   Free value
 J_S4_S5_2 = -0.4*meV; % MnIII - MnII, MnIII JT not involved. Rodolphe: Weak and AFM.      Free value
 J_S5_S5   = -0.1*meV;  % MnII  - MnII.                        Rodoplhe: Very weak and AFM. Free value
+
+% 
+% J_S4_S4   = -5*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
+% J_S4_S5_1 = 0.4*meV;  % MnIII - MnII, MnIII JT involved.     Rodolphe: Weak, FM or AFM.   Free value
+% J_S4_S5_2 = -0.3*meV; % MnIII - MnII, MnIII JT not involved. Rodolphe: Weak and AFM.      Free value
+% J_S5_S5   = -0.2*meV;  % MnII  - MnII. 
+
 
 
 
@@ -56,8 +63,11 @@ Sys.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 J
 % For scenario 1, these stay constant. Middle/green ones
 
 DIII = -0.029*meV; % MnIII anisotropy. Free Value 
+% DIII = -0.02*meV;
+
 EIII = 0*DIII;   % MnIII rhombicity. For INS, assume 0.
 B20III = 3*DIII; B22III = EIII; %Converting to Stevens Operator formalism
+
 
 DII = -0.00*meV; % MnII anisotropy. For INS, assume 0. 
 EII = DII*0;      % MnII rhombicity. For INS, assume 0.
@@ -77,12 +87,12 @@ Sys.B2 = [B22III 0 B20III 0 0;
 %           0 0 0 0 0 0 0 0 0];
 
 %set the parameters to be varied
-Vary.B2= [0 0 0 0 0;
-          0 0 0 0 0;
-          0 0 0 0 0;
-          0 0 0 0 0;
-          0 0 0 0 0;
-          0 0 0 0 0];
+% Vary.B2= [0 0 0 0 0;
+%           0 0 0 0 0;
+%           0 0 0 0 0;
+%           0 0 0 0 0;
+%           0 0 0 0 0;
+%           0 0 0 0 0];
 % Vary.B4= Sys.B4;
 % Vary.J = [1 1 1 1 1 1 1 1 1 1 1 1 1 1 1]; 
 Vary.J = Sys.J;   Vary.J(1) = 0;
@@ -130,22 +140,23 @@ colours = [b;y;g;r];
    INSOperators.Ops =Ops; INSOperators.SysFixed =SysFixed;
    INSOperators.ED = 'eigs';
 %%
-
-regulariser = @(NIter) 1e-5/NIter;
-regulariser = @(NIter,X)max(max(X.J))/max(max(diag(diag(X.J'*X.J))))/sqrt(NIter);
-Scaled= false;
-StepTol = 1e-2;    if Scaled;StepTol = StepTol/1e3;end
+regulariser  =[];
+% regulariser = @(NIter) 1e-5/NIter;
+% regulariser = @(NIter,X)max(max(X.J))/max(max(diag(diag(X.J'*X.J))))/sqrt(NIter);
+Scaled= true;
+StepTol = 1e1;    if Scaled;StepTol = StepTol/1e3;end
 
 % GroundStateFound = SysOut.GroundStateFound;
 GroundStateFound = [];
-Opt = struct('NDeflations',1,'Method','Good_GN','Linesearch','Quadratic','INSOperators',INSOperators,...
-    'MaxIter',500,'StepTolerance',StepTol,'GradientTolerance',1e-0,...
-    'ObjectiveTolerance',1e-1,'Scaled' ,Scaled,'epsilon',0.1,'MinAlpha',1e-1,...
-    'IEPType','Difference','Verbose',true,'c1',1e-8,'SysFound',[],...
+Opt = struct('NDeflations',5 ...
+    ,'Method','Newton','Linesearch','Quadratic','INSOperators',INSOperators,...
+    'MaxIter',1000,'StepTolerance',StepTol,'GradientTolerance',1e-1,...
+    'ObjectiveTolerance',1e3,'Scaled' ,false,'epsilon',0.1,'MinAlpha',1e-4,...
+    'IEPType','Classic','Verbose',true,'c1',1e-8,'SysFound',SysFound,...
     'Regularisation',regulariser,'LinearSolver','lsqminnorm','Alpha0',1e0,...
     'GroundStateFound',GroundStateFound);
 
-[SysOut, options] = INS_IEP(Sys,Vary,Exp,Opt);
+[SysOut, options,params,obj_fun] = INS_IEP(Sys,Vary,Exp,Opt);
 % SysOut
 % [SysOut1, options1] = INS_IEP(SysOut,Vary,Exp,Opt);
 
@@ -162,20 +173,21 @@ for i = 1:length(SysOut)
     MintSys.FormFactor = FormFactor;
     MintSys.Coords = Coords;
     if ~exist('MintSysPrev','var') || ~isequal(MintSys,MintSysPrev)
-        clear MintOpt Eigs Vecs
+        clear MintOpt Eigs Vcs
     else
         if exist('Eigs','var');MintOpt.Eigs = Eigs;end
         if exist('Vecs','var');MintOpt.Vecs = Vecs;end
     end
-
     MintOpt.NumEigs = length(Exp.ev);
-
-
     [cross_sect,Eigs,Vecs,I_nm] = mint(MintSys,MintExp,MintOpt);
     MintSysPrev = MintSys;
-    figure(i+1)
+    figure(i+2)
     plotmint(cross_sect, MintExp, colours)
 end
+%%
+
+    [cross_sect,Eigs,Vecs,I_nm] = mint(MintSys,MintExp,MintOpt);
+    plotmint(cross_sect, MintExp, colours)
 %%
 Kb=8.6170e-2;
 T = MintExp.Temperature;
