@@ -21,9 +21,9 @@ Vary=Sys;
     % B = B./max(max(B));
      % B = B./norm(B);
 
-Opt = struct('NDeflations',4,'Method','LP','Linesearch','No','minalpha',1e-15,...
+Opt = struct('NDeflations',2,'Method','LP','Linesearch','No','minalpha',1e-15,...
     'IEPType','Difference','Verbose',true,'epsilon',0.01,'theta',2,'MaxIter',10000,...
-    'c1',1e-8,'MaxStepSize',1e100,'Scaled',false,'DeflatedLinesearch','Quadratic');
+    'c1',1e-8,'MaxStepSize',1e100,'Scaled',false,'DeflatedLinesearch','Quadratic','SysFound',SysFound);
 [SysOut,options,params]= INS_IEP(Sys,Vary,Exp,Opt);
 SysOut.B2
 %% Mn12
@@ -37,10 +37,11 @@ Opt = [];
 Opt = struct('NDeflations',4,'Method','Good_GN','Linesearch','Armijo',...
     'IEPType','Classic','Verbose',false,'scaled',false,'c1',1e-16);
 [SysOutGood]= INS_IEP(Sys,Vary,Exp,Opt)
+%%
 Opt = struct('NDeflations',4,'Method','Bad_GN','Linesearch','Armijo',...
     'IEPType','Classic','Verbose',false,'scaled',false,'c1',1e-16);
 [SysOutBad]= INS_IEP(Sys,Vary,Exp,Opt)
-%
+%%
 clf
 f=figure(1);
 subplot(2,1,1)
@@ -188,7 +189,7 @@ SysOut= INS_IEP(Sys,Vary,Exp,Opt)
 clear Sys
 [Sys,Vary,Exp]=Dy_Sys;
 warning('Off','MATLAB:nearlySingularMatrix')
-Opt = struct('Eigensolver','eig','NDeflations',10,'Method','LM','Linesearch','Armijo',...
+Opt = struct('Eigensolver','eig','NDeflations',10,'Method','RGD_LP','Linesearch','Armijo',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-10,...
     'ObjectiveTolerance',1e-6,'Minalpha',1e-18,'Scaled',true,'epsilon',0.1,...
     'IEPType','Classic','Verbose',true,'c1',1e-10);
