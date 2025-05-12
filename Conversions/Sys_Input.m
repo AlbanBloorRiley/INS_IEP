@@ -1,4 +1,20 @@
 function [A,A0,xint,Ops,SysFixed] = Sys_Input(Sys0,Vary)
+%   SYS_INPUT calculates the basis of matrices(A) and initial values (xint) to be
+%   varied, as well as the matrix of fixed values (A0) as well as the 
+% corresponding spin structure (SysFixed).
+%
+%   Inputs:
+%   Sys0 - easyspin structure containing the current guess of the spin system.  
+%   Vary - logical structure defining which variables in Sys0 to vary.
+%   
+%   Outputs:
+%   A - Cell structure of basis matrices
+%   A0 = Matrix determined by fixed variables
+%   xint - Initial values as defined by Sys0
+%   Ops - Cell structure containing basis of all the spin structure fields,
+% each corresponding to the equivalent element of xint.
+%   SysFixed - the spin structure formed of only fixed variables.
+
 xint=[];
 A={};
 Ops={};
