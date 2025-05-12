@@ -10,9 +10,22 @@ Sys.S=Sys1.S;
 Sys.B2 = [-100,0,-4000,0,0];
 Sys.B4 = [-1,0,0,0,-1,0,0,0,0];
 Vary=Sys;
-Opt = struct('NDeflations',4,'Method','LP','Linesearch','Basic',...
-    'IEPType','Difference','Verbose',true,'epsilon',-inf,'theta',1,'MaxIter',1000);
-[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
+[A] =Sys_Input(Sys,Vary);
+% A{end+1} = eye(size(A{1}));
+    B = zeros(length(A));
+    for i = 1:(length(A))
+        for j = 1:(length(A))
+            B(i,j) = sum(sum(A{j}'.*A{i}));
+        end
+    end
+    % B = B./max(max(B));
+     % B = B./norm(B);
+
+Opt = struct('NDeflations',4,'Method','LP','Linesearch','No','minalpha',1e-15,...
+    'IEPType','Difference','Verbose',true,'epsilon',0.01,'theta',2,'MaxIter',10000,...
+    'c1',1e-8,'MaxStepSize',1e100,'Scaled',false,'DeflatedLinesearch','Quadratic');
+[SysOut,options,params]= INS_IEP(Sys,Vary,Exp,Opt);
+SysOut.B2
 %% Mn12
 clear Sys Exp
 [Sys1,Exp] = Mn12_Spin_Sys_3(1,1);
@@ -105,10 +118,24 @@ Vary = Sys;
 
 
 % Opt = struct('NDeflations',3,'verbose',true);
-Opt = struct('NDeflations',3,'Method','Good_GN','Linesearch','Basic',...
-    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',true,'epsilon',0.001,...
-    'IEPType','Difference','Verbose',true);
+% Opt = struct('NDeflations',1,'Method','LP','Linesearch','Basic',...
+%     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',0,...
+% 'Minalpha',1e-10,'Scaled',true,'epsilon',0.001,...
+%     'IEPType','Difference','Verbose',true,'c1',1e-6);
+
+
+[A] =Sys_Input(Sys,Vary);
+A{end+1} = eye(size(A{1}));
+    B = zeros(length(A));
+    for i = 1:(length(A))
+        for j = 1:(length(A))
+            B(i,j) = sum(sum(A{j}'.*A{i}));
+        end
+    end
+Opt = struct('NDeflations',1,'Method','LP','Linesearch','Armijo',...
+    'MaxIter',1e5,'theta',2,'StepTolerance',1e-6,'GradientTolerance',0,...
+'Minalpha',1e-10,'Scaled',false,'epsilon',0.001,...
+    'IEPType','Difference','Verbose',true,'c1',1e-6,'alpha0',100);
 [SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
 
 SysOut.B2
@@ -126,7 +153,7 @@ SysOut.B2
 
 %% Test 1
 clear Sys Sys1 Exp
-rng(3)
+rng(1)
 NumEigs = 100;
 Sys1.S = [2.5 2 2];
 B20I = 6*rcm;   B22I = 0.1*rcm;
@@ -144,7 +171,7 @@ Sys.B2 =[B22I 0 B20I 0 0; B22II 0 B20II 0 0; B22II 0 B20II 0 0];
 Sys.J = [J1 J1 J2];
 Vary = Sys;
 Exp.ev=ev;
-Opt = struct('NDeflations',2,'verbose',true,'Linesearch','Basic','Scaled',true);
+Opt = struct('NDeflations',2,'Method','Good_GN','verbose',true,'Linesearch','Quadratic','Scaled',true,'c1',1e-10);
 SysOut= INS_IEP(Sys,Vary,Exp,Opt)
 
 
@@ -161,10 +188,10 @@ SysOut= INS_IEP(Sys,Vary,Exp,Opt)
 clear Sys
 [Sys,Vary,Exp]=Dy_Sys;
 warning('Off','MATLAB:nearlySingularMatrix')
-Opt = struct('Eigensolver','eig','NDeflations',10,'Method','Newton','Linesearch','Armijo',...
+Opt = struct('Eigensolver','eig','NDeflations',10,'Method','LM','Linesearch','Armijo',...
     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-10,...
     'ObjectiveTolerance',1e-6,'Minalpha',1e-18,'Scaled',true,'epsilon',0.1,...
-    'IEPType','Difference','Verbose',true);
+    'IEPType','Classic','Verbose',true,'c1',1e-10);
 [SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
 warning('On','MATLAB:nearlySingularMatrix')
 %%
