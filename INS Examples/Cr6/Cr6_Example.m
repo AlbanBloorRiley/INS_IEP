@@ -4,7 +4,7 @@ clear Sys Exp
 rcm = 29979.2458;   
 meV = rcm*8.065;  
 N_electrons = 6;    %Number of Cr atoms in chain
-N_eigenvalues = 21; %Number of Eigenvalues known experimentaly
+N_eigenvalues = 24; %Number of Eigenvalues known experimentaly
 [Exp] = Cr_solution(N_electrons,N_eigenvalues); %Calculates simulated eigenvalues
 
 
@@ -12,8 +12,11 @@ N_eigenvalues = 21; %Number of Eigenvalues known experimentaly
 r=1;    %Number of significant figures initial guiess uses.
 %Set up initial guesses for parameters
 B20 = round((-0.041/3)*meV,r,'significant'); %B20 = 1000;
-B22 = round(0.007*meV,r,'significant');    %B22=-1000;
-Jval = round(1.46*meV,r,'significant');     %Jval = 10000
+B22 = round(0.007*meV,r,'significant');    %B22=-3000;
+Jval = round(1.46*meV,r,'significant');     %Jval = 10000;
+B20 = 100;
+B22 = 100;
+Jval= 1000;
 S=3/2;  Sys.S = [S];    %set up Spins
 B2 = [B22 0 B20 0 0];   Sys.B2 = [B2];  %set up Stevens parameter
 Sys.J = [];    %set up exchange terms
@@ -21,18 +24,19 @@ for i = 2:N_electrons   %Loop over all electrons
     Sys.S = [Sys.S,S];
     Sys.B2 = [Sys.B2;B2];
     %     Sys.J = [Jval,zeros(1,i-2),Sys.J];  %same value of J for all nearest neighbours
-    Sys.J = [Jval+i,zeros(1,i-2),Sys.J];   %different value of J for nearest neighbours
+    Sys.J = [Jval,zeros(1,i-2),Sys.J];   %different value of J for nearest neighbours
 end
 % Sys.J = Sys.J+[1 0 0 0 0 2 0 0 0 3 0 0 2 0 1];
 Vary = Sys; %This will vary all non-zero parameters
 
-
 %Optimse over parameters given
-Opt = struct('NMinima',1,'Method','Newton','Linesearch','Basic',...
-    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,...
-    'deflatelinesearch',1,'IEPType','Difference','Verbose',1,'tau',0.5);
-
+% Opt = struct('Ndeflations',1,'Method','Newton','Linesearch','Basic',...
+%     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
+%     'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',false,...
+%     'deflatelinesearch',1,'IEPType','Difference','Verbose',1,'tau',0.5);
+Opt = struct('Ndeflations',1,'Method','Good_GN','Linesearch','No',...
+    'MaxIter',1000,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
+    'IEPType','Classic','Verbose',true,'Scaled',true);
 [SysOut, NIter, Flags, Iters, FinalError]= INS_IEP(Sys,Vary,Exp,Opt);
 
 % SysOut.B2
