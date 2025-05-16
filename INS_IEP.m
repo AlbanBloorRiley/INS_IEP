@@ -1,4 +1,4 @@
-function [SysOut,options,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,varargin)
+function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,varargin)
 % INS_IEP Inelastic Neutron Scattering Inverse Eigenvalue Problem
 % SysOut =  INS_IEP(Sys0,Vary,Exp) produces an easyspin style Sys structure
 % containing the parameters that minimise difference in between the
@@ -29,7 +29,7 @@ function [SysOut,options,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,vara
 % Vary should contain all the same fields of Sys (not including S), and any
 % entry that is non-zero specifies that it is a parameter to be varied,
 % using the initial value given in Sys. Note that parameters that are given
-% by Sys but are not to be varied will still be used, just as constants.
+% by Sys but are not to be varied will still be used as fixed values.
 %
 % Experimental data:
 % Exp should contain the experimentally calculated eigenvalues saved as
@@ -44,6 +44,8 @@ function [SysOut,options,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,vara
 %
 %OPTIONAL PARAMETERS
 %IEP:
+%SysVaryParameters - A structure containing all of the outputs of the
+%function [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary)
 %IEPType - Defines which formulation of the IEP to use - [ Classic |
 %       {Difference} ]
 %Eigensolver - Specifies which eigensolver to use - [ eig | eigs ] (default
@@ -53,6 +55,8 @@ function [SysOut,options,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,vara
 %EigsNotConvergedWarning - Specifies if a warning should be output of the
 %       eigensolver fails to converge for some of the eigenvalues - [ {true} |
 %       false ]
+%SysFound - array of Sys structures of previously found minimising systems
+% - [ {[]}, Sys] 
 %NUMERICAL:
 %NDeflations - The number of local minima you wish to find, the output -
 % [ {1} | positive integer ]
@@ -60,38 +64,37 @@ function [SysOut,options,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,vara
 %           GaussNewtonT2 ]
 %MaxIter - The integer value  of Maximum iterations per deflation -
 %           [ {1000} | positive integer ]
-%Linesearch - line search method - [ No | {Armijo} | Quadratic ]
+%Linesearch - line search method - [ No | Basic | {Armijo} | Quadratic ]
 %theta - The deflation exponent - [ {2} | positive integer | exp ]
 %c1 - the armijo line search parameter - [ {1e-4} | positive scalar ]
 %alpha0 - Initial value of the line search parameter each iteration - [ 1
 %           | positive scalar ]
 %Tau - The value of the decrease in the line search parameter - [ {0.5} |
 %         scalar in [0,1] ]
-%Minalpha - The minimum value of the line search parameter - [ 1e-18 |
+%Minalpha - The minimum value of the line search parameter - [ 1e-10 |
 %       positive scalar ]
 %Verbose - Output value of objective function and gradient at each
 %            iteration - [ true | {false} ]
-%Constants - Any constants the objective funtion provided requires - [ {}
-%        | struct ]
-%PreviouslyFoundIterations - A struct of prevously found points to be deflated
-%        - [ {} | l \times x matrix ], where x is the number of previous
-%        deflations
+%Regularisation - The value regularing parameter - [ {0} ]
+%LinearSolver - The linear solver used - [ {mldivide} | lsqminnorm ]
 %ConvergenceFlags - The flags that are considered to mean convergence - [
 %        {Objective less than tolerance} | {Gradient less than tolerance} |
 %       Step Size too small | Line search failed | Max Iterations reached |
 %        Divergence Detected | NaN ]
+%DeflateLinesearch - Line searches should be applied to the deflated
+%        system - [ {true} | false ]
 %Sigma - The value of the shift of the deflation - [ {1} | scalar ]
 %SingleShift - Deflation shift should only be applied once [ true |
 %        {false} ]
 %Epsilon - Tolerence on the application of deflation or line search - [
-%        {0.01} | scalar in [0,1]]
+%        {0.01} | scalar ]
 %NormWeighting - Weighting applied to the norms in calculation of
-%           deflation operators - [ {} | l \times l matrix ]
+%           deflation operators - [ {} | l \times l identity matrix ]
 %GradientTolerance - Stopping criterion based on gradient of function -
 %        [ {0} | positive scalar ]
 %StepTolerance - Stopping criterion based on difference of consecutive
 %        steps - [ {1e-8} | positive scalar ]
-%ObjectiveTolerance - Stopping criterion based on value of objective
+%FunctionTolerance - Stopping criterion based on value of objective function
 %        function - [ {0} | positive scalar ]
 if nargin ==4
     Opt = varargin{1};
@@ -105,75 +108,74 @@ if ~isfield(Exp,"ev")
 end
 
 
-
-
-%Precalculated INS operators
-if isfield(Opt,'INSOperators')&&isfield(Opt.INSOperators,'A') &&isfield(Opt.INSOperators,'A0')...
-        &&isfield(Opt.INSOperators,'x0')&&isfield(Opt.INSOperators,'Ops')&&isfield(Opt.INSOperators,'SysFixed')
-    A =        Opt.INSOperators.A;
-    A0 =       Opt.INSOperators.A0;
-    scale_x =  Opt.INSOperators.x0;
-    Ops =      Opt.INSOperators.Ops;
-    SysFixed = Opt.INSOperators.SysFixed;
-    Opt = rmfield(Opt,'INSOperators');
+% Process the input of Sys structures, or use precalculated values
+if isfield(Opt,'SysVaryParameters')&&isfield(Opt.SysVaryParameters,'A') &&isfield(Opt.SysVaryParameters,'A0')...
+        &&isfield(Opt.SysVaryParameters,'x0')&&isfield(Opt.SysVaryParameters,'Ops')&&isfield(Opt.SysVaryParameters,'SysFixed')
+    A =        Opt.SysVaryParameters.A;
+    A0 =       Opt.SysVaryParameters.A0;
+    scale_x =  Opt.SysVaryParameters.x0;
+    Ops =      Opt.SysVaryParameters.Ops;
+    SysFixed = Opt.SysVaryParameters.SysFixed;
+    Opt = rmfield(Opt,'SysVaryParameters');
 else
     [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary);
-    if isfield(Opt,'INSOperators')
-        Opt = rmfield(Opt,'INSOperators');
+    if isfield(Opt,'SysVaryParameters')
+        Opt = rmfield(Opt,'SysVaryParameters');
     end
 end
+%% Set defaults
+% INS option defaults:
+defaultIEPType = 'Difference';
+defaultSysFound = [];
+defaultGroundStateFound = [];
+
+
+%Numerical  option defaults:
+% Main method options
+defaultMethod ='Good_GN';
+defaultNDeflations = 1;
+defaultMaxNonMinima = 10;
+
+
+% Solver options
+defaultRegularisation = [];
+defaultLinearSolver = "mldivide";
+defaultScaled = false;
 if length(A{1})<1000
     defaultEigensolver = 'eig';
 else
     defaultEigensolver = 'eigs';
 end
-% IEPOptions = [];
-% IEPOptionFields = ["SysFound","Eigensolver",",EigsNotConvergedWarning","IEPType","Scaled","GroundStateFound"];
-% for i = IEPOptionFields
-%     if isfield(Opt,i)
-%         IEPOptions.(i) = Opt.(i);
-%         Opt = rmfield(Opt,i);
-%     end
-% end
 
-% INS option defaults
-defaultScaled = false;
-defaultIEPType = 'Difference';
-defaultSysFound = [];
 
-%Numerical Method  option defaults
-defaultMethod ='Good_GN';
-defaultNDeflations = 1;
+%Input/output options 
 defaultVerbose = false;
-defaultSupressConvergedFlag = false;
-% defaultConstants=[];
-defaultRegularisation = [];
-defaultLinearSolver = "mldivide";
-
-defaultPreviouslyFoundIterations = [];
-defaultConvergenceFlags = ["Objective less than tolerance","Gradient less than tolerance","Step Size below tolerance","Merit line search terminated"];
 defaultRecordIterates = true;
-defaultMaxNonMinima = 10;
 defaultRecordTimes = false;
+defaultSupressConvergedFlag = false;
+defaultEigsNotConvergedWarning = true;
 
+%Line search options
 defaultLinesearch = 'Armijo';
 defaultC1 = 1e-4;
 defaultTau = 0.5;
 defaultAlpha0 = 1;
 defaultMinalpha = 1e-18;
-defaultMuLinesearch = "No";
 defaultDeflatedLinesearch = "No";
 
+%Deflation options
 defaultTheta = 2;
 defaultSigma = 1;
 defaultShiftType = "Multiple";
 defaultEpsilon = 0.01;
-defaultNormWeighting = speye(length(scale_x));
 
+%Stopping criteria 
 defaultStepTolerance = 1e-6;
 defaultGradientTolerance = 0;
-defaultObjectiveTolerance = 0;
+defaultFunctionTolerance = 0;
+defaultRelativeStepTolerance = 1e-10;
 defaultMaxIter = 1000;
+defaultConvergenceFlags = ["Objective less than tolerance","Gradient less than tolerance","Step Size below tolerance","Merit line search terminated","Relative Step Size below tolerance"];
 
 if isfield(Opt,'IEPType')&&Opt.IEPType =="Classic"
     defaultlbylIdentity = speye(length(scale_x)+1);
@@ -183,88 +185,72 @@ else
     isnumerical_lbyl = @(x) isnumeric(x) && all(size(x) == [length(scale_x),length(scale_x)]);
 end
 
-%
-% Parse Input Parameters
-%
-
-%Validation functions
-mergestructs = @(x,y) cell2struct([struct2cell(x);struct2cell(y)],[fieldnames(x);fieldnames(y)]);
-% islbylnumeric = @(x) all(size(x) == [length(x0),length(x0)] )&&isnumeric(x);
-
-isnumericscalar = @(x) isscalar(x) && isnumeric(x);
-isstringorchar = @(x) isstring(x) || ischar(x);
-isvalidstruct =@(x) (isstruct(x)&&4==sum(contains(fieldnames(x),[{'DeflatedPoint'}, ...
-    {'ErrorAtDeflatedPoint'},{'NIter'},{'ConvergenceFlag'}])))||isempty(x);
-
-
+%% Parse Input Parameters
 
 IP = inputParser;
+%Validation functions
+mergestructs = @(x,y) cell2struct([struct2cell(x);struct2cell(y)],[fieldnames(x);fieldnames(y)]);
+isnumericscalar = @(x) isscalar(x) && isnumeric(x);
+isstringorchar = @(x) isstring(x) || ischar(x);
 
-%Add required INS variables
+
+%Parse required INS variables
 addRequired(IP,'Sys0_In')
 addRequired(IP,'Vary')
 addRequired(IP,'Exp')
 
-%Add optional INS variables
+%Parse optional INS variables
 addParameter(IP,'IEPType',defaultIEPType)
 addParameter(IP,'SysFound',defaultSysFound)
-addParameter(IP,'Eigensolver',defaultEigensolver)
-addParameter(IP,'Scaled',defaultScaled,@islogical)
-addParameter(IP,'EigsNotConvergedWarning',true)
-addParameter(IP,'GroundStateFound',[])
-addParameter(IP,'OrthogonaliseBasis',true,@islogical)
+addParameter(IP,'GroundStateFound',defaultGroundStateFound)
 
-%Add optional Numerical method variables
-
+% Parse Numerical options:
+% Main method options
 addParameter(IP,'Method',defaultMethod,isstringorchar)
 addParameter(IP,'NDeflations',defaultNDeflations,isnumericscalar)
-addParameter(IP,'Verbose',defaultVerbose,@islogical)
-addParameter(IP,'SupressConvergedFlag',defaultSupressConvergedFlag,@islogical)
-% addParameter(IP,'constants',defaultConstants)
+addParameter(IP,'MaxNonMinima',defaultMaxNonMinima,isnumericscalar)
+
+% Solver options
 addParameter(IP,'Regularisation',defaultRegularisation)
 addParameter(IP,'LinearSolver',defaultLinearSolver,@(x)contains(x,["mldivide","lsqminnorm"]))
+addParameter(IP,'Scaled',defaultScaled,@islogical)
+addParameter(IP,'Eigensolver',defaultEigensolver)
 
-addParameter(IP,'PreviouslyFoundIterations',defaultPreviouslyFoundIterations,isvalidstruct)
-addParameter(IP,'ConvergenceFlags',defaultConvergenceFlags,isstringorchar)
+%Input/output options 
+addParameter(IP,'Verbose',defaultVerbose,@islogical)
 addParameter(IP,'RecordIterates',defaultRecordIterates,@islogical)
-addParameter(IP,'MaxNonMinima',defaultMaxNonMinima,isnumericscalar)
 addParameter(IP,'RecordTimes',defaultRecordTimes,@islogical)
+addParameter(IP,'SupressConvergedFlag',defaultSupressConvergedFlag,@islogical)
+addParameter(IP,'EigsNotConvergedWarning',defaultEigsNotConvergedWarning)
 
+%Line search options
 addParameter(IP,'Linesearch',defaultLinesearch,isstringorchar)
 addParameter(IP,'c1',defaultC1,isnumericscalar)
 addParameter(IP,'tau',defaultTau,isnumericscalar)
 addParameter(IP,'alpha0',defaultAlpha0,isnumericscalar)
 addParameter(IP,'minalpha',defaultMinalpha,isnumericscalar)
-addParameter(IP,'MuLinesearch',defaultMuLinesearch,isstringorchar)
-addParameter(IP,'Mualpha0',defaultAlpha0,isnumericscalar)
-
 addParameter(IP,'DeflatedLinesearch',defaultDeflatedLinesearch,isstringorchar)
-addParameter(IP,'Deflatedalpha0',[],isnumericscalar)
-addParameter(IP,'Deflatedc1',[],isnumericscalar)
-addParameter(IP,'Deflatedminalpha',[],isnumericscalar)
-addParameter(IP,'Deflatedtau',[],isnumericscalar)
 
+
+%Deflation options
 addParameter(IP,'theta',defaultTheta,@(x)isnumericscalar(x)||isstringorchar(x))
 addParameter(IP,'sigma',defaultSigma,isnumericscalar)
 addParameter(IP,'ShiftType',defaultShiftType,@(x)contains(x,["Multiple","Single","Scaled"]))
 addParameter(IP,'epsilon',defaultEpsilon,isnumericscalar)
 addParameter(IP,'NormWeighting',defaultlbylIdentity,isnumerical_lbyl)
 
-addParameter(IP,'ObjectiveTolerance',defaultObjectiveTolerance,isnumericscalar)
-addParameter(IP,'GradientTolerance',defaultGradientTolerance,isnumericscalar)
 addParameter(IP,'StepTolerance',defaultStepTolerance,isnumericscalar)
+addParameter(IP,'GradientTolerance',defaultGradientTolerance,isnumericscalar)
+addParameter(IP,'FunctionTolerance',defaultFunctionTolerance,isnumericscalar)
+addParameter(IP,'RelativeStepTolerance',defaultRelativeStepTolerance,isnumericscalar)
 addParameter(IP,'MaxIter',defaultMaxIter,isnumericscalar)
+addParameter(IP,'ConvergenceFlags',defaultConvergenceFlags,isstringorchar)
 
 addParameter(IP,'ScalingMatrix',defaultlbylIdentity,isnumerical_lbyl)
 addParameter(IP,'MaxStepSize',[],isnumericscalar)
 
-% if isempty(IEPOptions)
-%     IP.parse(Sys0,Vary,Exp)
-% else
 IP.parse(Sys0,Vary,Exp,varargin{:})
-% end
 res = IP.Results;
-
 
 %% Apply INS options
 
@@ -274,14 +260,14 @@ if res.EigsNotConvergedWarning
 end
 
 % Parses previously found results
-IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates"];
+IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates","FuncCount"];
 if isstruct(res.SysFound)
     for j = IterationFields
         if isfield(res.SysFound,j)
             for i = 1:length(res.SysFound)
                 Iterations(i).(j) = res.SysFound(i).(j);
             end
-            res.SysFound = rmfield(res.SysFound,j);
+            % res.SysFound = rmfield(res.SysFound,j);
         end
     end
 
@@ -296,14 +282,12 @@ if isstruct(res.SysFound)
         end
     end
     notfirstiteration = 1;
-    % Opt.PreviouslyFoundIterations = Iterations;
 else
     notfirstiteration = 0;
     Iterations = struct("DeflatedPoint",[],"ErrorAtDeflatedPoint",[],"NIter",[],"ConvergenceFlag",[],"FuncCount",[]);
     if res.RecordIterates == true
         Iterations.Iterates=[];
     end
-    % Iterations = [];
 end
 
 %Checks if Exp.ev is row or column vector
@@ -312,22 +296,10 @@ if size(Exp.ev,1)<size(Exp.ev,2)
 else
     constants.ev = Exp.ev;
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Need to do this
-
-% if isfield(Opt,"Method")&& Opt.Method == "LP"
-%     if res.IEPType =="Difference"
-%         warning("If using the Lift and Project method then the Classic IEP Type will be used")
-%         res.IEPType = "Classic";
-%     end
-% end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Sets up objective function
 if res.IEPType == "Classic"
     obj_fun = @IEP_Evaluate_full;
-
-    % scale_x(end+1)=1;
     if isempty(res.GroundStateFound)
         scale_x(end+1)= -eigs(FormA(scale_x,A,A0),1,'smallestreal');
     else
@@ -365,8 +337,9 @@ else
     error('Please use either the ''Classic'' or ''Difference'' options for IEPType')
 end
 
+%% Apply numerical method options
 
-% Applies Scaling
+% Applies Scaling if used
 if res.Scaled
     for i =1:length(scale_x)
         A{i}=scale_x(i)*A{i};
@@ -381,31 +354,10 @@ end
 constants.A = A;
 constants.A0 = A0;
 constants.ED = res.Eigensolver;
-% Opt.constants = constants;
 params.method.constants = constants;
 
 
-%
-% if isfield(Opt,"Method")&& Opt.Method == "LP"
-%     Opt.Method = "GradientDescent";
-%     B = zeros(length(A));
-%     for i = 1:(length(A))
-%         for j = 1:(length(A))
-%             B(i,j) = sum(sum(A{j}'.*A{i}));
-%         end
-%     end
-%     if isfield(Opt,"ScalingMatrix")
-%         Opt.ScalingMatrix = Opt.ScalingMatrix*2*inv(B);
-%     else
-%         Opt.ScalingMatrix = 2*inv(B);
-%     end
-% end
 
-
-
-
-
-%% Apply numerical method options
 
 %
 % Setup Method Parameters
@@ -419,7 +371,7 @@ params.method.LinearSolver = res.LinearSolver;
 params.method.MaxStepSize = res.MaxStepSize;
 params.method.ScalingMatrix = res.ScalingMatrix;
 
-if length(res.PreviouslyFoundIterations) >= res.NDeflations
+if length(res.SysFound) >= res.NDeflations
     error('Please request at least one more minima than input')
 end
 
@@ -438,38 +390,7 @@ if params.linesearch.merit.method =="Quadratic"
 end
 
 
-%Line search Parameters for deflated objective function
-if res.Method=="Bad_GN"||res.Method=="GradientDescent"||res.Method=="LP"
-    if isfield(varargin{1},"LinearSolver")
-        warning("The optional input LinearSolver has no effect when using the ""Bad"" Deflated Gauss Newton or deflated Gradient Descent method");
-    end
-    if isempty(res.DeflatedLinesearch)
-        params.linesearch.deflatedmerit.method = res.Linesearch;
-    else
-        params.linesearch.deflatedmerit.method = res.DeflatedLinesearch;
-        if params.linesearch.deflatedmerit.method =="Quadratic"
-            if ~isempty(res.Deflatedtau)
-                warning("The optional input DeflatedTau has no effect when using the deflated Quadratic linesearch")
-            end
-        end
-    end
-    for i = ["c1","tau","alpha0","minalpha"]
-        if isempty(res.(strcat("Deflated",i)))
-            params.linesearch.deflatedmerit.(i) = res.(i);
-        else
-            params.linesearch.deflatedmerit.(i) = res.(strcat("Deflated",i));
-        end
-    end
-elseif (res.DeflatedLinesearch)~="No"
-    warning("Deflated linesearch is only applied to the ""Bad"" deflated Gauss-Newton method")
-end
 
-%parameters for line search on Mu, not all adaptable currently
-params.linesearch.Mu.method = res.MuLinesearch;
-params.linesearch.Mu.c1 = res.c1;
-params.linesearch.Mu.tau = res.tau;
-params.linesearch.Mu.alpha0 = res.Mualpha0;
-params.linesearch.Mu.minalpha = res.minalpha;
 
 
 
@@ -481,9 +402,10 @@ params.deflation.epsilon = res.epsilon;
 params.deflation.NormWeighting = res.NormWeighting;
 
 %Convergence Parameters
-params.convergence.ObjectiveTolerance = res.ObjectiveTolerance;
-params.convergence.GradientTolerance = res.GradientTolerance;
 params.convergence.StepTolerance = res.StepTolerance;
+params.convergence.GradientTolerance = res.GradientTolerance;
+params.convergence.FunctionTolerance = res.FunctionTolerance;
+params.convergence.RelativeStepTolerance = res.RelativeStepTolerance;
 params.convergence.MaximumIterations = res.MaxIter;
 
 
@@ -499,37 +421,24 @@ switch res.Method
     case "Newton"
         params.linesearch.merit.phi = @(objective_function,x,constants,DeflatedPts,DeflationParameters) Gradient(objective_function,x,constants,DeflatedPts,DeflationParameters);
         params.linesearch.merit.gradphi = @(X) (X.J'*X.J+X.S)*(X.J'*X.R);
-        if isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
-            params.linesearch.deflatedmerit.phi = @(objective_function,x,constants,DeflatedPts,DeflationParameters) Deflated_Gradient(objective_function,x,constants,DeflatedPts,DeflationParameters);
-            params.linesearch.deflatedmerit.gradphi = @(X) 2*X.Mu*X.gradMu'*(X.J'*X.R)'*(X.J'*X.R)+ 2*X.Mu^2*(X.J'*X.J+X.S)*(X.J'*X.R);
-        end
         Fun  = str2func('Deflated_Newton');
     case "Good_GN"
-        if isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
-            warning("Note there is no deflated line search for any method other than for the '''Bad''' deflated Gauss-Newton and '''Newton''' methods.")
-        end
         params.linesearch.merit.phi = @(objective_function,x,constants,~,~) objective_function(x,constants);
         params.linesearch.merit.gradphi = @(X) 2*(X.J'*X.R);
         Fun = str2func('Good_Deflated_GaussNewton');
     case "Bad_GN"
         params.linesearch.merit.phi = @(objective_function,x,constants,~,~) objective_function(x,constants);
         params.linesearch.merit.gradphi = @(X) 2*(X.J'*X.R);
-        if params.linesearch.deflatedmerit.method ~= "No"
-            params.linesearch.deflatedmerit.phi = @(objective_function,x,constants,DeflatedPts,DeflationParameters) deflation(DeflatedPts,x,DeflationParameters)^2*objective_function(x,constants);
-            params.linesearch.deflatedmerit.gradphi = @(X) 2*X.Mu^2*(X.J'*X.R)+2*X.Mu*X.R'*X.R;
-        end
         Fun = str2func('Bad_Deflated_GaussNewton');
     case "LP"
         Fun  = str2func('LP');
         if res.NDeflations >1 || isstruct(res.SysFound)
-            warning("The Lift and Project method does not curently suport deflation, only one minimum can me requested")
+            warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
             res.NDeflations=1;
-            Opt.PreviouslyFoundIterations = [];
         else
             if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"||isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
                 warning("Note that no line search can be used with the Lift and Projection method.")
             end
-
             if res.IEPType ~= "Classic"
                 warning("When using the LP method the ""Classic"" IEP type must be used, switching to the  RGD_LP method.")
                 res.Method = "RGD_LP";
@@ -537,27 +446,22 @@ switch res.Method
                 if res.NDeflations >1 || isstruct(res.SysFound)
                     warning("The Lift and Project method does not curently suport deflation")
                     res.NDeflations=1;
-                    Opt.PreviouslyFoundIterations = [];
-                    % Opt = rmfield(Opt, "PreviouslyFoundIterations");
                 end
-
             end
         end
     case "RGD_LP"
         Fun  = str2func('RGD_LP');
         if res.NDeflations >1 || isstruct(res.SysFound)
-            warning("The Lift and Project method does not curently suport deflation, only one minimum can me requested") 
+            warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested") 
             res.NDeflations=1;
-            Opt.PreviouslyFoundIterations = [];
         else
             if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"||isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
                 warning("Note that no line search can be used with the Lift and Projection method.")
             end
 
             if res.NDeflations >1 || isstruct(res.SysFound)
-                warning("The Lift and Project method does not curently suport deflation, only one minimum can me requested")
+                warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
                 res.NDeflations=1;
-                Opt.PreviouslyFoundIterations = [];
             end
         end
     otherwise
@@ -602,9 +506,9 @@ for  i=length(Iterations)+notfirstiteration:res.NDeflations
     if ~res.SupressConvergedFlag
         if any(contains(res.ConvergenceFlags, Iterations(i).ConvergenceFlag))
             j = j+1;
-            OutputNumMinimaFound(j,i-length(res.PreviouslyFoundIterations))
+            OutputNumMinimaFound(j,i-length(res.SysFound))
         else
-            OutputNumMinimaFound(j,i-length(res.PreviouslyFoundIterations))
+            OutputNumMinimaFound(j,i-length(res.SysFound))
         end
     end
     % Check for NaNs
@@ -612,13 +516,11 @@ for  i=length(Iterations)+notfirstiteration:res.NDeflations
         warning("Method diverging to NaN or Inf values, stopped deflations early.")
         % stopearly = true;
         break
-    end
-    if Iterations(i).ConvergenceFlag == "Deflation operator is Nan/Inf"
+    elseif Iterations(i).ConvergenceFlag == "Deflation operator is Nan/Inf"
         warning("Deflation operatoris NaN/Inf, stopped deflations early.")
         % stopearly = true;
         break
-    end
-    if (i-length(res.PreviouslyFoundIterations)-1-j)>res.MaxNonMinima
+    elseif (i-length(res.SysFound)-1-j)>res.MaxNonMinima
         warning("Stopping deflations as the maximum number of non minima have been deflated")
         % stopearly = true;
         break
@@ -630,19 +532,6 @@ if res.RecordTimes
     % end
     Iterations = cell2struct([struct2cell(Iterations);reshape(Times,1,1,length(Iterations))],[fieldnames(Iterations);'Times']);
 end
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 if res.IEPType == "Classic" %Need to fix this option
@@ -669,85 +558,9 @@ if res.IEPType == "Classic"
     SysOut = mergestructs(SysOut,GroundStateFound);
 end
 
-options.Eigensolver = res.Eigensolver;
-options.EigsNotConvergedWarning = res.EigsNotConvergedWarning;
-options.Exp = res.Exp;
-options.IEPType = res.IEPType;
-options.Scaled = res.Scaled;
-options.Sys0_In = res.Sys0_In;
-options.SysFound = res.SysFound;
-options.Vary = res.Vary;
 end
 
 
-% function [Iterations,res,params] = DMin(obj_fun,x0,varargin)
-% %DMIN Finds multiple minima of the problem using deflation.
-% %
-% % Y= DMIN(obj_fun,x0)   Outputs a structure that contains the points that
-% % minimise the problem 'obj_fun' initialised as x0and the number of Iterations till
-% % convergence; the type of 'convergence' achieved; all the iterations
-% % made until convergence; the finall error at convergence. Where
-% % obj_fun(x,constants) is a function handle that returns the current
-% %    error of the least squares formulation, given the current guess, x,
-% %    and optional parameters, constants. It must also  output the
-% %    Residual and the Jacbian and (optionally) Hessian (if using the Newton
-% % method) of said residual of the least squares problem: [F,R,J,H] =
-% % obj_fun(x,constants)
-% %
-% %
-% %DMIN PARAMETERS
-% %NDeflations - The number of local minima you wish to find, the output -
-% % [ {1} | positive integer ]
-% %Method - The optimisation method desired - [ {Newton} | GaussNewtonT1 |
-% %           GaussNewtonT2 ]
-% %MaxIter - The integer value  of Maximum iterations per deflation -
-% %           [ {1000} | positive integer ]
-% %Linesearch - line search method - [ No | Basic | {Armijo} | Quadratic ]
-% %theta - The deflation exponent - [ {2} | positive integer | exp ]
-% %c1 - the armijo line search parameter - [ {1e-4} | positive scalar ]
-% %alpha0 - Initial value of the line search parameter each iteration - [ 1
-% %           | positive scalar ]
-% %Tau - The value of the decrease in the line search parameter - [ {0.5} |
-% %         scalar in [0,1] ]
-% %Minalpha - The minimum value of the line search parameter - [ 1e-10 |
-% %       positive scalar ]
-% %Verbose - Output value of objective function and gradient at each
-% %            iteration - [ true | {false} ]
-% %Scaled - Scale the variables by the value of the initial guess - [ true |
-% %       {false} ]
-% %Constants - Any constants the objective funtion provided requires - [ {}
-% %        | struct ]
-% %Regularisation - The value regularing parameter - [ {0} ]
-% %LinearSolver - The linear solver used - [ {mldivide} | lsqminnorm ]
-% %PreviouslyFoundIterations - A struct of prevously found points to be deflated
-% %        - [ {} | l \times x matrix ], where x is the number of previous
-% %        deflations
-% %ConvergenceFlags - The flags that are considered to mean convergence - [
-% %        {Objective less than tolerance} | {Gradient less than tolerance} |
-% %       Step Size too small | Line search failed | Max Iterations reached |
-% %        Divergence Detected | NaN ]
-% %DeflateLinesearch - Line searches should be applied to the deflated
-% %        system - [ {true} | false ]
-% %Sigma - The value of the shift of the deflation - [ {1} | scalar ]
-% %SingleShift - Deflation shift should only be applied once [ true |
-% %        {false} ]
-% %Epsilon - Tolerence on the application of deflation or line search - [
-% %        {0.01} | scalar ]
-% %NormWeighting - Weighting applied to the norms in calculation of
-% %           deflation operators - [ {} | l \times l matrix ]
-% %GradientTolerance - Stopping criterion based on gradient of function -
-% %        [ {0} | positive scalar ]
-% %StepTolerance - Stopping criterion based on difference of consecutive
-% %        steps - [ {1e-8} | positive scalar ]
-% %ObjectiveTolerance - Stopping criterion based on value of objective
-% %        function - [ {0} | positive scalar ]
-%
-% Auxiliary functions
-
-function f_out = Deflated_Gradient(objective_function,x,constants,DeflatedPts,DeflationParameters)
-[~,R,J] = objective_function(x,constants);
-f_out = deflation(DeflatedPts,x,DeflationParameters)^2*(J'*R)'*(J'*R);
-end
 function f_out = Gradient(objective_function,x,constants,~,~)
 [~,R,J] = objective_function(x,constants);
 f_out = (J'*R)'*(J'*R);
