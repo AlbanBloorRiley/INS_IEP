@@ -1,4 +1,4 @@
-function [test,flag] = ismin(f,p,gradf,NIter,ConvergenceParams,varargin)
+function [test,flag] = ismin(f,x,p,gradf,NIter,ConvergenceParams,varargin)
 %ISMIN Tests stopping criteria at current iteration
 %
 % stop = ismin(f,p,x,gradf,NIter,ConvergenceParams) outputs true if
@@ -19,7 +19,7 @@ if norm(p)<ConvergenceParams.StepTolerance
 elseif isnan(f)||isinf(f)
     test = true ;
     flag = 'NaN/Inf';
-elseif f <ConvergenceParams.ObjectiveTolerance
+elseif f <ConvergenceParams.FunctionTolerance
     flag = 'Objective less than tolerance';
     test = true ;
 elseif norm(gradf)<ConvergenceParams.GradientTolerance
@@ -28,8 +28,14 @@ elseif norm(gradf)<ConvergenceParams.GradientTolerance
 elseif NIter>=ConvergenceParams.MaximumIterations
     flag ='Max Iterations reached';
     test = true  ;
-elseif nargin> 5 && (any(isnan(varargin{1}))||any(isinf(varargin{1})))
+elseif nargin> 6 && (any(isnan(varargin{1}))||any(isinf(varargin{1})))
     flag = "Deflation operator is Nan/Inf";
     test = true;
+    elseif isfield(ConvergenceParams,'RelativeStepTolerance')&& (norm(p)/norm(x))<ConvergenceParams.RelativeStepTolerance
+    flag = 'Relative Step Size below tolerance';
+    test=true;
+elseif isfield(ConvergenceParams,'StepDifferenceTolerance')&& abs(norm(p)-norm(varargin{2}))<ConvergenceParams.StepDifferenceTolerance
+    flag = 'Step Size Difference below tolerance';
+    test=true;
 end
 end
