@@ -61,7 +61,8 @@ while stop == false
         if pTgradEta > 1 % Zone 3
             p = deflated_p;
             % By default this linesearch just returns alpha0.
-            [alpha,FCount] = Linesearch(x, p, DeflatedPts, params, params.linesearch.Mu, obj_fun, X);
+            alpha = params.linesearch.merit.alpha0; FCount = 0;
+            % [alpha,FCount] = Linesearch(x, p, DeflatedPts, params, params.linesearch.Mu, obj_fun, X);
             FuncCount = FuncCount+FCount;
             if (alpha<=params.linesearch.merit.minalpha)
                 if rank(X.J)<length(x)
@@ -74,7 +75,8 @@ while stop == false
         else % Zone 2
             p = deflated_p;
             % By default this linesearch just returns alpha0.
-            [alpha,FCount] = Linesearch(x, p, DeflatedPts, params, params.linesearch.deflatedmerit, obj_fun, X);
+            alpha = 1; FCount = 0;
+            % [alpha,FCount] = Linesearch(x, p, DeflatedPts, params, params.linesearch.deflatedmerit, obj_fun, X);
             FuncCount = FuncCount+FCount;
             if (alpha<=params.linesearch.merit.minalpha)
                 if rank(X.J)<length(x)
@@ -91,7 +93,7 @@ while stop == false
     x = x + alpha*p;
 
     % Apply stopping criteria
-    [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F, p, X.J'*X.R, NIter, params.convergence);
+    [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F,x, p, X.J'*X.R, NIter, params.convergence);
     % Print out convergence info
     if params.method.Verbose
         if NIter>0&& CurrentLoop.ConvergenceFlag ~= "Nan/Inf"

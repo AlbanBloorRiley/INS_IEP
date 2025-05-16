@@ -1,24 +1,8 @@
 function [CurrentLoop] = RGD_LP(obj_fun,x,~,params,RecordIterates)
 NIter = 0;   constants = params.method.constants;
 CurrentLoop.Iterates = x;
-if ~isfield(constants,'doubled')
-    constants.doubled = false;
-end
 Fprev = inf; pprev=0;
-% if isfield(constants, 'Verbose')
-%     Verbose = constants.Verbose;
-% else
-%     Verbose = false;
-% end
-usecholesky = false;
-if isfield(constants, 'BCholeskyFactor')
-    R = constants.BCholeskyFactor;
-    usecholesky = true;
-elseif isfield(constants,'Binv')
-    Binv = constants.Binv;
-else
-    Binv = FormBinv(constants.A);
-end
+
 % Calculate residual, Jacobian and Hessian of R
 [X.F,X.R,X.J] = obj_fun(x, constants); FuncCount = 1;
 % CurrentLoop.Error = X.F;
@@ -26,17 +10,10 @@ if params.method.Verbose
     OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d\n', NIter,X.F,norm(X.J'*X.R));
     fprintf(repmat(' ',1,OutputLineLength))
 end
-[stop,CurrentLoop.ConvergenceFlag] = isminimum(X.F,x, inf,inf, NIter, params.convergence);
+[stop,CurrentLoop.ConvergenceFlag] = ismin(X.F,x ,inf,X.J'*X.F, NIter, params.convergence,1,pprev);
 % Main Loop
 while stop == false
-    if usecholesky
-        p = R\(R\X.J'*X.R);
-    else
-        p = - Binv*X.J'*X.R;
-    end
-    if constants.doubled
-        p = p*2;
-    end
+    p = - params.method.ScalingMatrix*X.J'*X.R;
     xprev = x;
 
     x = xprev + p;
@@ -54,7 +31,7 @@ while stop == false
         fprintf(repmat('\b',1,OutputLineLength))
         OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d \n', NIter,X.F,norm(X.J'*X.R));
     end
-    [stop, CurrentLoop.ConvergenceFlag] = isminimum(X.F,x, p,pprev, NIter, params.convergence);
+    [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F,x, p, X.J'*X.F,NIter, params.convergence,1,pprev);
     pprev=p;
     % Save iterates for plotting
     if RecordIterates
@@ -67,7 +44,8 @@ CurrentLoop.NIter = NIter;
 CurrentLoop.FuncCount = FuncCount;
 end
 
-function [test,flag] = isminimum(f,x,p,pprev,NIter,ConvergenceParams)
+
+function [test,flag] = ismin(f,x,p,NIter,ConvergenceParams,~,pprev)
 flag = "";
 test = false;
 if norm(p)<ConvergenceParams.StepTolerance

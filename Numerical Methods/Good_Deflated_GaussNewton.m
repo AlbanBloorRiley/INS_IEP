@@ -44,7 +44,7 @@ while stop == false
         p = - params.method.ScalingMatrix*Solver([X.J;lambda(NIter,X)*diag(diag(X.J'*X.J))],[X.R;zeros(length(x),1)]);
     else
         p = - params.method.ScalingMatrix*Solver(X.J,X.R);
-        p = - Solver(X.J'*X.J, params.method.ScalingMatrix*X.J'*X.R);
+        % p = - Solver(X.J'*X.J, params.method.ScalingMatrix*X.J'*X.R);
     end
 
     % Calculate effect on log(Mu) in p direction
@@ -82,7 +82,7 @@ while stop == false
     [X.Mu,X.gradMu] = deflation(DeflatedPts, x, params.deflation);
 
     % Apply stopping criteria
-    [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F, p, X.J'*X.R, NIter, params.convergence,X.gradMu./X.Mu);
+    [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F, x,p, X.J'*X.R, NIter, params.convergence,X.gradMu./X.Mu);
 
     % Print out convergence info
     if params.method.Verbose

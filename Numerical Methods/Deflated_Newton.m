@@ -32,7 +32,7 @@ end
 if params.method.Verbose
     OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d; alpha = %d; \n', NIter,X.F,norm(X.J'*X.R),0);
 end
-[stop,CurrentLoop.ConvergenceFlag] = ismin(X.F, inf, X.J'*X.R, NIter, params.convergence);
+[stop,CurrentLoop.ConvergenceFlag] = ismin(X.F,x,  inf, X.J'*X.R, NIter, params.convergence);
 
 % Main loop
 while stop == false
@@ -83,7 +83,7 @@ while stop == false
     [X.Mu,X.gradMu] = deflation(DeflatedPts, x, params.deflation);
 
     % Apply stopping criteria
-    [stop,CurrentLoop.ConvergenceFlag] = ismin(X.F, p, X.J'*X.R, NIter, params.convergence, X.Mu*X.gradMu);
+    [stop,CurrentLoop.ConvergenceFlag] = ismin(X.F, x,  p, X.J'*X.R, NIter, params.convergence, X.Mu*X.gradMu);
     % Print out convergence info
     if params.method.Verbose
         if CurrentLoop.ConvergenceFlag ~= "Nan/Inf"

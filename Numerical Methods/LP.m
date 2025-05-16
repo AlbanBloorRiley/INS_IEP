@@ -13,7 +13,7 @@ end
 if params.method.Verbose
     OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d; alpha = %d; \n', NIter,X.F,norm(X.J'*X.R),0);
 end
-[stop,CurrentLoop.ConvergenceFlag] = ismin(X.F, inf, X.J'*X.R, NIter, params.convergence);
+[stop,CurrentLoop.ConvergenceFlag] = ismin(X.F,inf, inf, X.J'*X.R, NIter, params.convergence);
 % Main Loop
 while stop == false
 
@@ -52,7 +52,7 @@ while stop == false
     % Calculate residual, Jacobian of R
     [X.F,X.R,X.J] = obj_fun(x, params.method.constants); FuncCount = FuncCount +1;
 
-        [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F, x-xprev, X.J'*X.R, NIter, params.convergence);
+        [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F, x, x-xprev, X.J'*X.R, NIter, params.convergence);
     % Save iterates for plotting
     if RecordIterates; CurrentLoop.Iterates = [CurrentLoop.Iterates, x]; end
 end
