@@ -16,7 +16,6 @@ else
 end
 
 
-
 f = fieldnames(Ops);
 CellOps = struct2cell(Ops);
 k=1;
@@ -77,24 +76,3 @@ else
     end
 end
 
-
-% f = fieldnames(Ops);
-% COps = struct2cell(Ops);
-%
-%     k=1;
-%     for i=1:length(COps)       %Stevens Operators
-%         if isempty(COps{i})
-%             continue
-%         end
-%         for j=1:length(COps{i})
-%
-%             COps{i}{j} = COps{i}{j}*Y(k);
-%             k=j+1;
-%         end
-%         if length(COps{i})>1
-%             COps{i}=plus(COps{i}{:});
-%         else
-%             COps{i}=cell2mat(COps{i});
-%         end
-%     end
-%     Sys_Out{N} = cell2struct(COps,f,1);
