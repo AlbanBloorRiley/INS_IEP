@@ -8,7 +8,9 @@ function Sys_Out = Sys_Output(Vals,Ops,SysFixed)
 %
 %If Vals is a structure array then Sys_Out will also be a structure array 
 % of equal size where the function is applied element-wise.
-
+if isempty(Vals)
+    Sys_Out = [];
+end
 if isstruct(SysFixed)
     S=SysFixed.S;
 else
@@ -70,9 +72,7 @@ else
     end
     for  N= size(Vals,2):-1:1
         Sys_Out(N).S = S;
-
         Sys_Out = rmfield(Sys_Out, f(structfun(@isempty, Sys_Out(N))));
-
     end
 end
 
