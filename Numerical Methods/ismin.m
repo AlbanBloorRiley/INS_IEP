@@ -34,8 +34,5 @@ elseif nargin> 6 && (any(isnan(varargin{1}))||any(isinf(varargin{1})))
     elseif isfield(ConvergenceParams,'RelativeStepTolerance')&& (norm(p)/norm(x))<ConvergenceParams.RelativeStepTolerance
     flag = 'Relative Step Size below tolerance';
     test=true;
-elseif isfield(ConvergenceParams,'StepDifferenceTolerance')&& abs(norm(p)-norm(varargin{2}))<ConvergenceParams.StepDifferenceTolerance
-    flag = 'Step Size Difference below tolerance';
-    test=true;
 end
 end
