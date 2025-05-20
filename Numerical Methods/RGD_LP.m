@@ -1,7 +1,8 @@
 function [CurrentLoop] = RGD_LP(obj_fun,x,~,params,RecordIterates)
 NIter = 0;   constants = params.method.constants;
 CurrentLoop.Iterates = x;
-Fprev = inf; pprev=0;
+Fprev = inf; 
+Binv = params.method.ScalingMatrix*FormBinv(constants.A);
 
 % Calculate residual, Jacobian and Hessian of R
 [X.F,X.R,X.J] = obj_fun(x, constants); FuncCount = 1;
@@ -10,10 +11,10 @@ if params.method.Verbose
     OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d\n', NIter,X.F,norm(X.J'*X.R));
     fprintf(repmat(' ',1,OutputLineLength))
 end
-[stop,CurrentLoop.ConvergenceFlag] = ismin(X.F,x ,inf,X.J'*X.F, NIter, params.convergence,1,pprev);
-% Main Loop
+[stop,CurrentLoop.ConvergenceFlag] = ismin(X.F,x ,inf,X.J'*X.F, NIter, params.convergence);
+% Main Loop )
 while stop == false
-    p = - params.method.ScalingMatrix*X.J'*X.R;
+    p = - Binv*X.J'*X.R;
     xprev = x;
 
     x = xprev + p;
@@ -31,7 +32,7 @@ while stop == false
         fprintf(repmat('\b',1,OutputLineLength))
         OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d \n', NIter,X.F,norm(X.J'*X.R));
     end
-    [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F,x, p, X.J'*X.F,NIter, params.convergence,1,pprev);
+    [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F,x, p, X.J'*X.F,NIter, params.convergence);
     pprev=p;
     % Save iterates for plotting
     if RecordIterates
@@ -45,23 +46,3 @@ CurrentLoop.FuncCount = FuncCount;
 end
 
 
-function [test,flag] = ismin(f,x,p,NIter,ConvergenceParams,~,pprev)
-flag = "";
-test = false;
-if norm(p)<ConvergenceParams.StepTolerance
-    flag = 'Step Size below tolerance';
-    test=true;
-elseif isnan(f)||isinf(f)
-    test = true ;
-    flag = 'NaN/Inf';
-elseif NIter>=ConvergenceParams.MaximumIterations
-    flag ='Max Iterations reached';
-    test = true  ;
-elseif isfield(ConvergenceParams,'RelativeStepTolerance')&& (norm(p)/norm(x))<ConvergenceParams.RelativeStepTolerance
-    flag = 'Relative Step Size below tolerance';
-    test=true;
-elseif isfield(ConvergenceParams,'StepDifferenceTolerance')&& abs(norm(p)-norm(pprev))<ConvergenceParams.StepDifferenceTolerance
-    flag = 'Step Size Difference below tolerance';
-    test=true;
-end
-end
