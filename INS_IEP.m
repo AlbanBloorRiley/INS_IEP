@@ -1,4 +1,4 @@
-function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,varargin)
+function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,varySys,Exp,varargin)
 % INS_IEP Inelastic Neutron Scattering Inverse Eigenvalue Problem
 % SysOut =  INS_IEP(Sys0,Vary,Exp) produces an easyspin style Sys structure
 % containing the parameters that minimise difference in between the
@@ -56,7 +56,7 @@ function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,Vary,Exp,varargin
 %       eigensolver fails to converge for some of the eigenvalues - [ {true} |
 %       false ]
 %SysFound - array of Sys structures of previously found minimising systems
-% - [ {[]}, Sys] 
+% - [ {[]}, Sys]
 %NUMERICAL:
 %NDeflations - The number of local minima you wish to find, the output -
 % [ {1} | positive integer ]
@@ -118,11 +118,12 @@ if isfield(Opt,'SysVaryParameters')&&isfield(Opt.SysVaryParameters,'A') &&isfiel
     SysFixed = Opt.SysVaryParameters.SysFixed;
     Opt = rmfield(Opt,'SysVaryParameters');
 else
-    [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary);
+    [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,varySys);
     if isfield(Opt,'SysVaryParameters')
         Opt = rmfield(Opt,'SysVaryParameters');
     end
 end
+l = length(scale_x);
 %% Set defaults
 % INS option defaults:
 defaultIEPType = 'Difference';
@@ -148,7 +149,7 @@ else
 end
 
 
-%Input/output options 
+%Input/output options
 defaultVerbose = false;
 defaultRecordIterates = true;
 defaultRecordTimes = false;
@@ -157,7 +158,7 @@ defaultEigsNotConvergedWarning = true;
 
 %Line search options
 defaultLinesearch = 'Armijo';
-defaultC1 = 1e-4;
+defaultC1 = 1e-7;
 defaultTau = 0.5;
 defaultAlpha0 = 1;
 defaultMinalpha = 1e-18;
@@ -169,7 +170,7 @@ defaultSigma = 1;
 defaultShiftType = "Multiple";
 defaultEpsilon = 0.01;
 
-%Stopping criteria 
+%Stopping criteria
 defaultStepTolerance = 1e-6;
 defaultGradientTolerance = 0;
 defaultFunctionTolerance = 0;
@@ -184,6 +185,7 @@ else
     defaultlbylIdentity = speye(length(scale_x));
     isnumerical_lbyl = @(x) isnumeric(x) && all(size(x) == [length(scale_x),length(scale_x)]);
 end
+isSysFoundValid = @(x) isempty(x)||SysCompare(Sys0,varySys,x);
 
 %% Parse Input Parameters
 
@@ -201,7 +203,7 @@ addRequired(IP,'Exp')
 
 %Parse optional INS variables
 addParameter(IP,'IEPType',defaultIEPType)
-addParameter(IP,'SysFound',defaultSysFound)
+addParameter(IP,'SysFound',defaultSysFound,isSysFoundValid)
 addParameter(IP,'GroundStateFound',defaultGroundStateFound)
 
 % Parse Numerical options:
@@ -216,7 +218,7 @@ addParameter(IP,'LinearSolver',defaultLinearSolver,@(x)contains(x,["mldivide","l
 addParameter(IP,'Scaled',defaultScaled,@islogical)
 addParameter(IP,'Eigensolver',defaultEigensolver)
 
-%Input/output options 
+%Input/output options
 addParameter(IP,'Verbose',defaultVerbose,@islogical)
 addParameter(IP,'RecordIterates',defaultRecordIterates,@islogical)
 addParameter(IP,'RecordTimes',defaultRecordTimes,@islogical)
@@ -224,7 +226,7 @@ addParameter(IP,'SupressConvergedFlag',defaultSupressConvergedFlag,@islogical)
 addParameter(IP,'EigsNotConvergedWarning',defaultEigsNotConvergedWarning)
 
 %Line search options
-addParameter(IP,'Linesearch',defaultLinesearch,isstringorchar)
+addParameter(IP,'Linesearch',defaultLinesearch,@(str)contains(str,["No","Basic", "Armijo", "Quadratic"]))
 addParameter(IP,'c1',defaultC1,isnumericscalar)
 addParameter(IP,'tau',defaultTau,isnumericscalar)
 addParameter(IP,'alpha0',defaultAlpha0,isnumericscalar)
@@ -249,7 +251,7 @@ addParameter(IP,'ConvergenceFlags',defaultConvergenceFlags,isstringorchar)
 addParameter(IP,'ScalingMatrix',defaultlbylIdentity,isnumerical_lbyl)
 addParameter(IP,'MaxStepSize',[],isnumericscalar)
 
-IP.parse(Sys0,Vary,Exp,varargin{:})
+IP.parse(Sys0,varySys,Exp,varargin{:})
 res = IP.Results;
 
 %% Apply INS options
@@ -259,43 +261,16 @@ if res.EigsNotConvergedWarning
     warning('off','MATLAB:eigs:NotAllEigsConverged')
 end
 
-% Parses previously found results
-IterationFields = ["DeflatedPoint","ErrorAtDeflatedPoint","NIter","ConvergenceFlag","Iterates","FuncCount"];
-if isstruct(res.SysFound)
-    for j = IterationFields
-        if isfield(res.SysFound,j)
-            for i = 1:length(res.SysFound)
-                Iterations(i).(j) = res.SysFound(i).(j);
-            end
-            % res.SysFound = rmfield(res.SysFound,j);
-        end
-    end
-
-    if isfield(res.SysFound,"GroundStateFound")&&res.IEPType == "Classic"
-        if isfield(res.SysFound,"GroundStateFound")
-            Iterations.DeflatedPoint(end+1) =  res.SysFound.GroundStateFound;
-            % res.SysFound = rmfield(res.SysFound,'GroundStateFound')
-        elseif ~isempty(res.GroundStateFound)
-            Iterations.DeflatedPoint(end+1) =  res.GroundStateFound;
-        else
-            error("Ground state of previous SysFound must be provided")
-        end
-    end
-    notfirstiteration = 1;
-else
-    notfirstiteration = 0;
-    Iterations = struct("DeflatedPoint",[],"ErrorAtDeflatedPoint",[],"NIter",[],"ConvergenceFlag",[],"FuncCount",[]);
-    if res.RecordIterates == true
-        Iterations.Iterates=[];
-    end
-end
-
 %Checks if Exp.ev is row or column vector
 if size(Exp.ev,1)<size(Exp.ev,2)
     constants.ev = Exp.ev';
 else
     constants.ev = Exp.ev;
 end
+
+
+
+
 
 % Sets up objective function
 if res.IEPType == "Classic"
@@ -337,7 +312,7 @@ else
     error('Please use either the ''Classic'' or ''Difference'' options for IEPType')
 end
 
-%% Apply numerical method options
+
 
 % Applies Scaling if used
 if res.Scaled
@@ -355,6 +330,77 @@ constants.A = A;
 constants.A0 = A0;
 constants.ED = res.Eigensolver;
 params.method.constants = constants;
+
+
+%Parse the input of a previously found systems
+if isstruct(res.SysFound)
+    %Tests if SysFound was calculated by this package or manually
+    if isfield(res.SysFound,'Output')
+        [Output(1:length(res.SysFound))] = [res.SysFound(1:length(res.SysFound)).Output];
+    else
+        %If manually then calculate x and  F(x) for each input system.
+        Output = CalculateOutputStructure(res.SysFound,varySys,res.IEPType,constants);
+    end
+    % If Classic IEP type then check if Groundstate values input
+    if res.IEPType == "Classic"%&&~isfield(Output,'GroundStateFound')
+        %If not then calculate groundstate values
+        for i = 1:length(Output)
+            if length(Output(i).DeflatedPoint) == l+1   %groundstate
+                if ~isfield(Output,'GroundStateFound')||isempty(Output(i).GroundStateFound)
+                    Output(i).GroundStateFound = Output(i).DeflatedPoint(end);
+                elseif Output(i).GroundStateFound ~= Output(i).DeflatedPoint(end)
+                    error("Mismatch in GroundStateFound and DeflatedPoint in Output")
+                end
+
+            elseif isfield(Output,'GroundStateFound')&&~isempty(Output(i).GroundStateFound)
+                Output(i).DeflatedPoint(end+1)= Output(i).GroundStateFound;
+            elseif isfield(Opt,'GroundStateFound')
+                Output(i).DeflatedPoint(end+1) = res.GroundStateFound;
+                Output(i).GroundStateFound = res.GroundStateFound;
+            else
+                smallesteig = -eigs(FormA(Output(i).DeflatedPoint,A(1:end-1),A0),1,'smallestreal');
+                Output(i).DeflatedPoint(end+1) = smallesteig;
+                Output(i).GroundStateFound = smallesteig;
+            end
+        end
+    elseif res.IEPType == "Difference"
+        warn = false;
+        for i = 1:length(Output)
+            if length(Output(i).DeflatedPoint) == l+1   %groundstate
+                if (isfield(Output,'GroundStateFound')&&Output(i).GroundStateFound == Output(i).DeflatedPoint(end))...
+                        ||(~isempty(res.GroundStateFound)&& res.GroundStateFound == Output(i).DeflatedPoint(end))
+                else
+                    warn = true;
+                end
+                Output(i).DeflatedPoint(end) = [];
+            end
+        end
+        if warn
+            warning("SysFound contains solutions with an extra parameter, assuming that previous results calculated using '''Classic''' IEP Type.")
+        end
+    end
+
+    % notfirstiteration = 1;
+else
+    % notfirstiteration = 0;
+    Output = struct("DeflatedPoint",[],"ErrorAtDeflatedPoint",[],"NIter",[],"ConvergenceFlag",[],"FuncCount",[]);
+    if res.RecordIterates == true
+        Output.Iterates=[];
+    end
+    if res.IEPType == "Classic"
+        Output.GroundStateFound = [];
+    end
+end
+
+
+
+
+
+
+
+
+%% Apply numerical method options
+
 
 
 
@@ -388,9 +434,6 @@ if params.linesearch.merit.method =="Quadratic"
         warning("The optional input Tau has no effect when using the Quadratic linesearch")
     end
 end
-
-
-
 
 
 
@@ -452,7 +495,7 @@ switch res.Method
     case "RGD_LP"
         Fun  = str2func('RGD_LP');
         if res.NDeflations >1 || isstruct(res.SysFound)
-            warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested") 
+            warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
             res.NDeflations=1;
         else
             if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"||isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
@@ -479,17 +522,27 @@ if res.RecordTimes
     Times{1,:,:} = [];
     tic
 end
-
-for  i=length(Iterations)+notfirstiteration:res.NDeflations
-    % for  i=length(Iterations)+1:res.NDeflations
-    if isfield(Iterations,'DeflatedPoint')&&~isempty([Iterations.DeflatedPoint])&&any(all(abs([Iterations.DeflatedPoint] - x0)<1e-16))
+if ~isempty(Output(1).DeflatedPoint)
+    if res.Scaled
+    DeflatedPts = [Output.DeflatedPoint]./scale_x;
+    else
+        DeflatedPts = [Output.DeflatedPoint];
+    end
+else
+    DeflatedPts = [];
+end
+% for  i=length(Output)+notfirstiteration:res.NDeflations
+for  i=length(res.SysFound)+1:res.NDeflations
+    % for  i=length(Output)+1:res.NDeflations
+    if isfield(Output,'DeflatedPoint')&&~isempty([Output.DeflatedPoint])&&any(all(abs([Output.DeflatedPoint] - x0)<1e-16))
         warning('The intial vector is a deflated point, stopping method...')
         break
     end
 
     % Main optimisation algorithm
+    Iterations = [];
     try
-        [Iterations(i)] = Fun(obj_fun,x0,[Iterations.DeflatedPoint],params,res.RecordIterates);
+        [Iterations] = Fun(obj_fun,x0,[DeflatedPts,Output(length(res.SysFound)+1:i-1).DeflatedPoint],params,res.RecordIterates);
     catch ME
         msg = getReport(ME);
         warning(msg)
@@ -501,22 +554,39 @@ for  i=length(Iterations)+notfirstiteration:res.NDeflations
         Times{i,:,:} = toc;
         tic
     end
+    % if res.Scaled
+    %     Iterations.DeflatedPoint = Iterations.DeflatedPoint .*scale_x;
+    % end
 
-    % Print desired info
-    if ~res.SupressConvergedFlag
-        if any(contains(res.ConvergenceFlags, Iterations(i).ConvergenceFlag))
-            j = j+1;
-            OutputNumMinimaFound(j,i-length(res.SysFound))
+    if isfield(Output,'GroundStateFound')
+        if res.IEPType == "Classic" %Need to fix this option
+            % if res.Scaled
+            Iterations.GroundStateFound = Iterations.DeflatedPoint(end);
+            % scale_x(end)=[];
+            % else
+            Iterations.GroundStateFound = Iterations.DeflatedPoint(end);
+            % end
+            % Iterations.DeflatedPoint(end) = [];
         else
-            OutputNumMinimaFound(j,i-length(res.SysFound))
+            Iterations.GroundStateFound = [];
         end
     end
+    Output(i) = Iterations;
+
+    % Print desired info
+    if any(contains(res.ConvergenceFlags, Output(i).ConvergenceFlag))
+        j = j+1;
+        if ~res.SupressConvergedFlag; OutputNumMinimaFound(j,i-length(res.SysFound));end
+    else
+        if ~res.SupressConvergedFlag; OutputNumMinimaFound(j,i-length(res.SysFound));end
+    end
+
     % Check for NaNs
-    if Iterations(i).ConvergenceFlag == "NaN/Inf"
+    if Output(i).ConvergenceFlag == "NaN/Inf"
         warning("Method diverging to NaN or Inf values, stopped deflations early.")
         % stopearly = true;
         break
-    elseif Iterations(i).ConvergenceFlag == "Deflation operator is Nan/Inf"
+    elseif Output(i).ConvergenceFlag == "Deflation operator is Nan/Inf"
         warning("Deflation operatoris NaN/Inf, stopped deflations early.")
         % stopearly = true;
         break
@@ -526,37 +596,40 @@ for  i=length(Iterations)+notfirstiteration:res.NDeflations
         break
     end
 end
+ 
+if j ~= i-length(res.SysFound)
+    disp("Note: Not all systems found were minima")
+end
+
 if res.RecordTimes
     % if stopearly
     %     Times{i,:,:} = NaN;
     % end
-    Iterations = cell2struct([struct2cell(Iterations);reshape(Times,1,1,length(Iterations))],[fieldnames(Iterations);'Times']);
+    Output = cell2struct([struct2cell(Output);reshape(Times,1,1,length(Output))],[fieldnames(Output);'Times']);
 end
 
 
-if res.IEPType == "Classic" %Need to fix this option
-    for i = 1:length(Iterations)
-        if res.Scaled
-            GroundStateFound(i).GroundStateFound = Iterations(i).DeflatedPoint(end)*scale_x(end);
-        else
-            GroundStateFound(i).GroundStateFound = Iterations(i).DeflatedPoint(end);
-        end
-        Iterations(i).DeflatedPoint(end) = [];
-    end
+
+SysOut1 = [];
+if length(Output) - length(res.SysFound) >0
     if res.Scaled
-        scale_x(end)=[];
+        SysOut1 = Sys_Output([Output(length(res.SysFound)+1:length(Output)).DeflatedPoint].*scale_x,Ops,SysFixed);
+    else
+        SysOut1 = Sys_Output([Output(length(res.SysFound)+1:length(Output)).DeflatedPoint],Ops,SysFixed);
     end
-end
-if res.Scaled
-    SysOut = Sys_Output([Iterations.DeflatedPoint].*scale_x,Ops,SysFixed);
 else
-    SysOut = Sys_Output([Iterations.DeflatedPoint],Ops,SysFixed);
+    warning("No new minimising system calculated")
 end
 warning('on','MATLAB:eigs:NotAllEigsConverged')
-SysOut = mergestructs(SysOut,Iterations);
-if res.IEPType == "Classic"
-    SysOut = mergestructs(SysOut,GroundStateFound);
+
+for i=1:length(SysOut1)
+    SysOut1(i).Output = Output(i+length(res.SysFound));
 end
+SysOut = [res.SysFound,SysOut1];
+% SysOut = mergestructs(SysOut,Output);
+% if res.IEPType == "Classic"
+%     SysOut = mergestructs(SysOut,GroundStateFound);
+% end
 
 end
 
@@ -580,5 +653,40 @@ else
     else
         disp(['Found ',num2str(NumMinFound),' local minima after ',num2str(Deflations),' deflations.'])
     end
+end
+end
+
+function test = SysCompare(Sys0,Vary,SysFound)
+test = true;
+Varynames = fieldnames(Vary);
+for j = length(SysFound)
+    for i = 1:length(Varynames)
+        if ~all(logical(logical(Vary.(Varynames{i}))+logical(Sys0.(Varynames{i})))==logical(SysFound(j).(Varynames{i})))
+            test = fail;
+            warning("SysFound structure not compatible")
+            return
+        end
+    end
+end
+end
+
+function Output = CalculateOutputStructure(SysFound,Vary,IEPType,constants)
+
+for i = 1:length(SysFound)
+    [~,~,x]= Sys_Input(SysFound(i),Vary);
+    Output(i).DeflatedPoint = x;
+    if IEPType == "Classic"
+        Output(i).DeflatedPoint(end+1)= -eigs(FormA(Output(i).DeflatedPoint,constants.A(1:end-1),constants.A0),1,'smallestreal');
+        Outout(i).GroundStateFound = Output(i).DeflatedPoint(end);
+        Output(i).ErrorAtDeflatedPoint = IEP_Evaluate_full(Output(i).DeflatedPoint,constants);
+    else
+        Output(i).ErrorAtDeflatedPoint = IEP_Evaluate_diff(Output(i).DeflatedPoint,constants);
+    end
+
+    % Output(i).ErrorAtDeflatedPoint = f(x);
+    Output(i).NIter = 0;
+    Output(i).ConvergenceFlag = "";
+    Output(i).Iterates = x;
+    Output(i).FuncCount = 0;
 end
 end
