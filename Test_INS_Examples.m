@@ -1,118 +1,113 @@
-%Define unit conversions
-rcm = 29979.2458;    % reciprocal cm to MHz
-kelvin = rcm*0.695;  % kelvin        to MHz
-meV = rcm*8.065;     % meV           to MHz
-Tesla = meV*0.116;   % Tesla         to MHz
-%% Mn12
-clear Sys Exp Opt
-[Sys1,Exp] = Mn12_Spin_Sys_3(1,1);
-Sys.S=Sys1.S;
-Sys.B2 = [-100,0,-4000,0,0];
-Sys.B4 = [-1,0,0,0,-1,0,0,0,0];
-Vary=Sys;
-[A] =Sys_Input(Sys,Vary);
-% A{end+1} = eye(size(A{1}));
-    B = zeros(length(A));
-    for i = 1:(length(A))
-        for j = 1:(length(A))
-            B(i,j) = sum(sum(A{j}'.*A{i}));
-        end
-    end
-    % B = B./max(max(B));
-     % B = B./norm(B);
+%% Mn12 Manganese-12-acetate [1,2,3]
+clear all
+rcm = 29979.2458;   meV = rcm*8.065;  
+%Calculate the simulated eigenvalues
+B20 = -0.0570*meV/3; B40 = (-2.78*10^-6)*meV;
+B44 = (-3.2*10^-6)*meV;  B22 = (6.8*10^-4)*meV; %(=E)
+% B44 = (5.1*10^-6)*meV;   B22 = (5.3*10^-4)*meV;  %one of two possible solutions
+ExpSys.S = 10;   ExpSys.B2 = [B22 0 B20 0 0];        % B(k=2,q) with q = +2,+1,0,-1,-2
+ExpSys.B4 = [B44 0 0 0 B40 0 0 0 0];  % B(k=4,q) with q = +4,+3,+2,+1,0,-1,-2,-3,-4
+H = ham(ExpSys,[0,0,0]);
+[~,E]=eig(H); EE = diag(E);  Exp.ev=EE-EE(1);
 
-Opt = struct('NDeflations',2,'Method','LP','Linesearch','No','minalpha',1e-15,...
-    'IEPType','Difference','Verbose',true,'epsilon',0.01,'theta',2,'MaxIter',10000,...
-    'c1',1e-8,'MaxStepSize',1e100,'Scaled',false,'DeflatedLinesearch','Quadratic','SysFound',SysFound);
-[SysOut,options,params]= INS_IEP(Sys,Vary,Exp,Opt);
-SysOut.B2
-%% Mn12
-clear Sys Exp
-[Sys1,Exp] = Mn12_Spin_Sys_3(1,1);
-Sys.S=Sys1.S;
-Sys.B2 = [-100,0,-4000,0,0];
-Sys.B4 = [-1,0,0,0,-1,0,0,0,0];
-Vary=Sys;
-Opt = [];
-Opt = struct('NDeflations',4,'Method','Good_GN','Linesearch','Armijo',...
-    'IEPType','Classic','Verbose',false,'scaled',false,'c1',1e-16);
-[SysOutGood]= INS_IEP(Sys,Vary,Exp,Opt)
-%%
-Opt = struct('NDeflations',4,'Method','Bad_GN','Linesearch','Armijo',...
-    'IEPType','Classic','Verbose',false,'scaled',false,'c1',1e-16);
-[SysOutBad]= INS_IEP(Sys,Vary,Exp,Opt)
-%%
-clf
-f=figure(1);
-subplot(2,1,1)
-options.ShowLegend = true; options.ShowDeflations = 1:length(SysOutGood);
-PlotxConvergence(SysOutGood,options)
-% title('''Good''')
-grid on
-xlabel('k')
-ylabel('error')
-% xlim([0,150])
-hLegend = findobj(gcf, 'Type', 'Legend');
+%Set up the System and intial guess
+%Only one spin centre (Using Giant Spin approximation):
+Sys0.S=ExpSys.S;  
+%Use 4 Stevens operators:
+Sys0.B2 = [-100,0,-1000,0,0];   
+Sys0.B4 = [-1,0,0,0,-1,0,0,0,0];
+%Vary all non zero parameters (no Fixed parameters):
+Vary=Sys0; 
 
-lgnd = strcat(hLegend(1).String, string(newline), format_errs([SysOutGood.ErrorAtDeflatedPoint]));
-legend(lgnd,'location','eastoutside')
+%Calculate a minimising system:
+SysOut= INS_IEP(Sys0,Vary,Exp);
 
-subplot(2,1,2)
-options.ShowDeflations = 1:length(SysOutBad);
-PlotxConvergence(SysOutBad,options)
-hLegend = findobj(gcf, 'Type', 'Legend');
+%Note that you can specify a minimisation method, for example the Riemannian
+% Gradient Descent Lift and Projection method [4]:
+Opt = struct('Method', 'RGD_LP');
+SysOutLP= INS_IEP(Sys0,Vary,Exp,Opt);
 
-lgnd = strcat(hLegend(1).String, string(newline), format_errs([SysOutBad.ErrorAtDeflatedPoint]));
-legend(lgnd,'location','eastoutside')
-% title('''Bad''')
-grid on
-xlabel('k')
-ylabel('error')
-% xlim([0,150])
+%If multiple solutions are desired can use deflation [5]:
+Opt = struct('NDeflations',4);
+SysOut= INS_IEP(Sys0,Vary,Exp,Opt);
 
-f.Units = 'centimeters';
-f.Position = [-50 10 20 18];
+%It is also possible to use previously found solutions in the deflation
+%process:
+Opt = struct('NDeflations',4,'SysFound',SysOutLP);
+SysOut= INS_IEP(Sys0,Vary,Exp,Opt);
 
-%% Cr_n
-clear Sys Exp
-[Sys1,Exp]=Cr_Spin_Sys_3(4);
-H=ham(Sys1,[0,0,0],'sparse'); [Vecs,EE] = eig(full(H),'vector');
-EE=EE(1:24);
-Exp.ev=EE-EE(1);
+% SysOut.B2
 
-r=1;
-% Sys.B2 = [1;1;1;1]*[1000 0 -1000 0 0];
-% Sys.S=Sys1.S;
-% Sys.B2=round(Sys1.B2,r,'significant');
-% Sys.ee=round(Sys1.ee,r,'significant');
-% Vary = Sys;
-N_electrons = 4;
-B20 = (-0.041/3).*meV; % convert from meV to MHz
-B22 = 0.007.*meV; % convert from meV to MHz
-B20 = -1000;
-B22=1000;
-BValues = [-3304.4;1692.5;353000];
-S=3/2;
-Sys.S = [S];
+%% Cr_6 Chromium-6 Chains [6]
+clear all
+rcm = 29979.2458;   meV = rcm*8.065; 
+%set up model
+N_electrons = 6; %Original paper has 6 chains, but can work for other lengths
+%Spins of 3/2
+S=3/2;   Sys.S = ones(1,N_electrons)*S; 
+% Use two stevens operators (D and E)
+Sys.B2 = [ones(N_electrons,1) zeros(N_electrons,1) ones(N_electrons,1)...
+    zeros(N_electrons,1) zeros(N_electrons,1) ];
+%Include isotropic electron-electron exchange coupling terms for nearest 
+% neighbours using Sys.J
+J = []; %ee= [];
 for i = 2:N_electrons
-    Sys.S = [Sys.S,S];
+    J = [1,zeros(1,i-2),J];
+    % ee = [eye(3);zeros(3*(i-2),3);ee];
 end
-B2 = [B22 0 B20 0 0]; % B(k=2,q) with q = +2,+1,0,-1,-2\% Sys.B2=round(Sys.B2,r,'significant');
-B2=round(B2,r,'significant');
-Sys.B2 = [B2];
-for i = 2:N_electrons
-    Sys.B2 = [Sys.B2;B2];
-end
-J = 1.46*meV;   ee = [];ee1=[];JJ = [];
-% J = 0.1*meV;
-J = round(J,r,'significant');
-for i = 2:N_electrons
-%     JJ = [1+i*1e-4,zeros(1,i-2),JJ];
-    JJ = [J,zeros(1,i-2),JJ];
+Sys.J = J;
+% Sys.ee = ee;
+%Simulate the eigenvalues:
+ExpSys.S = Sys.S;
+ExpSys.J = Sys.J*1.46*meV;
+ExpSys.B2 = Sys.B2.*[0.007.*meV 0 (-0.041/3).*meV 0 0];
+H = ham(ExpSys,[0,0,0]);
+[~,E]=eig(H); EE = diag(E);  Exp.ev=EE(1:24)-EE(1);
 
+
+%%
+%Set up initial guess, using Sys.J
+Sys1.S = Sys.S;
+Sys1.B2 = Sys.B2.*[1 0 -1 0 0];
+Sys1.J = Sys.J*1e2;
+Vary1 = Sys;
+
+SysOut1= INS_IEP(Sys1,Vary1,Exp);
+
+%Can alternatively Sys.ee to describe the total coupling matrix, if we only
+%include the isotropic terms then the end result will be the same:
+Sys2 = Sys1;
+ee = [];
+for i = 2:N_electrons
     ee = [eye(3);zeros(3*(i-2),3);ee];
 end
-Sys.J = JJ;
+Sys2.ee = ee.*1e2;
+
+%Note that it is not possible to use both  Sys.J and Sys.ee at the same time
+Sys2 = rmfield(Sys2,'J');
+%and Vary has to be updated: 
+Vary2 =Sys2;
+SysOut2= INS_IEP(Sys2,Vary2,Exp);
+
+%Check that the output structures are equivalent:
+all(all(ham(SysOut1,[0,0,0]) == ham(SysOut2,[0,0,0])))
+
+%It is also possible to find multiple numerical solutions to this problem,
+%even if they make no physical sense. In this case it is necessary to
+%change one of the deflation parmeters. 
+Opt = struct('NDeflations',4,'Sigma',1e-7);
+SysOut= INS_IEP(Sys1,Vary1,Exp,Opt);
+
+
+
+
+
+%% Dy_6 Dysprosium
+
+ExpSys.S = Sys.S
+
+
+
 Vary = Sys;
 % Sys.ee = J.*ee;
 % J=1;
@@ -248,3 +243,35 @@ function ferrs = format_errs(errs)
         ferrs(k) = sprintf('%0.1e', errs(k));
     end
 end
+
+
+
+
+
+% [1] - Roland Bircher et al. “Transverse magnetic anisotropy in Mn 12 
+% acetate: Direct determination by inelastic neutron scattering”. en. In: 
+% Physical Review B 70.21 (Dec. 2004), p. 212413. issn: 1098-0121, 1550-235X
+
+% [2] - J. R. Friedman, M. P. Sarachik, J. Tejada, and R. Ziolo, 
+% Macroscopic Measurement of Resonant Magnetization Tunneling in High-Spin 
+% Molecules, Phys. Rev. Lett., 76 (1996), pp. 3830–3833, https://doi.org/10.
+% 1103/physrevlett.76.3830, https://link.aps.org/doi/10.1103/PhysRevLett.76.3830. 
+% Publisher: American Physical Society (APS).
+
+% [3] - R. Sessoli, D. Gatteschi, A. Caneschi, and M. A. Novak, Magnetic 
+% bistability in a metal-ion cluster, Nature, 365 (1993), pp. 141–143, 
+% https://doi.org/10.1038/365141a0, https://www.nature.com/articles/365141a0.
+% Publisher: Springer Science and Business Media LLC.
+
+
+
+
+% [4] - A Bloor Riley RGDLP
+
+% [5] - A Bloor Riley Deflation
+
+% [6] - Michael L. Baker et al. “Varying spin state composition by the choice of capping
+% ligand in a family of molecular chains: detailed analysis of magnetic properties
+% of chromium(iii) horseshoes”. en. In: Dalton Transactions 40.12 (2011), p. 2725.
+% issn: 1477-9226, 1477-9234. doi: 10.1039/c0dt01243b. url: http://xlink.
+% rsc.org/?DOI=c0dt01243b.
