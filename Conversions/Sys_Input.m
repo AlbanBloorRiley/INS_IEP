@@ -22,6 +22,10 @@ N_electrons = length(Sys0.S);
 Varynames = fieldnames(Vary);
 Sys0names = fieldnames(Sys0);
 
+if ~all(contains(Sys0names,[Varynames;"S"]))
+    error("Please use all the same fields in 'Sys0' and 'Vary' inputs.")
+end
+
 if ~any(contains(Sys0names,'J'))&&~any(contains(Sys0names,'ee'))&&N_electrons>1
     error('Please provide an electron-electron exchange coupling. Use either the J or ee field')
 end
