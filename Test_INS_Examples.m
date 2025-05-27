@@ -22,23 +22,29 @@ Vary=Sys0;
 %Calculate a minimising system:
 SysOut= INS_IEP(Sys0,Vary,Exp);
 
-%Note that you can specify a minimisation method, for example the Riemannian
-% Gradient Descent Lift and Projection method [4]:
-Opt = struct('Method', 'RGD_LP');
-SysOutLP= INS_IEP(Sys0,Vary,Exp,Opt);
 
-%If multiple solutions are desired can use deflation [5]:
-Opt = struct('NDeflations',4);
+%Note that there are two formulations of the Inverse eigenvalue problem,
+%this is due to the fact that INS experiments caluculate the difference,
+% between eigenvalues not their explicit values. Thus the "Difference" type
+% matches to this difference directly (reducing the number of equations
+% used to match the data by one), whearas the "Classic" type adds an
+% additional parameter to fit (the value of the groundstate/smallest
+% eigenvalue. In most cases both formulations will find a minimum:
+Opt = struct('IEPType', 'Classic');
+SysOut= INS_IEP(Sys0,Vary,Exp,Opt);
+
+%If multiple solutions are desired can use deflation [4]:
+Opt = struct('NDeflations',3);
 SysOut= INS_IEP(Sys0,Vary,Exp,Opt);
 
 %It is also possible to use previously found solutions in the deflation
 %process:
-Opt = struct('NDeflations',4,'SysFound',SysOutLP);
+Opt = struct('NDeflations',4,'SysFound',SysOut);
 SysOut= INS_IEP(Sys0,Vary,Exp,Opt);
 
 % SysOut.B2
 
-%% Cr_6 Chromium-6 Chains [6]
+%% Cr_6 Chromium-6 Chains [5]
 clear all
 rcm = 29979.2458;   meV = rcm*8.065; 
 %set up model
@@ -103,7 +109,89 @@ SysOut= INS_IEP(Sys1,Vary1,Exp,Opt);
 
 
 %% Dy_6 Dysprosium
+clear all
+rcm = 29979.2458;   meV = rcm*8.065; 
+%Experimental eigenvalues
+Exp.ev = [0;0;0.72;0.72;1.12;1.12;1.28;1.28].*meV;
 
+Sys.S = [1/2 15/2 1/2];
+B20 = -0.173585036568371*meV;B22 = 0.443886669455654*meV;
+B40 = -0.000767621238475*meV;B60 = -0.000125378265669*meV;
+Jex1 = 0.076588615657158*meV;Jex2 = 0.048947841762338*meV;
+% 
+% B20 = -0.173585*meV;B22 =  0.443886*meV;
+B40 = -0.000767*meV;B60 = -0.000125*meV;
+% Jex1 = 0.076588*meV;Jex2 = 0.048947*meV;
+
+B20 = -0.1*meV;B22 =  0.4*meV;
+B40 = -0.0007*meV;B60 = -0.0001*meV;
+Jex1 = 0.07*meV;Jex2 = 0.04*meV;
+Sys.B2 = [0 0 0 0 0 ; B22 0 B20 0 0 ; 0 0 0 0 0 ];
+% Sys.B2 = [0 0 0 0 0 ; 0 0 B20 0 0 ; 0 0 0 0 0 ];
+Sys.B4 = [0 0 0 0 0 0 0 0 0; 0 0 0 0 B40 0 0 0 0; 0 0 0 0 0 0 0 0 0];
+Sys.B6 = [0 0 0 0 0 0 0 0 0 0 0 0 0; 0 0 0 0 0 0 B60 0 0 0 0 0 0; 0 0 0 0 0 0 0 0 0 0 0 0 0];
+% Sys.J = [Jex1 0 Jex2];
+
+% Sys.ee = [diag([Jex1,Jex1,Jex1]);zeros(3);diag([Jex2,Jex2,Jex2])];
+% 
+Sys.ee = [diag([Jex1,Jex1,Jex1+1]);zeros(3);diag([Jex2,Jex2,Jex2+1])];
+% Vary.ee = [[1,0,1;0,1,0;1,0,1];zeros(3);[1,0,1;0,1,0;1,0,1]];
+Vary = Sys;
+%
+% Vary.B2([2,8]) = 0;
+% Vary.B4(14) = 0;
+% Vary.B6(20) = 0;
+
+% This model of the system is rank deficien and does not converge within 
+% 1000 iterations with default settings:
+SysOut = INS_IEP(Sys,Vary,Exp,Opt);
+%Note the warning about rank deficiency, now if we include a regularisation
+%term the method converges very quickly:
+%
+Opt.Regularisation = 1e-8;
+SysOut = INS_IEP(Sys,Vary,Exp,Opt);
+
+% Antiisotropic? off diagonals
+
+%%
+clear all
+%Calculate eigenvalues
+rcm = 29979.2458;   meV = rcm*8.065;
+ExpSysA.S = 6;
+ExpSysA.B2 = [0 0 0.705 0 0.0250].*meV;
+ExpSysA.B4 = [0 0 0 0 0 0 0 0 -8.5E-4 ].*meV;
+EE = eig(ham(ExpSysA,[0,0,0]));
+ExpA.ev = EE-EE(1);
+ExpSysB.S = 6;
+ExpSysB.B2 = [0 0 0.712 0 0.0729].*meV;
+EE = eig(ham(ExpSysB,[0,0,0]));
+ExpB.ev = EE(1:end)-EE(1);
+
+%Set up system fo 
+Sys0.S = 6;
+Sys0.B2 = [0 0 1 0 0.1].*meV;
+% Sys0.B2 = ExpSysB.B2;
+
+%In this case the standard method converges (the line search terminates), 
+% but the value of the objective function is large, as well as the norm of
+% the gradient so this is not a minimum, most likely due to the highly non
+% linear nature of the problem:
+Opt.Verbose=true
+SysOutB = INS_IEP(Sys0,Sys0,ExpB,Opt)
+
+%In this case it may be better to use an alternaitve minimisation method, 
+%for example the Riemannian Gradient Descent Lift and Projection method [6]:
+Opt = struct('Method', 'RGD_LP');
+SysOutB = INS_IEP(Sys0,Sys0,ExpB,Opt)
+
+Sys0.B4 = [zeros(1,8),-1e-2].*meV;
+% Opt = struct('Method','RGD_LP');
+SysOutA = INS_IEP(Sys0,Sys0,ExpA,Opt)
+
+
+
+
+%%
 ExpSys.S = Sys.S
 
 
@@ -266,11 +354,11 @@ end
 
 
 
-% [4] - A Bloor Riley RGDLP
+% [6] - A Bloor Riley RGDLP
 
-% [5] - A Bloor Riley Deflation
+% [4] - A Bloor Riley Deflation
 
-% [6] - Michael L. Baker et al. “Varying spin state composition by the choice of capping
+% [5] - Michael L. Baker et al. “Varying spin state composition by the choice of capping
 % ligand in a family of molecular chains: detailed analysis of magnetic properties
 % of chromium(iii) horseshoes”. en. In: Dalton Transactions 40.12 (2011), p. 2725.
 % issn: 1477-9226, 1477-9234. doi: 10.1039/c0dt01243b. url: http://xlink.
