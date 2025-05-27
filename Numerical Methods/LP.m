@@ -32,7 +32,7 @@ while stop == false
    
     if length(params.method.constants.ev)<length(DFull)
         C = (DFull'-params.method.constants.ev).^2;
-        pairs = matchpairs(C,1e10);
+        pairs = matchpairs(C,max(size(C)) * max(C,[],'all'));
         D = DFull(pairs(:,2));
         Q = QFull(:,pairs(:,2));
         params.method.constants.ev = params.method.constants.ev((pairs(:,1)));
