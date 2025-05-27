@@ -33,7 +33,7 @@ while stop == false
         OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d \n', NIter,X.F,norm(X.J'*X.R));
     end
     [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F,x, p, X.J'*X.F,NIter, params.convergence);
-    pprev=p;
+    % pprev=p;
     % Save iterates for plotting
     if RecordIterates
         CurrentLoop.Iterates = [CurrentLoop.Iterates, x];
