@@ -32,6 +32,7 @@ end
 % Print 0th iteration
 if params.method.Verbose
     OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d; alpha = %d; \n', NIter,X.F,norm(X.J'*X.R),0);
+    fprintf(repmat(' ',1,OutputLineLength))
 end
 
 % Main Loop
@@ -42,6 +43,7 @@ while stop == false
     if regularise  % If ill-conditioned use Tikhonov regularisation
         % p = - Solver(lambda(NIter)*diag(diag(X.J'*X.J)) + X.J'*X.J,X.J'*X.R);
         p = - params.method.ScalingMatrix*Solver([X.J;lambda(NIter,X)*diag(diag(X.J'*X.J))],[X.R;zeros(length(x),1)]);
+                % p = - params.method.ScalingMatrix*Solver((X.J),X.R);
     else
         p = - params.method.ScalingMatrix*Solver(X.J,X.R);
         % p = - Solver(X.J'*X.J, params.method.ScalingMatrix*X.J'*X.R);
@@ -71,9 +73,13 @@ while stop == false
             else
                 CurrentLoop.ConvergenceFlag = "Merit line search terminated";
             end
+            if params.method.Verbose
+                fprintf(repmat('\b',1,OutputLineLength))
+                OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d; alpha = %d; \n', NIter,X.F,norm(X.J'*X.R),alpha);
+            end
             break
         end
-    % Take the deflated Gauss-Newton Type 1 step:
+        % Take the deflated Gauss-Newton Type 1 step:
     x = x + alpha*p;
 
     % Calculate updated residual, Jacobian of R
