@@ -32,7 +32,9 @@ end
 % Print 0th iteration
 if params.method.Verbose
     OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d; alpha = %d; \n', NIter,X.F,norm(X.J'*X.R),0);
-    fprintf(repmat(' ',1,OutputLineLength))
+    if isempty(DeflatedPts)
+        fprintf(repmat(' ',1,OutputLineLength))
+    end
 end
 
 % Main Loop
