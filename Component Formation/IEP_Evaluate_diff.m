@@ -27,18 +27,18 @@ else
     D1=diag(D1);
         D = (D1(1:length(constants.ev)));
     if any(isnan(D))
-        [Q,D1] = eigs(FormA(x,constants.A,constants.A0),length(constants.ev),'smallestreal','subspacedimension',2*min([length(constants.ev)+10,2*length(constants.ev),length(constants.A{1})]));
+        [Q,D1] = eigs(FormA(x,constants.A,constants.A0),2*length(constants.ev),'smallestreal','subspacedimension',2*min([length(constants.ev)+10,2*length(constants.ev),length(constants.A{1})]));
         D1=diag(D1);
         D = (D1(1:length(constants.ev)));
     end
     if any(isnan(D))
-        [Q,D1] = eigs(FormA(x,constants.A,constants.A0),length(constants.ev),'smallestreal','subspacedimension',2*min([max(length(constants.ev)+50,3*length(constants.ev)),length(constants.A{1})]));
+        [Q,D1] = eigs(FormA(x,constants.A,constants.A0),3*length(constants.ev),'smallestreal','subspacedimension',2*min([max(length(constants.ev)+50,3*length(constants.ev)),length(constants.A{1})]));
         D1=diag(D1);
         D = D1(1:length(constants.ev));
     end
     if any(isnan(D))
         warning("eigs() not converged, using eig()");
-%         [Q,D] = eig(full(FormA(x,constants.A,constants.A0)),'vector');
+        [Q,D] = eig(full(FormA(x,constants.A,constants.A0)),'vector');
         D = D(1:length(constants.ev));
     end
 %     if (D-D1(length(D)))>1e-3
