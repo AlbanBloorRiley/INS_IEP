@@ -103,9 +103,9 @@ N_electrons = length(Sys.S);
 % if all(size(Sys0.ee) == [N_electrons,3])||all(size(Sys0.ee) == [3*N_electrons,3])
 [initials] = unique(abs(Sys0.ee),'stable');
 initials = initials';
-if all(size(Sys0.ee) == [N_electrons,3])
+if all(size(Sys0.ee) == [(N_electrons-1)*(N_electrons)/2,3])
 
-    OpDim= [3,(N_electrons-1)*(N_electrons)/2];
+    OpDim= [(N_electrons-1)*(N_electrons)/2,3];
 elseif all(size(Sys0.ee) == [3*(N_electrons-1)*(N_electrons)/2,3])
     OpDim=[3*(N_electrons-1)*(N_electrons)/2,3];
 else
