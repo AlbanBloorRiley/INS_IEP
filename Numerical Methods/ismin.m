@@ -13,7 +13,10 @@ function [test,flag] = ismin(f,x,p,gradf,NIter,ConvergenceParams,varargin)
 
 test = false;
 flag = "";
-if norm(p)<ConvergenceParams.StepTolerance
+if nargin> 6 && (any(isnan(varargin{1}))||any(isinf(varargin{1})))
+    flag = "Deflation operator is Nan/Inf";
+    test = true;
+elseif norm(p)<ConvergenceParams.StepTolerance
     flag = 'Step Size below tolerance';
     test=true;
 elseif isnan(f)||isinf(f)
@@ -27,11 +30,8 @@ elseif norm(gradf)<ConvergenceParams.GradientTolerance
     test=true;
 elseif NIter>=ConvergenceParams.MaximumIterations
     flag ='Max Iterations reached';
-    test = true  ;
-elseif nargin> 6 && (any(isnan(varargin{1}))||any(isinf(varargin{1})))
-    flag = "Deflation operator is Nan/Inf";
     test = true;
-    elseif isfield(ConvergenceParams,'RelativeStepTolerance')&& (norm(p)/norm(x))<ConvergenceParams.RelativeStepTolerance
+elseif isfield(ConvergenceParams,'RelativeStepTolerance')&& (norm(p)/norm(x))<ConvergenceParams.RelativeStepTolerance
     flag = 'Relative Step Size below tolerance';
     test=true;
 end
