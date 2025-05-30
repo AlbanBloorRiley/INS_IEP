@@ -96,7 +96,7 @@ while stop == false
     if RecordIterates, CurrentLoop.Iterates = [CurrentLoop.Iterates, x]; end
 end
 CurrentLoop.DeflatedPoint = x;
-CurrentLoop.ErrorAtDeflatedPoint = obj_fun(x, params.method.constants);
+CurrentLoop.ErrorAtDeflatedPoint = X.F;
 CurrentLoop.NIter = NIter;
 CurrentLoop.FuncCount= FuncCount;
 
