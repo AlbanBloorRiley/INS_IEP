@@ -123,9 +123,9 @@ Jex1 = 0.076588615657158*meV;Jex2 = 0.048947841762338*meV;
 B40 = -0.000767*meV;B60 = -0.000125*meV;
 % Jex1 = 0.076588*meV;Jex2 = 0.048947*meV;
 
-B20 = -0.1*meV;B22 =  0.4*meV;
-B40 = -0.0007*meV;B60 = -0.0001*meV;
-Jex1 = 0.07*meV;Jex2 = 0.04*meV;
+B20 = -0.1*meV;B22 =  0.1*meV;
+B40 = -0.001*meV;B60 = -0.0001*meV;
+Jex1 = 0.1*meV;Jex2 = 0.01*meV;
 Sys.B2 = [0 0 0 0 0 ; B22 0 B20 0 0 ; 0 0 0 0 0 ];
 % Sys.B2 = [0 0 0 0 0 ; 0 0 B20 0 0 ; 0 0 0 0 0 ];
 Sys.B4 = [0 0 0 0 0 0 0 0 0; 0 0 0 0 B40 0 0 0 0; 0 0 0 0 0 0 0 0 0];
@@ -144,12 +144,13 @@ Vary = Sys;
 
 % This model of the system is rank deficien and does not converge within 
 % 1000 iterations with default settings:
-SysOut = INS_IEP(Sys,Vary,Exp,Opt);
+SysOut1 = INS_IEP(Sys,Vary,Exp);
 %Note the warning about rank deficiency, now if we include a regularisation
 %term the method converges very quickly:
 %
-Opt.Regularisation = 1e-8;
-SysOut = INS_IEP(Sys,Vary,Exp,Opt);
+% Opt.Verbose = true;
+Opt.Regularisation = 1e-4;
+SysOut2 = INS_IEP(Sys,Vary,Exp,Opt);
 
 % Antiisotropic? off diagonals
 
@@ -171,28 +172,303 @@ ExpB.ev = EE(1:end)-EE(1);
 Sys0.S = 6;
 Sys0.B2 = [0 0 1 0 0.1].*meV;
 % Sys0.B2 = ExpSysB.B2;
-
-%In this case the standard method converges (the line search terminates), 
-% but the value of the objective function is large, as well as the norm of
-% the gradient so this is not a minimum, most likely due to the highly non
+Sys0.B2 = [0 0 0.71 0 0.072].*meV;
+%In this case the standard method fails to converge this is most likely due to the highly non
 % linear nature of the problem:
-Opt.Verbose=true
-SysOutB = INS_IEP(Sys0,Sys0,ExpB,Opt)
+Opt.Verbose = true;
 
-%In this case it may be better to use an alternaitve minimisation method, 
-%for example the Riemannian Gradient Descent Lift and Projection method [6]:
+SysOutB = INS_IEP(Sys0,Sys0,ExpB)
+
+%In this case it is better to use an alternaitve minimisation method, 
+%for example the Riemannian Gradient Descent Lift and Projection method [6],
+% which finds the minimum for each example:
 Opt = struct('Method', 'RGD_LP');
 SysOutB = INS_IEP(Sys0,Sys0,ExpB,Opt)
 
 Sys0.B4 = [zeros(1,8),-1e-2].*meV;
-% Opt = struct('Method','RGD_LP');
 SysOutA = INS_IEP(Sys0,Sys0,ExpA,Opt)
 
 
 
 
 %%
-ExpSys.S = Sys.S
+%% Example 2
+% PHYSICAL REVIEW B 88, 064405 (2013)
+clear all
+% some constants
+rcm = 29979.2458; % reciprocal cm to MHz
+meV = rcm*8.065; % meV to MHz
+% All parameters come from PHYSICAL REVIEW B 88, 064405 (2013)
+%Setup of J=6 for Tb3+ and S=1/2 for Cu
+ExpSys.S = [6 1/2];
+
+% Exchange coupling
+Jxx = -0.54;
+Jyy = -0.54;
+Jzz = -0.298;
+ExpSys.ee = [Jxx Jyy Jzz].*meV;
+%Stevens parameters
+B20 = -0.197;
+B22 = 0.066;
+B40 = 1.5e-4;
+B44 = 5e-4;
+B60 = -1.25e-5;
+B64 = 1.17e-4;
+ExpSys.B2 = [B22 0 B20 0 0 ; zeros(1,5)].*meV;
+ExpSys.B4 = [B44 0 0 0 B40 0 0 0 0 ; zeros(1,9)].*meV;
+ExpSys.B6 = [0 0 B64 0 0 0 B60 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
+H = ham(ExpSys,[0,0,0]);
+EE = eig(H);
+Exp.ev = EE(1:10)-EE(1);
+
+Sys0.S = [6 1/2];
+Sys0.ee = [-0.5 -0.5 -0.25].*meV;
+Sys0.B2 = [0.1 0 -0.1 0 0 ; zeros(1,5)].*meV;
+Sys0.B4 = [1e-4 0 0 0 1e-4 0 0 0 0 ; zeros(1,9)].*meV;
+Sys0.B6 = [0 0 1e-4 0 0 0 -1e-4 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
+
+%This is another highly nonlinear problem, with an often poorly conditioned
+% Jacobian matrix, meaning the method doesnt even take a single iteration 
+% as the line search terminates:
+SysOut = INS_IEP(Sys0,Sys0,Exp);
+SysOut.Output.ErrorAtDeflatedPoint
+%%
+
+%One option to try if the method doesn't converge is to scale the problem
+%by the initial guess given:
+Opt.Scaled = true;
+SysOut = INS_IEP(Sys0,Sys0,Exp,Opt);
+% Note that this now causes a rank deficient jacobian. We have already
+% discussed the method of regularisation to deal with this, an alternative
+% approach is to change the linear solver that is used:
+Opt.LinearSolver = "lsqminnorm";
+SysOut = INS_IEP(Sys0,Sys0,Exp,Opt);
+
+% There are two ways to combat this problem, use the Riemannian Gradient
+% descent Lift and projection method, with an increased number of iterations:
+%%
+clear Opt
+Opt.Method = "RGD_LP";
+% Opt.Verbose = true;
+Opt.MaxIter = 1e5;
+SysOut = INS_IEP(Sys0,Sys0,Exp,Opt)
+SysOut.Output
+
+%%
+% We have already discussed using regularisation to deal with a rank 
+% deficient jacobian, an alternative approach is to change the linear
+% solver that is used to calculate the next step:
+clear Opt
+% Opt.Verbose = true;
+Opt.LinearSolver = "lsqminnorm";
+% Opt.C1 = 1e-18;
+Opt.Scaled = true;
+Opt.NDeflations = 100;
+% Opt.IEPType = "Classic";
+SysOut = INS_IEP(Sys0,Sys0,Exp,Opt);
+% SysOut.Output
+% Opt.StepTolerance = 1e-6;
+
+
+
+
+
+%%
+
+
+clear all
+% some constants
+rcm = 29979.2458; % reciprocal cm to MHz
+meV = rcm*8.065; % meV to MHz
+% All parameters come from PHYSICAL REVIEW B 88, 064405 (2013)
+%Setup of J=6 for Tb3+ and S=1/2 for Cu
+ExpSys.S = [6 1/2];
+
+% Exchange coupling
+Jxx = -0.54;
+Jyy = -0.54;
+Jzz = -0.298;
+ExpSys.ee = [Jxx Jyy Jzz].*meV;
+%Stevens parameters
+B20 = -0.197;
+B22 = 0.066;
+B40 = 1.5e-4;
+B44 = 5e-4;
+B60 = -1.25e-5;
+B64 = 1.17e-4;
+ExpSys.B2 = [B22 0 B20 0 0 ; zeros(1,5)].*meV;
+ExpSys.B4 = [B44 0 0 0 B40 0 0 0 0 ; zeros(1,9)].*meV;
+ExpSys.B6 = [0 0 B64 0 0 0 B60 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
+H = ham(ExpSys,[0,0,0]);
+EE = eig(H);
+Exp.ev = EE(1:end)-EE(1);
+
+%Not every parameter needs to be fitted. Only the non zero values in the
+%structure 'Vary' will be varied. All the other parameters will stay fixed.
+%In this example we fix the zero field splitting parameters and 
+Sys0 = ExpSys;
+Sys0.ee = [-1 -1 -2].*meV;
+Vary.ee = Sys0.ee;
+Vary.B2 = zeros(size(ExpSys.B2));
+Vary.B4 = zeros(size(ExpSys.B4));
+Vary.B6 = zeros(size(ExpSys.B6));
+% Sys0.S = [6 1/2];
+% Sys0.ee = [-0.5 -0.5 -0.25].*meV;
+% Sys0.B2 = [0.1 0 -0.1 0 0 ; zeros(1,5)].*meV;
+% Sys0.B4 = [1e-4 0 0 0 1e-4 0 0 0 0 ; zeros(1,9)].*meV;
+% Sys0.B6 = [0 0 1e-4 0 0 0 -1e-4 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
+
+%This is another highly nonlinear problem which fails to converge with
+% standard options :
+SysOut = INS_IEP(Sys0,Vary,Exp);
+SysOut.Output.ErrorAtDeflatedPoint
+%%
+%One option is to use a different numerical method:
+Opt.Method = "RGD_LP";
+SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
+
+
+
+% Another option is to try and find the minimum after multiple deflations.
+% When using deflation is it often adventagous to scale the variables:
+clear Opt
+Opt.Scaled = true;
+Opt.NDeflations = 5;
+SysOut = INS_IEP(Sys0,Sys0,Exp,Opt);
+% In this case it is the 5th found system that we want.
+SysOut(5)
+
+%%
+
+clear Opt
+Opt.Method = "Newton";
+Opt.Scaled = true;
+Opt.NDeflations = 300;
+Opt.Verbose = true;
+% Opt.LinearSolver = "lsqminnorm";
+% Opt.Regularisation = 1e-18;
+Opt.FunctionTolerance = 1e-3;
+Opt.ConvergenceFlags = "Gradient less than tolerance";
+SysOut = INS_IEP(Sys0,Sys0,Exp,Opt);
+% In this case it is the 5th found system that we want.
+% SysOut.Output
+
+%%
+%% Cr_6 Chromium-6 Chains [5]
+clear all
+rcm = 29979.2458;   meV = rcm*8.065; 
+%set up model
+N_electrons = 8; %Original paper has 6 chains, but can work for other lengths
+%Spins of 3/2
+S=3/2;   Sys.S = ones(1,N_electrons)*S; 
+% Use two stevens operators (D and E)
+Sys.B2 = [ones(N_electrons,1) zeros(N_electrons,1) ones(N_electrons,1)...
+    zeros(N_electrons,1) zeros(N_electrons,1) ];
+%Include isotropic electron-electron exchange coupling terms for nearest 
+% neighbours using Sys.J
+J = []; %ee= [];
+for i = 2:N_electrons
+    J = [1,zeros(1,i-2),J];
+    % ee = [eye(3);zeros(3*(i-2),3);ee];
+end
+Sys.J = J;
+% Sys.ee = ee;
+%Simulate the eigenvalues:
+ExpSys.S = Sys.S;
+ExpSys.J = Sys.J*1.46*meV;
+ExpSys.B2 = Sys.B2.*[0.007.*meV 0 (-0.041/3).*meV 0 0];
+tic
+% H = ham(ExpSys,[0,0,0],'sparse');
+[A,A0,x0,Ops,SysFixed] = Sys_Input(ExpSys,ExpSys);
+H = FormA(x0,A,A0);
+[~,E]=eigs(H,30,'smallestreal'); EE = diag(E);  Exp.ev=EE(1:24)-EE(1);
+toc
+
+%%
+%Set up initial guess, using Sys.J
+Sys0.S = Sys.S;
+Sys0.B2 = Sys.B2.*[1 0 -1 0 0];
+Sys0.J = Sys.J*1e2;
+Vary1 = Sys;
+Opt.Verbose = true;
+tic
+SysOut= INS_IEP(Sys0,Vary1,Exp,Opt);
+toc
+
+%%
+
+
+Sys0.S = [2 2 5/2 5/2 5/2 5/2]; % MnIII has S = 2, MnII has S = 5/2
+
+% Here are some somewhat reasonable starting parameters
+J_S4_S4   = -5*meV;    % MnIII - MnIII.                       
+J_S4_S5_1 = 0.41*meV;  % MnIII - MnII, MnIII JT involved.     
+J_S4_S5_2 = -0.41*meV; % MnIII - MnII, MnIII JT not involved. 
+J_S5_S5   = -0.1*meV;  % MnII  - MnII.                        
+
+
+%Assigning parameter values to spin site pairs
+%Labelling follows the drawing in the presentation from 29/4 2024
+J_AB = J_S4_S4;
+J_A1 = J_S4_S5_1; J_A3 = J_S4_S5_1; J_B2 = J_S4_S5_1; J_B4 = J_S4_S5_1; %For these, the MnIII JT axis is involved. Can be FM or AFM
+J_A2 = J_S4_S5_2; J_A4 = J_S4_S5_2; J_B1 = J_S4_S5_2; J_B3 = J_S4_S5_2; %For these, the MnIII JT axis is NOT involved. Can only be AFM
+J_12 = J_S5_S5;   J_34 = J_S5_S5; 
+J_14 = 0;         J_23 = 0; %Assumed zero. Only interacts via a pivalate bridge.
+J_13 = 0;         J_24 = 0; %Assumed zero. No interaction pathway
+
+Sys0.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 J_34].*(-2); %-2J formalism
+
+DIII = -0.029*meV; % MnIII anisotropy. Free Value 
+EIII = 0*DIII;   % MnIII rhombicity. For INS, assume 0.
+B20III = 3*DIII; B22III = EIII; %Converting to Stevens Operator formalism
+
+DII = -0.000*meV; % MnII anisotropy. For INS, assume 0. 
+EII = DII*0;      % MnII rhombicity. For INS, assume 0.
+B20II = 3*DII; B22II = EII; %Converting to Stevens Operator formalism
+
+Sys0.B2 = [B22III 0 B20III 0 0;
+          B22III 0 B20III 0 0;
+          B22II 0 B20II 0 0;
+          B22II 0 B20II 0 0;
+          B22II 0 B20II 0 0;
+          B22II 0 B20II 0 0];
+Vary = Sys0; Vary.J(1)=0;
+
+
+Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218]'.*meV;   %or
+Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]'.*meV;
+
+clear Opt
+Opt.Verbose = true;
+Opt.Scaled = true;
+% Opt.MaxIter = 11;
+Opt.Method = "Good_GN";
+SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
+
+%%
+
+
+
+
+
+
+%% General tips
+%
+% If failing to converge then use: scaling, regularisation, try RGD_LP or
+% another method
+%
+% If converging at 0/1 iterations, recuce C1
+%
+% If rank deficiency try: Regularisation or change the LinearSolver to
+% "lsqminnorm" or custom Solver. 
+%
+% If deflation is not effective use: Scaling, increase Theta, decrease
+% Sigma
+%
+% 
+%
+%
+
 
 
 
@@ -208,14 +484,7 @@ Vary = Sys;
 %     'IEPType','Difference','Verbose',true,'c1',1e-6);
 
 
-[A] =Sys_Input(Sys,Vary);
-A{end+1} = eye(size(A{1}));
-    B = zeros(length(A));
-    for i = 1:(length(A))
-        for j = 1:(length(A))
-            B(i,j) = sum(sum(A{j}'.*A{i}));
-        end
-    end
+
 Opt = struct('NDeflations',1,'Method','LP','Linesearch','Armijo',...
     'MaxIter',1e5,'theta',2,'StepTolerance',1e-6,'GradientTolerance',0,...
 'Minalpha',1e-10,'Scaled',false,'epsilon',0.001,...
@@ -260,24 +529,6 @@ SysOut= INS_IEP(Sys,Vary,Exp,Opt)
 
 
 
-
-
-
-
-
-
-
-
-%%
-clear Sys
-[Sys,Vary,Exp]=Dy_Sys;
-warning('Off','MATLAB:nearlySingularMatrix')
-Opt = struct('Eigensolver','eig','NDeflations',10,'Method','RGD_LP','Linesearch','Armijo',...
-    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-10,...
-    'ObjectiveTolerance',1e-6,'Minalpha',1e-18,'Scaled',true,'epsilon',0.1,...
-    'IEPType','Classic','Verbose',true,'c1',1e-10);
-[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
-warning('On','MATLAB:nearlySingularMatrix')
 %%
 clear Sys Vary
 [Sys,Vary,Exp]=Mn6_Sys;
@@ -292,16 +543,7 @@ Opt = struct('Eigensolver','eig','NDeflations',10,'Method','Good_GN','Linesearch
 % SysOut.B2
 
 % SysOut.ee
-%% Test scale invariance
-Opt = struct('NMinima',1,'Method','Newton','Linesearch','No',...
-    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-    'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'epsilon',0.001,...
-    'deflatelinesearch',1,'IEPType','Classic','Verbose',1,'tau',0.5);
-Opt.Scaled = 1;
-[SysOut1, NIter1, Flags1, Iters1, FinalError1]= INS_IEP(Sys,Vary,Exp,Opt);
-Opt.Scaled = 0;
-[SysOut0, NIter0, Flags0, Iters0, FinalError0]= INS_IEP(Sys,Vary,Exp,Opt);
-Iters1{1}.*Iters0{1}(:,1)-Iters0{1}
+
 %% 
 
 j=1;    idx=[];
