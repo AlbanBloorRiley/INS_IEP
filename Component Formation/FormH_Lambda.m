@@ -16,7 +16,7 @@ l=length(A);
 H = zeros(l,l,m);
 QAQ = cell(1,l);
 for i = 1:l
-    QAQ{i} = Q'*A{i}*Q(:,1:m);
+    QAQ{i} = Q(:,1:m)'*A{i}*Q(:,1:m);
 end
 if ~isvector(D)
     D  =diag(D);
