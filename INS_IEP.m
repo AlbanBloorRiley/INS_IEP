@@ -135,7 +135,7 @@ defaultGroundStateFound = [];
 % Main method options
 defaultMethod ='Good_GN';
 defaultNDeflations = 1;
-defaultMaxNonMinima = 10;
+defaultMaxNonMinima = inf;
 
 
 % Solver options
@@ -161,7 +161,7 @@ defaultLinesearch = 'Armijo';
 defaultC1 = 1e-7;
 defaultTau = 0.5;
 defaultAlpha0 = 1;
-defaultMinalpha = 1e-18;
+defaultMinalpha = 1e-15;
 defaultDeflatedLinesearch = "No";
 
 %Deflation options
@@ -174,7 +174,7 @@ defaultEpsilon = 0.01;
 defaultStepTolerance = 1e-6;
 defaultGradientTolerance = 0;
 defaultFunctionTolerance = 0;
-defaultRelativeStepTolerance = 1e-10;
+defaultRelativeStepTolerance = 0;%1e-10;
 defaultMaxIter = 1000;
 defaultConvergenceFlags = ["Objective less than tolerance","Gradient less than tolerance","Step Size below tolerance","Merit line search terminated","Relative Step Size below tolerance"];
 
@@ -378,6 +378,9 @@ if isstruct(res.SysFound)
         if warn
             warning("SysFound contains solutions with an extra parameter, assuming that previous results calculated using '''Classic''' IEP Type.")
         end
+        if ~isempty(res.GroundStateFound)
+            params.method.constants.A0 = A0+speye(size(A0))*res.GroundStateFound;
+        end
     end
 
     % notfirstiteration = 1;
@@ -463,6 +466,7 @@ params.linesearch.Mu.gradphi = @(X) X.gradMu;
 switch res.Method
     case "Newton"
         params.linesearch.merit.phi = @(objective_function,x,constants,DeflatedPts,DeflationParameters) Gradient(objective_function,x,constants,DeflatedPts,DeflationParameters);
+        % params.linesearch.merit.phi = @(X) (X.J'*X.R)'*(X.J'*X.R);
         params.linesearch.merit.gradphi = @(X) (X.J'*X.J+X.S)*(X.J'*X.R);
         Fun  = str2func('Deflated_Newton');
     case "Good_GN"
@@ -532,6 +536,7 @@ else
     DeflatedPts = [];
 end
 % for  i=length(Output)+notfirstiteration:res.NDeflations
+warning('off',"MATLAB:rankDeficientMatrix")
 for  i=length(res.SysFound)+1:res.NDeflations
     % for  i=length(Output)+1:res.NDeflations
     if isfield(Output,'DeflatedPoint')&&~isempty([Output.DeflatedPoint])&&any(all(abs([Output.DeflatedPoint] - x0)<1e-16))
@@ -540,7 +545,7 @@ for  i=length(res.SysFound)+1:res.NDeflations
     end
 
     % Main optimisation algorithm
-    Iterations = [];
+    Iterations = []; lastwarn('')
     try
         [Iterations] = Fun(obj_fun,x0,[DeflatedPts,Output(length(res.SysFound)+1:i-1).DeflatedPoint],params,res.RecordIterates);
     catch ME
@@ -549,6 +554,12 @@ for  i=length(res.SysFound)+1:res.NDeflations
         % stopearly = true;
         break
     end
+
+            [~,ID]=lastwarn;
+        if ID == "MATLAB:rankDeficientMatrix"
+            warning("Rank deficient matrix detected, consider using the Regularisation option. ")
+        end
+
     %Record Time to compute if requested
     if res.RecordTimes
         Times{i,:,:} = toc;
@@ -607,7 +618,7 @@ if res.RecordTimes
     % end
     Output = cell2struct([struct2cell(Output);reshape(Times,1,1,length(Output))],[fieldnames(Output);'Times']);
 end
-
+warning('on',"MATLAB:rankDeficientMatrix")
 
 
 SysOut1 = [];
