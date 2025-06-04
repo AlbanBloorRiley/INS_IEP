@@ -14,7 +14,7 @@ end
 [stop,CurrentLoop.ConvergenceFlag] = ismin(X.F,x ,inf,X.J'*X.F, NIter, params.convergence);
 % Main Loop )
 while stop == false
-    p = - Binv*X.J'*X.R;
+    p = - params.method.ScalingMatrix*Binv*X.J'*X.R;
     xprev = x;
 
     x = xprev + p;
