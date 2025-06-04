@@ -19,9 +19,9 @@ authors:
     affiliation: 2
 affiliations:
   - name: The Uinversity of Manchester, Department of Mathematics
-   index: 1
+    index: 1
   - name: The Uinversity of Manchester, Department of Chemistry
-   index: 2
+    index: 2
 date: June 2025
 bibliography: Paper.bib
 
