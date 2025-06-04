@@ -1,5 +1,5 @@
 ---
-title: 'INS_IEP': A Matlab package for fitting Inelastic Neutron Scattering data.
+title: 'INS_IEP: A Matlab package for fitting Inelastic Neutron Scattering data.'
 tags:
   - Matlab 
   - Inelastic Neutron Scattering
@@ -45,12 +45,10 @@ Inelastic neutron scattering (INS) is a spectroscopic technique used to measure 
 The INS experiements provide eigenvalues of the Spin Hamiltonian matrix of the sample, the task of calculating the matrix from the eigenvalues is an inverse eigenvalue problem
 
 Let $A(x)$ be the affine family of matrices,
-$$
-A( x) = A_0 + \sum^\ell_{i=1} x_i A_i,
-$$
+$$ A( x) = A_0 + \sum^\ell_{i=1} x_i A_i, $$
 where $x\in\mathbb R^\ell$ and $A_0,\dots,A_\ell \in \mathbb R^{n\times n}$ are linearly independent symmetric matrices, and denote the ordered eigenvalues of $A(x)$ as $\lambda_1(x)\leq\dots\leq\lambda_n(x)$.
 Then the least squares inverse eigenvalue problem is to find the parameters $x \in \mathbb R^\ell$ that minimises
-$$  F(x,\rho) = \frac 1 2 ||r(x,\rho)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_{\rho_i}( x) - \lambda_i^*)^2$$, where  $\lambda_1^*\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues. 
+$$  F(x,\rho) = \frac 1 2 ||r(x,\rho)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_{\rho_i}( x) - \lambda_i^*)^2 $$ , where  $\lambda_1^*\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues. 
 
 
 Given real numbers $\lambda_1^*\leq\ldots\leq\lambda_m^*$, where $m \leq n$, find the parameters $x \in \mathbb R^\ell$ and the permutation $\rho$ $\in S_n$
