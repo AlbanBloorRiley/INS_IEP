@@ -76,14 +76,16 @@ $$F(x) = \frac 1 2 ||r(x)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_(x) - \lambda_i
 
 where  $\lambda_1^*\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues. In the case of INS fitting the $A_i$ basis matrices will be a combination of Stevens operators and electron-electron exchange terms. The IEP described above is formulated as an least squares problem, this is due to the fact that the number of eigenvalues that can be probed by INS experiments is often a small subset of the full spectrum
 
-As far as we are aware this is the first time that the fitting of INS data has been explicitly formulated as an IEP. The advantage of this formulation is that there are explicit formulas for the derivatives of $r(x)$:
+As far as we are aware this is the first time that the fitting of INS data has been explicitly formulated as an IEP. The advantage of this formulation is that there are explicit formulas for the derivatives of $r(x)$, the first derivative (Jacobian) is:
 
 $$ J_r(x) = \begin{pmatrix}
         q_1(x)^TA_1q_1(x)&\dots &q_1(x)^TA_\ell q_1(x)\\
         \vdots&\ddots&\vdots\\
         q_m(x)^TA_1q_m(x)&\dots& q_m(x)^TA_\ell q_m(x)
     \end{pmatrix},$$
-   
+    
+And the seccond derivative (Hessian) is:
+
 $$ (H_{r})_{ij} = \sum^m_{k=1} (\lambda_k-\lambda_k^*) (2\sum^m_{\substack{t=1\\\lambda_t\neq\lambda_k}} \frac{(q_t^TA_iq_k)(q_t^TA_jq_k)}{\lambda_k-\lambda_t}.}$$
 
 ## Methods
