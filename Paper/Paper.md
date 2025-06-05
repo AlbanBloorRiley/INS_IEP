@@ -40,29 +40,65 @@ Inelastic neutron scattering (INS) is a spectroscopic technique used to measure 
 
 
 
-# Inverse Eigenvalue Problem 
+# The Spin Hamiltonian
 
-The INS experiements provide eigenvalues of the Spin Hamiltonian matrix of the sample, the task of calculating the matrix from the eigenvalues is an inverse eigenvalue problem
+The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, it is  widely used to model data arising from many spectroscopy techniques \cite[p.257]{launay_electrons_2014}. It can be modeled as a linear combination of interaction terms, we will focus on the zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
+
+$$H = H_{ZFI} + H_{EEI} $$
+
+Both of these terms can themselves be modelled as the linear sum of other basis matrices. The zero field interaction can be written as:
+
+$$H_{ZFI} = \sum_{-k\leq q \leq k} B^q_kO^q_k$$
+
+where the $O^q_k$ are Stevens Operators [@], and $B^q_k$ the assosiated parameter. When there are multiple spin centres it is necessary to take kronecker products of the operator with identity matrices of the appropriate for each other spin centre.
+
+When there are multiple spin centres it is also necessary to include an electron-electron interaction term, H_{EEI}. This term will be the sum of interaction terms between each pair of spin centres:
+
+$$H_{EEI} = -\sum_{i\neqj} J_{ij} \bm S_i\cdot \bm S_j$$
+
+where $\bm S_i$ is the vector of spin operators $\bm S_i = [S_x, S_y, S_z]$ for the $i$th spin centre, and $J_{ij}$ is the unknown parameter. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotripc case will be a matrix where the off diagonals are skew symmetric. While the summation is in theory over all spin centre comninations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are modeled. 
+
+
+# Mathematical Background 
+## Inverse Eigenvalue Problem
+
+
+The INS experiements provide eigenvalues of the Spin Hamiltonian matrix of the sample, the task of calculating the matrix from the eigenvalues is an inverse eigenvalue problem:
 
 Let $A(x)$ be the affine family of matrices,
-$$ A( x) = A_0 + \sum^\ell_{i=1} x_i A_i, $$
+
+$$A( x) = A_0 + \sum^\ell_{i=1} x_i A_i,$$
+
 where $x\in\mathbb R^\ell$ and $A_0,\dots,A_\ell \in \mathbb R^{n\times n}$ are linearly independent symmetric matrices, and denote the ordered eigenvalues of $A(x)$ as $\lambda_1(x)\leq\dots\leq\lambda_n(x)$.
 Then the least squares inverse eigenvalue problem is to find the parameters $x \in \mathbb R^\ell$ that minimises
-$$  F(x,\rho) = \frac 1 2 ||r(x,\rho)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_{\rho_i}( x) - \lambda_i^*)^2 $$ , where  $\lambda_1^*\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues. 
 
+$$F(x) = \frac 1 2 ||r(x)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_(x) - \lambda_i^*)^2$$
 
-Given real numbers $\lambda_1^*\leq\ldots\leq\lambda_m^*$, where $m \leq n$, find the parameters $x \in \mathbb R^\ell$ and the permutation $\rho$ $\in S_n$
+where  $\lambda_1^*\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues. In the case of INS fitting the $A_i$ basis matrices will be a combination of Stevens operators and electron-electron exchange terms. The IEP described above is formulated as an least squares problem, this is due to the fact that the number of eigenvalues that can be probed by INS experiments is often a small subset of the full spectrum
 
+As far as we are aware this is the first time that the fitting of INS data has been explicitly formulated as an IEP. The advantage of this formulation is that there are explicit formulas for the derivatives of $r(x)$:
 
-# Overview of Methods
+$$ J_r(x) = \begin{pmatrix}
+        q_1(x)^TA_1q_1(x)&\dots &q_1(x)^TA_\ell q_1(x)\\
+        \vdots&\ddots&\vdots\\
+        q_m(x)^TA_1q_m(x)&\dots& q_m(x)^TA_\ell q_m(x)
+    \end{pmatrix},$$
+   
+$$ (H_{r})_{ij} = \sum^m_{k=1} (\lambda_k-\lambda_k^*) (2\sum^m_{\substack{t=1\\\lambda_t\neq\lambda_k}} \frac{(q_t^TA_iq_k)(q_t^TA_jq_k)}{\lambda_k-\lambda_t}.}$$
 
-As far as we are aware this is the first time that the fitting of INS data has been explicitly formulated as an IEP. The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space my be very 'bumpy', that is there may exist many local minimisers to the problem. We seek to solve this problem by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015; farrell_deflation_2020]. 
-`INS_IEP` contains  a deflated Newton method, and two deflated Gauss-Newton methods [@DeflationPaper] for finding multiple minimising systems.
+## Methods
 
-`INS_IEP` also contains a Riemannian Gradient descent method [@RGDLP Paper], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. This method is guaranteed to converge to a minimum, but only linearly, it is also currently not possible to apply deflation to this method.
+Access to analytical forms of the derivatives means it is not necessary to use the finite difference approximation that other approaches use, making the three optimisation  methods that ``INS_IEP`` uses faster and more accurate. All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ where the step $p^k$ uniquely defines each algorithm:
 
+-  Newton's method: $p^k = (J_r^TJ_r + H_rr){-1}J_r^Tr$
+-  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$
+-  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$
 
+The Lift and Projection method is a a Riemannian Gradient descent method [@RGDLP Paper], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. The matrix $B$ is a Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. In [@RGDLP Paper] it is proven that the method is a strictly descending algorthim, that reduces the value of the objective function every step.
 
+##Deflation 
+
+The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space my be very 'bumpy', that is there may exist many local minimisers to the problem. We seek to solve this problem by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015; farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change [@Deflation_Paper] . 
 
 
 # Acknowledgements
@@ -70,3 +106,9 @@ As far as we are aware this is the first time that the fitting of INS data has b
 ABR thanks the University of Manchester for a Dean’s Doctoral Scholarship. MW thanks the Polish National Science Centre (SONATA-BIS-9), project no. 2019/34/E/ST1/00390, for the funding that supported some of this research. 
 
 # References
+Statement of need - ask mike
+INS
+IEP 
+Methods - (Forula for derivatives)
+Deflation 
+
