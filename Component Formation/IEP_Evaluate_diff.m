@@ -17,7 +17,7 @@ function [f,varargout] = IEP_Evaluate_diff(x,constants)
 if ~isfield(constants,'eigenvalueDifferenceSD')
     constants.eigenvalueDifferenceSD = ones(length(constants.ev)-1,1);
 end
-if constants.ED =="eig"
+if isfield(constants,'ED') && constants.ED =="eig"
     [Q,D] = eig(full(FormA(x,constants.A,constants.A0)),'vector');
     D = D(1:length(constants.ev));
     Q = Q(:,1:length(constants.ev));
