@@ -27,7 +27,12 @@ if ~all(contains(Sys0names,[Varynames;"S"]))
 end
 
 if ~any(contains(Sys0names,'J'))&&~any(contains(Sys0names,'ee'))&&N_electrons>1
-    error('Please provide an electron-electron exchange coupling. Use either the J or ee field')
+    warning("No electron-electron exchange coupling provided, assuming all couplings are zero. " + ...
+        "Use either the J or ee field to input couplings")
+    Sys0.J = zeros(1,(N_electrons-1)*(N_electrons)/2);
+    Vary.J = zeros(1,(N_electrons-1)*(N_electrons)/2);
+    Sys0names{end+1} = 'J';
+    % error('Please provide an electron-electron exchange coupling. Use either the J or ee field')
 end
 stevk="";   %adds empty string
 for i = 1:length(Varynames)
