@@ -29,7 +29,10 @@ bibliography: Paper.bib
 
 # Summary
 
-`INS_IEP` is a MATLAB package used to fit experimental  inelastic neutron scattering (INS) data to a spin Hamiltonian model. INS experiments yield information about the eigenvalues of the spin Hamiltonian matrix that describes the sample being investigated, this can then be formulated as an associated inverse eigenvalue problem (IEP). `INS_IEP` uses deflated numerical optimisation techniques to find multiple spin systems that minimise this problem. 
+Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins. The experimental data is then used to form an inverse eigenvalue problem (IEP) to calculate the spin Hamiltonian operator that represents the sample. Numerical optimisation methods can be used to solve this problem, it is also possoble to use the technique of deflation to 
+
+
+ `INS_IEP` uses deflated numerical optimisation techniques to find multiple spin systems that minimise this problem. 
 
 
 
@@ -54,9 +57,9 @@ where the $O^q_k$ are Stevens Operators [@], and $B^q_k$ the assosiated paramete
 
 When there are multiple spin centres it is also necessary to include an electron-electron interaction term, H_{EEI}. This term will be the sum of interaction terms between each pair of spin centres:
 
-$$H_{EEI} = -\sum_{i\neqj} J_{ij} \bm S_i\cdot \bm S_j$$
+$$H_{EEI} = -\sum_{i\neq j} J_{ij}  S_i\cdot  S_j$$
 
-where $\bm S_i$ is the vector of spin operators $\bm S_i = [S_x, S_y, S_z]$ for the $i$th spin centre, and $J_{ij}$ is the unknown parameter. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotripc case will be a matrix where the off diagonals are skew symmetric. While the summation is in theory over all spin centre comninations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are modeled. 
+where $ S_i$ is the vector of spin operators $ S_i = [S_x, S_y, S_z]$ for the $i$th spin centre, and $J_{ij}$ is the unknown parameter. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotripc case will be a matrix where the off diagonals are skew symmetric. While the summation is in theory over all spin centre comninations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are modeled. 
 
 
 # Mathematical Background 
@@ -82,12 +85,11 @@ $$ J_r(x) = \begin{pmatrix}
         q_1(x)^TA_1q_1(x)&\dots &q_1(x)^TA_\ell q_1(x)\\
         \vdots&\ddots&\vdots\\
         q_m(x)^TA_1q_m(x)&\dots& q_m(x)^TA_\ell q_m(x)
-    \end{pmatrix},$$
+    \end{pmatrix}.$$
     
-And the seccond derivative (Hessian) is:
-
-$$ (H_{r})_{ij} = \sum^m_{k=1} (\lambda_k-\lambda_k^*) (2\sum^m_{\substack{t=1\\\lambda_t\neq\lambda_k}} \frac{(q_t^TA_iq_k)(q_t^TA_jq_k)}{\lambda_k-\lambda_t}.}$$
-
+And the second derivative (Hessian) is:
+    
+$$ (H_{r})_{ij}   = 2\sum^m_{k=1} (\lambda_k-\lambda_k^*) \sum^m_{\substack{t=1\\\lambda_t\neq\lambda_k}} \frac{(q_t^TA_iq_k)(q_t^TA_jq_k)}{\lambda_k-\lambda_t}.$$
 ## Methods
 
 Access to analytical forms of the derivatives means it is not necessary to use the finite difference approximation that other approaches use, making the three optimisation  methods that ``INS_IEP`` uses faster and more accurate. All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ where the step $p^k$ uniquely defines each algorithm:
