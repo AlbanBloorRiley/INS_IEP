@@ -10,13 +10,13 @@ function Sys_Out = Sys_Output(Vals,Ops,SysFixed)
 % of equal size where the function is applied element-wise.
 if isempty(Vals)
     Sys_Out = [];
+    return
 end
 if isstruct(SysFixed)
     S=SysFixed.S;
 else
     S=SysFixed;
 end
-
 
 f = fieldnames(Ops);
 CellOps = struct2cell(Ops);
