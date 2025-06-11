@@ -479,38 +479,31 @@ switch res.Method
         Fun = str2func('Bad_Deflated_GaussNewton');
     case "LP"
         Fun  = str2func('LP');
+
+        if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"||isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
+            warning("Note that no line search can be used with the Lift and Projection method.")
+        end
         if res.NDeflations >1 || isstruct(res.SysFound)
-            warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
+            warning("The Lift and Project method does not curently suport deflation")
             res.NDeflations=1;
-        else
-            if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"||isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
-                warning("Note that no line search can be used with the Lift and Projection method.")
-            end
-            if res.IEPType ~= "Classic"
-                warning("When using the LP method the ""Classic"" IEP type must be used, switching to the  RGD_LP method.")
-                res.Method = "RGD_LP";
-                Fun  = str2func('RGD_LP');
-                if res.NDeflations >1 || isstruct(res.SysFound)
-                    warning("The Lift and Project method does not curently suport deflation")
-                    res.NDeflations=1;
-                end
-            end
+        end
+        if res.IEPType ~= "Classic"
+            warning("When using the LP method the ""Classic"" IEP type must be used, switching to the  RGD_LP method.")
+            res.Method = "RGD_LP";
+            Fun  = str2func('RGD_LP');
         end
     case "RGD_LP"
         Fun  = str2func('RGD_LP');
-        if res.NDeflations >1 || isstruct(res.SysFound)
-            warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
-            res.NDeflations=1;
-        else
+
             if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"||isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
                 warning("Note that no line search can be used with the Lift and Projection method.")
             end
 
-            if res.NDeflations >1 || isstruct(res.SysFound)
-                warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
-                res.NDeflations=1;
-            end
-        end
+            % if res.NDeflations >1 || isstruct(res.SysFound)
+            %     warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
+            %     res.NDeflations=1;
+            % end
+
     otherwise
         error('Please select a valid method - Newton/Good_GN/Bad_GN')
 end
