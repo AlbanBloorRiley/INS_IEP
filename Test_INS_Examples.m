@@ -19,6 +19,10 @@ Sys0.B4 = [-1,0,0,0,-1,0,0,0,0];
 %Vary all non zero parameters (no Fixed parameters):
 Vary=Sys0; 
 
+SysOut= INS_IEP(Sys0,Vary,Exp,Opt);
+%%
+
+
 %Calculate a minimising system:
 SysOut= INS_IEP(Sys0,Vary,Exp);
 
@@ -396,16 +400,17 @@ SysOut= INS_IEP(Sys0,Vary1,Exp,Opt);
 toc
 
 %%
-
-
-Sys0.S = [2 2 5/2 5/2 5/2 5/2]; % MnIII has S = 2, MnII has S = 5/2
+clear Sys0
+rcm = 29979.2458;   meV = rcm*8.065; 
+SysSol.S = [2 2 5/2 5/2 5/2 5/2]; % MnIII has S = 2, MnII has S = 5/2
 
 % Here are some somewhat reasonable starting parameters
-J_S4_S4   = -5*meV;    % MnIII - MnIII.                       
-J_S4_S5_1 = 0.41*meV;  % MnIII - MnII, MnIII JT involved.     
-J_S4_S5_2 = -0.41*meV; % MnIII - MnII, MnIII JT not involved. 
-J_S5_S5   = -0.1*meV;  % MnII  - MnII.                        
+                 
 
+J_S4_S4   = -5*meV;    % MnIII - MnIII.                       Rodolphe: Strong and AFM.    Keep fixed.
+J_S4_S5_1 = 0.41*meV;  % MnIII - MnII, MnIII JT involved.     Rodolphe: Weak, FM or AFM.   Free value
+J_S4_S5_2 = -0.4*meV; % MnIII - MnII, MnIII JT not involved. Rodolphe: Weak and AFM.      Free value
+J_S5_S5   = -0.1*meV;  % MnII  - MnII.    
 
 %Assigning parameter values to spin site pairs
 %Labelling follows the drawing in the presentation from 29/4 2024
@@ -413,7 +418,38 @@ J_AB = J_S4_S4;
 J_A1 = J_S4_S5_1; J_A3 = J_S4_S5_1; J_B2 = J_S4_S5_1; J_B4 = J_S4_S5_1; %For these, the MnIII JT axis is involved. Can be FM or AFM
 J_A2 = J_S4_S5_2; J_A4 = J_S4_S5_2; J_B1 = J_S4_S5_2; J_B3 = J_S4_S5_2; %For these, the MnIII JT axis is NOT involved. Can only be AFM
 J_12 = J_S5_S5;   J_34 = J_S5_S5; 
-J_14 = 0;         J_23 = 0; %Assumed zero. Only interacts via a pivalate bridge.
+J_14 = 0;         J_23 = 0;% 0.01*meV; %Assumed zero. Only interacts via a pivalate bridge.
+J_13 = 0;         J_24 = 0; %Assumed zero. No interaction pathway
+
+SysSol.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 J_34].*(-2); %-2J formalism
+
+DIII = -0.029*meV; % MnIII anisotropy. Free Value 
+EIII = 0*DIII;   % MnIII rhombicity. For INS, assume 0.
+B20III = 3*DIII; B22III = EIII; %Converting to Stevens Operator formalism
+
+DII = -0.000*meV; % MnII anisotropy. For INS, assume 0. 
+EII = DII*0;      % MnII rhombicity. For INS, assume 0.
+B20II = 3*DII; B22II = EII; %Converting to Stevens Operator formalism
+
+SysSol.B2 = [B22III 0 B20III 0 0;
+          B22III 0 B20III 0 0;
+          B22II 0 B20II 0 0;
+          B22II 0 B20II 0 0;
+          B22II 0 B20II 0 0;
+          B22II 0 B20II 0 0];
+
+%%
+Sys0.S = [2 2 5/2 5/2 5/2 5/2]; % MnIII has S = 2, MnII has S = 5/2
+
+J_S4_S4   = -5*meV;    % MnIII - MnIII.                       
+J_S4_S5_1 = 0.6*meV;  % MnIII - MnII, MnIII JT involved.     
+J_S4_S5_2 = -0.2*meV; % MnIII - MnII, MnIII JT not involved. 
+J_S5_S5   = -0.01*meV;  % MnII  - MnII.       
+J_AB = J_S4_S4;
+J_A1 = J_S4_S5_1; J_A3 = J_S4_S5_1; J_B2 = J_S4_S5_1; J_B4 = J_S4_S5_1; %For these, the MnIII JT axis is involved. Can be FM or AFM
+J_A2 = J_S4_S5_2; J_A4 = J_S4_S5_2; J_B1 = J_S4_S5_2; J_B3 = J_S4_S5_2; %For these, the MnIII JT axis is NOT involved. Can only be AFM
+J_12 = J_S5_S5;   J_34 = J_S5_S5; 
+J_14 = 0;         J_23 = 0;% 0.01*meV; %Assumed zero. Only interacts via a pivalate bridge.
 J_13 = 0;         J_24 = 0; %Assumed zero. No interaction pathway
 
 Sys0.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 J_34].*(-2); %-2J formalism
@@ -432,17 +468,23 @@ Sys0.B2 = [B22III 0 B20III 0 0;
           B22II 0 B20II 0 0;
           B22II 0 B20II 0 0;
           B22II 0 B20II 0 0];
-Vary = Sys0; Vary.J(1)=0;
+
+Vary = Sys0; %Vary.J(1)=0;
 
 
 Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218]'.*meV;   %or
-Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]'.*meV;
+% Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]'.*meV;
 
 clear Opt
+% Opt.ScalingMatrix = 1e2*eye(5);
 Opt.Verbose = true;
-Opt.Scaled = true;
-% Opt.MaxIter = 11;
-Opt.Method = "Good_GN";
+% Opt.Scaled = true;
+Opt.C1 =1e-2;
+Opt.Alpha0 = 1e-0;
+Opt.Linesearch = "Quadratic";
+% Opt.Method = "Classic";
+Opt.MaxIter = 500;
+% Opt.Method = "RGD_LP";
 SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
 
 %%
@@ -471,39 +513,6 @@ SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
 
 
 
-
-Vary = Sys;
-% Sys.ee = J.*ee;
-% J=1;
-
-
-% Opt = struct('NDeflations',3,'verbose',true);
-% Opt = struct('NDeflations',1,'Method','LP','Linesearch','Basic',...
-%     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',0,...
-% 'Minalpha',1e-10,'Scaled',true,'epsilon',0.001,...
-%     'IEPType','Difference','Verbose',true,'c1',1e-6);
-
-
-
-Opt = struct('NDeflations',1,'Method','LP','Linesearch','Armijo',...
-    'MaxIter',1e5,'theta',2,'StepTolerance',1e-6,'GradientTolerance',0,...
-'Minalpha',1e-10,'Scaled',false,'epsilon',0.001,...
-    'IEPType','Difference','Verbose',true,'c1',1e-6,'alpha0',100);
-[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
-
-SysOut.B2
-
-
-
-%For many minima:
-% Opt = struct('NMinima',8,'Method','Newton','Linesearch','Basic',...
-%     'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',1e-1,...
-%     'ObjectiveTolerance',1e-1,'Minalpha',1e-10,'Scaled',1,'epsilon',0.001,...
-%     'deflatelinesearch',0,'IEPType','Difference','Verbose',1,'tau',0.5);
-% Sys.B2=round(Sys.B2,r,'significant');
-% Sys.ee=round(Sys.ee,r,'significant');
-% Sys.J=round(Sys.J,r,'significant');
-
 %% Test 1
 clear Sys Sys1 Exp
 rng(1)
@@ -529,23 +538,8 @@ SysOut= INS_IEP(Sys,Vary,Exp,Opt)
 
 
 
-%%
-clear Sys Vary
-[Sys,Vary,Exp]=Mn6_Sys;
-%%
-Opt = struct('Eigensolver','eig','NDeflations',10,'Method','Good_GN','Linesearch','Armijo',...
-    'MaxIter',1000,'theta',2,'StepTolerance',1e-6,'GradientTolerance',0,...
-    'ObjectiveTolerance',0,'Minalpha',1e-13,'Scaled',true,'epsilon',0.1,...
-    'IEPType','Difference','Verbose',false,'tau',0.5,'c1',1e-10,...
-    "MuLinesearch","No","DeflatedLinesearch","Armijo");
-[SysOut]= INS_IEP(Sys,Vary,Exp,Opt)
-
-% SysOut.B2
-
-% SysOut.ee
 
 %% 
-
 j=1;    idx=[];
 for i = 1:length(NIter1)
     if Flags{i} == "Objective less than tolerance"||Flags{i} == "Gradient less than tolerance"
@@ -558,25 +552,6 @@ end
 % SysOut=SysOut1(idx)
 NIter=NIter1(idx);
 FinalError(idx)
-
-
-
-
-
-
-
-
-%%
-function ferrs = format_errs(errs)
-    ferrs = string([]);
-    for k = 1:length(errs)
-        ferrs(k) = sprintf('%0.1e', errs(k));
-    end
-end
-
-
-
-
 
 % [1] - Roland Bircher et al. “Transverse magnetic anisotropy in Mn 12 
 % acetate: Direct determination by inelastic neutron scattering”. en. In: 
