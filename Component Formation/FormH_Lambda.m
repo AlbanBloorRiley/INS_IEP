@@ -1,7 +1,7 @@
 function H = FormH_Lambda(Q,A,D,evORm)
-%FORMJLAMBDA Hessian matrix of Lambda
+%FORMHLAMBDA Hessian matrix of Lambda
 %
-%FORMJLAMBDA(Q,A) is the Hessian matrix of Lambda with respect to x, where
+%FORMHLAMBDA(Q,A,D,evORm)is the Hessian matrix of Lambda with respect to x, where
 %Q is the eigenvectors of the current Hamiltonian estimate, A is the 
 % cell tructure of basis matrices, D is the eigenvalues of the current 
 % Hamiltonian estimate, and evORm is either the vector if prescribed
