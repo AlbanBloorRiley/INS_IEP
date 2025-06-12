@@ -14,7 +14,7 @@ Vary = ExpSys; Vary.B2(3)=0; Vary.B4(5)=0;
 constants.A = A;
 constants.A0 = A0;
 constants.ev=Exp.ev;
-N=1000;
+N=100;
 x = linspace(-2.5e-3,2.5e-3,N);
 y = linspace(-1.5e-5,1.5e-5,N);
 [X,Y] =meshgrid(x,y);
