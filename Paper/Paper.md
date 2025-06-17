@@ -34,13 +34,13 @@ Inelastic neutron scattering (INS) is a spectroscopic technique used to measure 
 # Statement of need
 
 
-Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins, such as single ions or molecular-based magnets. The  experiments are able to measure the energy between quantum spin states, these energy are then associated with the eigenvalues of the Hamiltonian matrix that describes the quantum spin dynamics of the compound in question [@furrer_magnetic_2013; @baker_neutron_2012; @baker_spectroscopy_2014]. This information is crucial in understanding quantum phenomena and potentially can help  utilise electronic quantum spins in new quantum applications such as information sensing and processing. The particular parametrised inverse eigenvalue problem that arises from an INS experiment is determined by the Hamiltonian model that is used to describe the spin system, and the eigenvalues that have been found experimentally.
+Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins, such as single ions or molecular-based magnets. The  experiments are able to measure the energy between quantum spin states, these energy are then associated with the eigenvalues of the Hamiltonian matrix that describes the quantum spin dynamics of the compound in question [@furrer_magnetic_2013;@baker_neutron_2012;@baker_spectroscopy_2014]. This information is crucial in understanding quantum phenomena and potentially can help  utilise electronic quantum spins in new quantum applications such as information sensing and processing. The particular parametrised inverse eigenvalue problem that arises from an INS experiment is determined by the Hamiltonian model that is used to describe the spin system, and the eigenvalues that have been found experimentally.
 
 
 
 # The Spin Hamiltonian
 
-The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, it is  widely used to model data arising from many spectroscopy techniques @launay_electrons_2014]. It can be modeled as a linear combination of interaction terms, we will focus on the zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
+The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, it is  widely used to model data arising from many spectroscopy techniques [@launay_electrons_2014]. It can be modeled as a linear combination of interaction terms, we will focus on the zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
 
 $$H = H_{ZFI} + H_{EEI} $$
 
@@ -80,25 +80,28 @@ $$ J_r(x) = \begin{pmatrix}
         q_1(x)^TA_1q_1(x)&\dots &q_1(x)^TA_\ell q_1(x)\\
         \vdots&\ddots&\vdots\\
         q_m(x)^TA_1q_m(x)&\dots& q_m(x)^TA_\ell q_m(x)
-    \end{pmatrix}.$$
-    
+    \end{pmatrix}.$$    
+
 And the second derivative (Hessian) is:
-  
-$$(H_{r})_{ij}   = 2\sum^m_{k=1} (\lambda_k-\lambda_k^*) \sum^m_{\substack{t=1\\\lambda_t\neq\lambda_k}} \frac{(q_t^TA_iq_k)(q_t^TA_jq_k)}{\lambda_k-\lambda_t}.$$
+
+$$ (H_{r})_{ij}   = 2\sum^m_{k=1} (\lambda_k-\lambda_k^*) \sum^m_{\substack            {t=1\\\lambda_t\neq\lambda_k}} \frac{(q_t^TA_iq_k)(q_t^TA_jq_k)}{\lambda_k-\lambda_t}.
+$$
+
+Access to analytical forms of the derivatives means it is not necessary to use the finite difference approximation that other approaches use, making the three optimisation  methods that ``INS_IEP`` uses faster and more accurate. 
 
 ## Methods
 
-Access to analytical forms of the derivatives means it is not necessary to use the finite difference approximation that other approaches use, making the three optimisation  methods that ``INS_IEP`` uses faster and more accurate. All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ where the step $p^k$ uniquely defines each algorithm:
+All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ where the step $p^k$ uniquely defines each algorithm:
 
--  Newton's method: $p^k = (J_r^TJ_r + H_rr){-1}J_r^Tr$
--  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$
--  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$
+-  Newton's method: $p^k = (J_r^TJ_r + H_rr){-1}J_r^Tr$ [@Noced]
+-  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$ [@DeflationPaper]
+-  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$ [@RGDLP_Paper]
 
-The Lift and Projection method is a a Riemannian Gradient descent method [@RGDLP Paper], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. The matrix $B$ is a Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. In [@RGDLP Paper] it is proven that the method is a strictly descending algorthim, that reduces the value of the objective function every step.
+The Lift and Projection method is a a Riemannian Gradient descent method [@RGDLP_Paper], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. The matrix $B$ is a Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. In [@RGDLP_Paper] it is proven that the method is a strictly descending algorthim, that reduces the value of the objective function every step.
 
 ## Deflation 
 
-The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space my be very 'bumpy', that is there may exist many local minimisers to the problem. For example in figure \autoref{fig:mn12}, there are clearly 4 distinct solutions (for more details see Example1_Mn12 in the examples folder). We seek to solve the problem of multiple local minima by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015; farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change [@Deflation_Paper] . 
+The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space my be very 'bumpy', that is there may exist many local minimisers to the problem. For example in figure \autoref{fig:mn12}, there are clearly 4 distinct solutions (for more details see Example1_Mn12 in the examples folder). We seek to solve the problem of multiple local minima by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015;@farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change [@Deflation_Paper] . 
 
 <!--![Left: Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in [@bircher_transverse_2004]. Right: Convergence plot for finding each minimum using deflation 
 \label{fig:mn12}](Mn12_figure.png) 
