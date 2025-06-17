@@ -29,12 +29,7 @@ bibliography: Paper.bib
 
 # Summary
 
-Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins. The experimental data is then used to form an inverse eigenvalue problem (IEP) to calculate the spin Hamiltonian operator that represents the sample. Numerical optimisation methods can be used to solve this problem, it is also possoble to use the technique of deflation to 
-
-
- `INS_IEP` uses deflated numerical optimisation techniques to find multiple spin systems that minimise this problem. 
-
-
+Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins. Fitting the experimental data to a spin Hamiltonian model can be formulated as an inverse eigenvalue problem (IEP). `INS_IEP` is a MATLAB package that uses deflated numerical optimisation techniques to find multiple solutions to this problem. The package requires and is fully compatible with `easyspin` [@stoll_easyspin_2006], a package for solving similar problems in electron paramagnetic resonance.
 
 # Statement of need
 
@@ -102,8 +97,9 @@ The Lift and Projection method is a a Riemannian Gradient descent method [@RGDLP
 
 ## Deflation 
 
-The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space my be very 'bumpy', that is there may exist many local minimisers to the problem. For an example of this see figure ![Mn12](Mn12_figure.eps)We seek to solve this problem by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015; farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change [@Deflation_Paper] . 
+The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space my be very 'bumpy', that is there may exist many local minimisers to the problem. For example in figure \autoref{fig:mn12}, there are clearly 4 distinct solutions (for more details see Example1_Mn12 in the examples folder). We seek to solve the problem of multiple local minima by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015; farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change [@Deflation_Paper] . 
 
+![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in [@bircher_transverse_2004] \label{fig:mn12}](Mn12_figure.png | width=100) ![Convergence \label{fig:mn12}](Mn12_Convergence.png "title-2" =50&x)
 
 # Acknowledgements
 
