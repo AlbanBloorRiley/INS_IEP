@@ -48,7 +48,7 @@ Both of these terms can themselves be modelled as the linear sum of other basis 
 
 $$H_{ZFI} = \sum_{-k\leq q \leq k} B^q_kO^q_k$$
 
-where the $O^q_k$ are Stevens Operators [@], and $B^q_k$ the assosiated parameter. When there are multiple spin centres it is necessary to take kronecker products of the operator with identity matrices of the appropriate for each other spin centre.
+where the $O^q_k$ are Stevens Operators [@rudowicz_generalization_2004], and $B^q_k$ the assosiated parameter. When there are multiple spin centres it is necessary to take kronecker products of the operator with identity matrices of the appropriate for each other spin centre.
 
 When there are multiple spin centres it is also necessary to include an electron-electron interaction term, H_{EEI}. This term will be the sum of interaction terms between each pair of spin centres:
 
@@ -93,11 +93,11 @@ Access to analytical forms of the derivatives means it is not necessary to use t
 
 All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ where the step $p^k$ uniquely defines each algorithm:
 
--  Newton's method: $p^k = (J_r^TJ_r + H_rr){-1}J_r^Tr$ [@Noced]
--  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$ [@DeflationPaper]
--  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$ [@RGDLP_Paper]
+-  Newton's method: $p^k = (J_r^TJ_r + H_rr){-1}J_r^Tr$ [@nocedal_numerical_2006]
+-  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$ [@riley_deflation_2025]
+-  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$ [@riley_riemannian_2025]
 
-The Lift and Projection method is a a Riemannian Gradient descent method [@RGDLP_Paper], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. The matrix $B$ is a Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. In [@RGDLP_Paper] it is proven that the method is a strictly descending algorthim, that reduces the value of the objective function every step.
+Where the matrix $B$ is the Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. The Lift and Projection method is a a Riemannian Gradient descent method [@riley_riemannian_2025], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. In [@riley_riemannian_2025] it is proven that the method is a strictly descending algorthim, that is it reduces the value of the objective function every step. Both the deflated Gauss-Newton method and the Riemannian Gradient descent Lift and Projection method are new methods designed for this package. 
 
 ## Deflation 
 
