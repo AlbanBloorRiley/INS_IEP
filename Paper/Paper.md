@@ -34,13 +34,13 @@ Inelastic neutron scattering (INS) is a spectroscopic technique used to measure 
 # Statement of need
 
 
-Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins, such as single ions or molecular-based magnets. The  experiments are able to measure the energy between quantum spin states, these energy are then associated with the eigenvalues of the Hamiltonian matrix that describes the quantum spin dynamics of the compound in question [furrer_magnetic_2013; baker_neutron_2012; baker_spectroscopy_2014]. This information is crucial in understanding quantum phenomena and potentially can help  utilise electronic quantum spins in new quantum applications such as information sensing and processing. The particular parametrised inverse eigenvalue problem that arises from an INS experiment is determined by the Hamiltonian model that is used to describe the spin system, and the eigenvalues that have been found experimentally.
+Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins, such as single ions or molecular-based magnets. The  experiments are able to measure the energy between quantum spin states, these energy are then associated with the eigenvalues of the Hamiltonian matrix that describes the quantum spin dynamics of the compound in question [@furrer_magnetic_2013; @baker_neutron_2012; @baker_spectroscopy_2014]. This information is crucial in understanding quantum phenomena and potentially can help  utilise electronic quantum spins in new quantum applications such as information sensing and processing. The particular parametrised inverse eigenvalue problem that arises from an INS experiment is determined by the Hamiltonian model that is used to describe the spin system, and the eigenvalues that have been found experimentally.
 
 
 
 # The Spin Hamiltonian
 
-The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, it is  widely used to model data arising from many spectroscopy techniques \cite[p.257]{launay_electrons_2014}. It can be modeled as a linear combination of interaction terms, we will focus on the zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
+The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, it is  widely used to model data arising from many spectroscopy techniques @launay_electrons_2014]. It can be modeled as a linear combination of interaction terms, we will focus on the zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
 
 $$H = H_{ZFI} + H_{EEI} $$
 
@@ -102,8 +102,8 @@ The number of eigenvalues that can be probed via INS experiments varies  dependi
 <!--![Left: Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in [@bircher_transverse_2004]. Right: Convergence plot for finding each minimum using deflation 
 \label{fig:mn12}](Mn12_figure.png) 
 -->
-![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in [@bircher_transverse_2004]\label{fig:contour}](Mn12_contour.png){width=400}
-![Rate of converge for each deflation.\label{fig:convergence}](Mn12_convergence.png){width=400}
+![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in [@bircher_transverse_2004]\label{fig:contour}](Mn12_contour.png){ width=400 }
+![Rate of converge for each deflation.\label{fig:convergence}](Mn12_convergence.png){ width=400 }
 
 # Acknowledgements
 
