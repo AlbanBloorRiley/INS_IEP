@@ -102,7 +102,7 @@ The Lift and Projection method is a a Riemannian Gradient descent method [@RGDLP
 
 ##Deflation 
 
-The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space my be very 'bumpy', that is there may exist many local minimisers to the problem. We seek to solve this problem by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015; farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change [@Deflation_Paper] . 
+The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space my be very 'bumpy', that is there may exist many local minimisers to the problem. For an example of this see figure ![](Mn12_figure.eps)We seek to solve this problem by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015; farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change [@Deflation_Paper] . 
 
 
 # Acknowledgements
@@ -110,9 +110,5 @@ The number of eigenvalues that can be probed via INS experiments varies  dependi
 ABR thanks the University of Manchester for a Dean’s Doctoral Scholarship. MW thanks the Polish National Science Centre (SONATA-BIS-9), project no. 2019/34/E/ST1/00390, for the funding that supported some of this research. 
 
 # References
-Statement of need - ask mike
-INS
-IEP 
-Methods - (Forula for derivatives)
-Deflation 
+
 
