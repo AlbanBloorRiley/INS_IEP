@@ -54,7 +54,7 @@ When there are multiple spin centres it is also necessary to include an electron
 
 $$H_{EEI} = -\sum_{i\neq j} J_{ij}  S_i\cdot  S_j$$
 
-where $S_i$ is the vector of spin operators $S_i = [S_x, S_y, S_z]$ for the $i$th spin centre, and $J_{ij}$ is the unknown parameter. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotripc case will be a matrix where the off diagonals are skew symmetric. While the summation is in theory over all spin centre comninations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are modeled. 
+where $S_i$ is the vector of spin operators $S_i = [S_x, S_y, S_z]$ for the $i$-th spin centre, and $J_{ij}$ is the unknown parameter. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotripc case will be a matrix where the off diagonals are skew symmetric. While the summation is in theory over all spin centre comninations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are modeled. 
 
 
 # Mathematical Background 
