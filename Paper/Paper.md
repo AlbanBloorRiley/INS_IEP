@@ -106,8 +106,48 @@ The number of eigenvalues that can be probed via INS experiments varies  dependi
 <!--![Left: Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in [@bircher_transverse_2004]. Right: Convergence plot for finding each minimum using deflation 
 \label{fig:mn12}](Mn12_figure.png) 
 -->
-![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in [@bircher_transverse_2004]\label{fig:contour}](Mn12_contour.png){ width=400 }
+![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in Example 1 \label{fig:contour}](Mn12_contour.png){ width=400 }
 ![Rate of converge for each deflation.\label{fig:convergence}](Mn12_convergence.png){ width=400 }
+
+
+## Examples
+## Example 1 - Mn12
+The first example we will look at is Manganese-12-acetate. This is a well know example in the INS and magnetism community, as one of the first molecules that  behaves like a nano-sized magnet with a molecular magnetic coercivity as well as its role in the research of quantum tunnelling of magnetisation [@friedman_macroscopic_1996;@sessoli_magnetic_1993]. 
+
+The Spin Hamiltonian of this system, using the giant spin approximation, can be represented as a $21\times21$ matrix modelled using 4 Stevens operators [@bircher_transverse_2004]:
+$$  H = B^0_2O^0_2 + B^0_4O^0_4 +B^2_2O^2_2 +B^4_4O^4_4 \in \mathbb R^{21\times 21} $$
+
+We utilise the same spin system syntax as `easyspin`, so to set up the problem we first set up the model, along with initial guesses for the parameters:
+```matlab
+  %One spin centre (because giant spin approximation)
+  Sys0.S=10; 
+  %Four Stevens operators 
+  Sys0.B2 = [-100,0,-1000,0,0];   
+  Sys0.B4 = [-1,0,0,0,-1,0,0,0,0];
+```
+Then we input the experimental eigenvalues, these will normally be translated such that the smallest eigenvalue is zero, and define which parameters to fit. Note that all values given must be in Hertz, so it may be useful to use conversions.
+```matlab
+  rcm = 29979.2458;   meV = rcm*8.065;  %Conversions values
+  %Input calculated eigenvalues:
+  Exp.ev = [0,0,1.24,1.24,2.3,2.3,3.18,3.18,3.91,3.91,4.5,4.5,4.97,4.97,5.32,5.32,5.54,5.59,5.69,5.75,5.78].*meV;
+  %Vary all non zero parameters (no Fixed parameters):
+  Vary = Sys0; 
+```
+Then all that is required is to call `INS_IEP` with these three inputs:
+```matlab
+  SysOut = INS_IEP(Sys0,Vary,Exp);
+```
+If we wish to find all four solutions as shown in figire \autoref{fig:contour} then we use the aditional option:
+
+```matlab
+  Opt.NDeflations = 4;
+  SysOut = INS_IEP(Sys0,Vary,Exp,Opt);
+```
+Then SysOut will be an array of four spin structures each containing a distinct solution. 
+
+## Example 2 - 
+
+
 
 # Acknowledgements
 
