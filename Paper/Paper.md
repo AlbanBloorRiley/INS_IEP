@@ -115,7 +115,8 @@ The number of eigenvalues that can be probed via INS experiments varies  dependi
 The first example we will look at is Manganese-12-acetate. This is a well know example in the INS and magnetism community, as one of the first molecules that  behaves like a nano-sized magnet with a molecular magnetic coercivity as well as its role in the research of quantum tunnelling of magnetisation [@friedman_macroscopic_1996;@sessoli_magnetic_1993]. 
 
 The Spin Hamiltonian of this system, using the giant spin approximation, can be represented as a $21\times21$ matrix modelled using 4 Stevens operators [@bircher_transverse_2004]:
-$$  H = B^0_2O^0_2 + B^0_4O^0_4 +B^2_2O^2_2 +B^4_4O^4_4 \in \mathbb R^{21\times 21} $$
+
+$$H = B^0_2O^0_2 + B^0_4O^0_4 +B^2_2O^2_2 +B^4_4O^4_4 \in \mathbb R^{21\times 21} $$
 
 We utilise the same spin system syntax as `easyspin`, so to set up the problem we first set up the model, along with initial guesses for the parameters:
 ```matlab
