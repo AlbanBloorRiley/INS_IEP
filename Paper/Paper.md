@@ -111,7 +111,7 @@ The number of eigenvalues that can be probed via INS experiments varies  dependi
 
 
 ## Examples
-## Example 1 - Mn12
+## Example 1 - Mn12 
 The first example we will look at is Manganese-12-acetate. This is a well know example in the INS and magnetism community, as one of the first molecules that  behaves like a nano-sized magnet with a molecular magnetic coercivity as well as its role in the research of quantum tunnelling of magnetisation [@friedman_macroscopic_1996;@sessoli_magnetic_1993]. 
 
 The Spin Hamiltonian of this system, using the giant spin approximation, can be represented as a $21\times21$ matrix modelled using 4 Stevens operators [@bircher_transverse_2004]:
@@ -144,11 +144,35 @@ If we wish to find all four solutions as shown in figire \autoref{fig:contour} t
   Opt.NDeflations = 4;
   SysOut = INS_IEP(Sys0,Vary,Exp,Opt);
 ```
-Then SysOut will be an array of four spin structures each containing a distinct solution. 
+In this case SysOut will be an array of four spin structures each containing a distinct solution. 
 
-## Example 2 - 
+## Example 2 - Chromium(iii) Horseshoes
+The second example concerns antiferro-magnetically coupled
+chromium(III) chains six atoms long [@baker_varying_2011], although different length chains are of interest and can also be modelled. Because there are multiple spin centres an electron-electron interaction term is required. The spin hamiltonian is a 4096×4096 matrix composed of two Stevens operators and one interaction term:
 
-
+```matlab
+  Sys0.S = [1.5 1.5 1.5 1.5 1.5 1.5];
+  Sys0.B2 =  [1     0    -1     0     0;
+             1     0    -1     0     0;
+             1     0    -1     0     0;
+             1     0    -1     0     0;
+             1     0    -1     0     0;
+             1     0    -1     0     0];
+  Sys0.J = [100,0,0,0,0,100,0,0,0,100,0,0,100,0,100];
+  Vary = Sys0;
+  Exp.ev = [0,0.355,0.457,0.497,1.576,1.577,1.592,1.629,1.632,2.97,2.98,3.002,3.004,
+            3.01,3.038,3.821,3.824,3.827,3.837,3.856,3.879,3.888,3.895,3.903];
+```
+Note that only 24 eigenvalues were found experimentally, so this will form a partial eigenvalue problem. To find the solution system is as simple as:
+```matlab
+  SysOut = INS_IEP(Sys0,Vary,Exp);
+```
+It is possible to find multiple minimising systems even if they do not make any sense physically, however due to the scalling of the problem a change in the default deflation parameters is necessary:
+```matlab
+  Opt = struct('NDeflations',4,'Sigma',1e-7);
+  SysOut= INS_IEP(Sys0,Vary,Exp,Opt);
+```
+The output contains four different spin systems that all have the same eigenvalues as input, one is the original solution up to a change of sign of the $B_2^2$ parameter, and all have the same exchange term. 
 
 # Acknowledgements
 
