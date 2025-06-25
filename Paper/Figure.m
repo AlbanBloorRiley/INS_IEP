@@ -25,4 +25,63 @@ for i=1:length(x)
     end
 end
 %
-contourf(X,Y,Z,100,'edgecolor','none')
+f = figure(1);
+% subplot(1,2,1)
+contourf(X,Y,Z,100,'edgecolor','none');
+%
+ylabel("B^4_4 meV")
+xlabel("B^2_2 meV")
+
+f.Units = 'centimeters';
+f.Position = [-50 10 20 14];
+%
+
+print(f, 'Mn12_contour.png', '-dpng')
+
+%%
+Opt.NDeflations = 4;
+Sys0 = ExpSys;
+Sys0.B2 = [-100,0,-1000,0,0];   
+Sys0.B4 = [-1,0,0,0,-1,0,0,0,0];
+SysOut = INS_IEP(Sys0, Sys0,Exp,Opt)
+
+%%
+
+subplot(1,2,2)
+%%
+f = figure(2);
+hold on
+cla
+lgnd = string;
+for i = 1:4
+     x = 0:SysOut(i).Output.NIter-1;
+        xx = sum((SysOut(i).Output.Iterates(:,1:end-1)-SysOut(i).Output.Iterates(:,2:end)).^2);
+        semilogy(x,xx,'linewidth',1.3)
+        entry = ['Deflation ', num2str(i-1)];
+        lgnd = [lgnd; entry];
+end
+    lgnd = lgnd(2:end,:);
+    if lgnd(1) == "Deflation 0"
+        lgnd(1) = "Undeflated";
+    end
+    legend(lgnd,'Location','s','fontsize',15)
+hold off
+
+xlabel("Iterations")
+ylabel("Error")
+ylim([1e-10,1e5])
+set(gca, 'YScale', 'log')
+set(gca,'YMinorGrid','on')
+
+f.Units = 'centimeters';
+f.Position = [-50 10 20 14];
+print(f, 'Mn12_convergence.png', '-dpng')
+
+%%
+
+% f.Units = 'centimeters';
+% f.Position = [-50 10 35 14];
+% %
+% print(f, 'Mn12_figure.eps', '-depsc')
+% print(f, 'Mn12_figure.pdf', '-dpdf')
+% print(f, 'Mn12_figure.png', '-dpng')
