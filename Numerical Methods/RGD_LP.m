@@ -10,17 +10,17 @@ Binv = params.method.ScalingMatrix*FormBinv(constants.A);
 [X.Mu,X.gradMu] = deflation(DeflatedPts, x, params.deflation);
 % CurrentLoop.Error = X.F;
 if params.method.Verbose
-    OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d\n', NIter,X.F,norm(X.J'*X.R));
+    OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d; alpha = %d; \n', NIter,X.F,norm(X.J'*X.R),0);
     fprintf(repmat(' ',1,OutputLineLength))
 end
 [stop,CurrentLoop.ConvergenceFlag] = ismin(X.F,x ,inf,X.J'*X.F, NIter, params.convergence);
 % Main Loop )
 while stop == false
     p = - params.method.ScalingMatrix*Binv*X.J'*X.R;
-
+     alpha = Linesearch(x,p,DeflatedPts, params, params.linesearch.merit, obj_fun, X);
      pTgradNu = dot(X.gradMu,p)/X.Mu;
 
-    alpha = params.linesearch.merit.alpha0;
+    % alpha = params.linesearch.merit.alpha0;
     if pTgradNu > 1 % Zone 3
         % Could use a linesearch on mu here. Not necessary in practice.
         alpha = alpha/(1-pTgradNu);
@@ -42,8 +42,8 @@ while stop == false
     Fprev = X.F;
     % [constants,x,Binv] = rescale(constants,x);
     if params.method.Verbose
-        fprintf(repmat('\b',1,OutputLineLength))
-        OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d \n', NIter,X.F,norm(X.J'*X.R));
+ fprintf(repmat('\b',1,OutputLineLength))
+        OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d; alpha = %d; \n', NIter,X.F,norm(X.J'*X.R),alpha);
     end
     [stop, CurrentLoop.ConvergenceFlag] = ismin(X.F,x, p, X.J'*X.F,NIter, params.convergence);
     % pprev=p;
