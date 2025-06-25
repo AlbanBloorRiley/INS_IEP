@@ -340,6 +340,7 @@ if isstruct(res.SysFound)
     else
         %If manually then calculate x and  F(x) for each input system.
         Output = CalculateOutputStructure(res.SysFound,varySys,res.IEPType,constants);
+        res.SysFound(1:length(res.SysFound)).Output = Output;
     end
     % If Classic IEP type then check if Groundstate values input
     if res.IEPType == "Classic"%&&~isfield(Output,'GroundStateFound')
@@ -453,7 +454,7 @@ params.convergence.GradientTolerance = res.GradientTolerance;
 params.convergence.FunctionTolerance = res.FunctionTolerance;
 params.convergence.RelativeStepTolerance = res.RelativeStepTolerance;
 params.convergence.MaximumIterations = res.MaxIter;
-
+params.convergence.ConvergenceFlags = res.ConvergenceFlags;
 
 % Set line search objective/merit function and derivatives - phi/gradphi
 %First set deflation linesearch
@@ -495,9 +496,16 @@ switch res.Method
     case "RGD_LP"
         Fun  = str2func('RGD_LP');
 
-            if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"||isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
-                warning("Note that no line search can be used with the Lift and Projection method.")
+            if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"
+                if isfield(Opt,"Alpha0")&&params.linesearch.merit.alpha0 <=2
+                    params.linesearch.merit.method = "No";
+                    warning("Line search only applied to Lift and Projection method when Alpha0 > 2.")
+                else
+                    params.linesearch.merit.phi = @(objective_function,x,constants,~,~) objective_function(x,constants);
+                    params.linesearch.merit.gradphi = @(X) 2*(X.J'*X.R);
+                end
             end
+
 
             % if res.NDeflations >1 || isstruct(res.SysFound)
             %     warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
