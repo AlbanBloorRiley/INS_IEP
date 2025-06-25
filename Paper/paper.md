@@ -23,7 +23,7 @@ affiliations:
   - name: The Uinversity of Manchester, Department of Chemistry
     index: 2
 date: June 2025
-bibliography: Paper.bib
+bibliography: paper.bib
 
 ---
 
