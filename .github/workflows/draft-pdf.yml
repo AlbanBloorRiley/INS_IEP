@@ -1,6 +1,9 @@
 name: Draft PDF
-on: [push]
-
+on:
+  push:
+    paths:
+      - Paper/paper.md
+      - Paper/paper.bib
 jobs:
   paper:
     runs-on: ubuntu-latest
