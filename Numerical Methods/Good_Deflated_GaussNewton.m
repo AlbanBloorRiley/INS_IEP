@@ -43,8 +43,8 @@ while stop == false
 
     % Calculate undeflated Gauss-Newton Step: p = - J \ R
     if regularise  % If ill-conditioned use Tikhonov regularisation
-        % p = - Solver(lambda(NIter)*diag(diag(X.J'*X.J)) + X.J'*X.J,X.J'*X.R);
-        p = - params.method.ScalingMatrix*Solver([X.J;lambda(NIter,X)*diag(diag(X.J'*X.J))],[X.R;zeros(length(x),1)]);
+        p = - params.method.ScalingMatrix*Solver(lambda(NIter)*diag(diag(X.J'*X.J)) + X.J'*X.J,X.J'*X.R);
+        % p = - params.method.ScalingMatrix*Solver([X.J;lambda(NIter,X)*diag(diag(X.J'*X.J))],[X.R;zeros(length(x),1)]);
                 % p = - params.method.ScalingMatrix*Solver((X.J),X.R);
     else
         p = - params.method.ScalingMatrix*Solver(X.J,X.R);
