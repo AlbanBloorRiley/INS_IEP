@@ -50,7 +50,7 @@ $$H_{ZFI} = \sum_{-k\leq q \leq k} B^q_kO^q_k$$
 
 where the $O^q_k$ are Stevens Operators [@rudowicz_generalization_2004], and $B^q_k$ the assosiated parameter. When there are multiple spin centres it is necessary to take kronecker products of the operator with identity matrices of the appropriate for each other spin centre.
 
-When there are multiple spin centres it is also necessary to include an electron-electron interaction term, H_{EEI}. This term will be the sum of interaction terms between each pair of spin centres:
+When there are multiple spin centres it is also necessary to include an electron-electron interaction term, $H_{EEI}$. This term will be the sum of interaction terms between each pair of spin centres:
 
 $$H_{EEI} = -\sum_{i\neq j} J_{ij}  S_i\cdot  S_j$$
 
