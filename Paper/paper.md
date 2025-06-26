@@ -171,7 +171,7 @@ It is possible to find multiple minimising systems even if they do not make any 
 ```
 The output contains four different spin systems that all have the same eigenvalues as input, one is the original solution up to a change of sign of the $B_2^2$ parameter, and all have the same exchange term. 
 
-Other examples can be found in the Examples folder.
+Additional examples can be found in the Examples folder.
 
 # Acknowledgements
 
