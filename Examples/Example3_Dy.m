@@ -29,21 +29,14 @@ clear Sys
 
 rcm = 29979.2458;   meV = rcm*8.065; 
 %Experimental eigenvalues
-Exp.ev = [0;0;0.72;0.72;1.12;1.12;1.28;1.28].*meV;
+Exp.ev = [0;0;0.72;0.72;1.12;1.12;1.28;1.28;1.28;1.28;1.58;1.58].*meV;
+Exp.ev = [0;0;0.72;0.72;1.12;1.12;1.28;1.28;1.58;1.58].*meV;
 
 Sys.S = [1/2 15/2 1/2];
 B20 = -0.173585036568371*meV;B22 = 0.443886669455654*meV;
 B40 = -0.000767621238475*meV;B60 = -0.000125378265669*meV;
 Jex1 = 2*0.076588615657158*meV;Jex2 = 2*0.048947841762338*meV;
-% 
-% B20 = -0.173585*meV;B22 =  0.443886*meV;
-% B40 = -0.000767*meV;B60 = -0.000125*meV;
-% Jex1 = 2*0.076588*meV;Jex2 = 2*0.048947*meV;
 
-% B20 = -0.1*meV;B22 =  0.1*meV;
-% B40 = -0.001*meV;
-% B60 = -0.0001*meV;
-% Jex1 = 2*0.1*meV;Jex2 = 2*0.01*meV;
 Sys.B2 = [0 0 0 0 0 ; B22 0 B20 0 0 ; 0 0 0 0 0 ];
 % Sys.B2 = [0 0 0 0 0 ; 0 0 B20 0 0 ; 0 0 0 0 0 ];
 Sys.B4 = [zeros(1,9); 0 0 0 0 B40 0 0 0 0; zeros(1,9)];
@@ -54,50 +47,67 @@ Sys.B6 = [zeros(1,13); 0 0 0 0 0 0 B60 0 0 0 0 0 0; zeros(1,13)];
 % 
 Sys.ee = [diag([Jex1,Jex1,Jex1+1]);zeros(3);diag([Jex2,Jex2,Jex2+1])];
 % Vary.ee = [[1,0,1;0,1,0;1,0,1];zeros(3);[1,0,1;0,1,0;1,0,1]];
+
+%Fix the value of B22
 Vary = Sys;
-%
-Vary.B2([2,8]) = 0;
-% Vary.B4(14) = 0;
-Vary.B6(20) = 0;
+Vary.B2([2]) = 0;
+
 %%
 % This model of the system is rank deficien and does not converge within 
 % 1000 iterations with default settings:
-SysOut1 = INS_IEP(Sys,Vary,Exp);
+SysOut = INS_IEP(Sys,Vary,Exp);
+%% 
 %Note the warning about rank deficiency, now if we include a regularisation
 %term the method converges very quickly:
-
+clear Opt
+Opt.MaxIter = 200;
+Opt.Regularisation = 1e-8;
+SysOut= INS_IEP(Sys,Vary,Exp,Opt);
 %%
+%Warnings are still given about how the matrix is singular or badly
+%scaled. In this case either changing the linear solver or scaling the
+%variables will solve this problem:
+Opt.LinearSolver = "lsqminnorm";
+SysOut= INS_IEP(Sys,Vary,Exp,Opt);
+Opt = rmfield(Opt,'LinearSolver');
+Opt.Scaled = true;
+SysOut= INS_IEP(Sys,Vary,Exp,Opt);
+
+%% 
+%If multiple solutions are required:
 clear Opt
 Opt.Verbose = true;
-Opt.NDeflations = 15;
-Opt.Sigma = 1e-5;
+Opt.NDeflations = 3;
+Opt.Sigma = 1e-3;
 % Opt.Theta = 'exp';
 % Opt.SysFound = SysFound;
 Opt.Scaled = true;
-Opt.MaxIter = 200;
-% Opt.Regularisation = 1e-8;
+Opt.MaxIter = 400;
+Opt.Regularisation = 1e-1;
 Opt.LinearSolver = "lsqminnorm";
-Opt.Method = "Newton";
-% Opt.Method = "RGD_LP";
-Opt.Epsilon = 1e-4;
-% Opt.C1 = 1e-10;
-Opt.StepTolerance = 1e-10;
-Opt.FunctionTolerance = 1e-4;
-% Opt.IEPType = "Classic";
+% Opt.Method = "Newton";
+% Opt.Method = "Bad_GN";
+Opt.C1 = 1e-10;
+% Opt.StepTolerance = 1e-10;
+% Opt.FunctionTolerance = 1e-4;
+Opt.IEPType = "Classic";
 [SysOut,Opt,params] = INS_IEP(Sys,Vary,Exp,Opt);
 % Antiisotropic? off diagonals
 
 
 
-%%
-   Dy_coords = Dy_Coords;
+%% Plotting the INS Spectrum of the minimising Spin Systems (Requires mint)
+% mint can be downloaded from https://mlbakerlab.co.uk/mint/
 
-   rcm = 29979.2458;    % reciprocal cm to
-   
-kelvin = rcm*0.695;  % kelvin        to MHz
-meV = rcm*8.065;     % meV           to MHz
-%Tesla = meV*0.116;   % Tesla         to MHz
-
+Dy_coords =  [      0            0            0;
+     -0.11166       1.9967      -1.2563;
+      -1.3752      -1.3608       1.2909;
+       1.4795       1.3061        1.261;
+       1.5057      -1.4735       1.1273;
+        1.971     0.047554      -1.2991;
+     0.054185       -1.987      -1.2418;
+      -1.9351     0.047795      -1.2996;
+       -1.489       1.3153        1.224];
 
 MintOpt.NumEigs = 20;
 MintExp.SpectrumType = 'SE'; 
@@ -113,90 +123,15 @@ for i = 1:length(SysOut)
     SysOut(i).FormFactor = {'Cu2','Dy3','Cu2'}; %elements included i.e. Dy(3+) and neutral oxygen radical
     SysOut(i).Coords = Dy_coords;
     [cross,Eigs] = mint(SysOut(i),MintExp,MintOpt);
-    i
-    %f = figure;
-    % delete(get(f,'children'))
     plot(MintExp.Energy,cross);
     xlim([0;MintExp.Energy(end)])
     xlabel('Energy (meV)')
-    xticks([0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,1.1,1.2,1.3,1.4,1.5])
+    xticks(0:0.1:1.5)
     ylabel('Intensity (arb. units)')
     legend('1 K','3.5 K','9 K')
-
-    hold on
-    errorbar(x_avg_1, y_avg_1, err_avg_1,'o-','LineWidth',1.5);
-    errorbar(x_avg_2, y_avg_2, err_avg_2,'o-','LineWidth',1.5);
-    %
-    xlim([0,1.5]); %1K
-    ylim([0,80]);% 1K
-    legend('Sim 1 K','Sim 3.5 K','Sim 9 K','Exp 1K','Exp 9K')
-    hold off
+    ylim([0,40]);% 1K
     pause
 end
 
-
-
-%% New easyspin
-MintExp.Field = 100;
-MintExp.Temperature = Dy_Susceptibility(:,1);
-[~,chizz] = curry(SysOut(1),MintExp);
-
-%one of these
-figure(1)
-plot(MintExp.Temperature, chizz)
-figure(2)
-plot(MintExp.Temperature, MintExp.Temperature'.*chizz./(4*pi*1e-6))
-
-%plot Dy_Susceptibility for the exp data
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-%%
-clear all
-%Calculate eigenvalues
-rcm = 29979.2458;   meV = rcm*8.065;
-ExpSysA.S = 6;
-ExpSysA.B2 = [0 0 0.705 0 0.0250].*meV;
-ExpSysA.B4 = [0 0 0 0 0 0 0 0 -8.5E-4 ].*meV;
-EE = eig(ham(ExpSysA,[0,0,0]));
-ExpA.ev = EE-EE(1);
-ExpSysB.S = 6;
-ExpSysB.B2 = [0 0 0.712 0 0.0729].*meV;
-EE = eig(ham(ExpSysB,[0,0,0]));
-ExpB.ev = EE(1:end)-EE(1);
-
-%Set up system fo 
-Sys0.S = 6;
-Sys0.B2 = [0 0 1 0 0.1].*meV;
-% Sys0.B2 = ExpSysB.B2;
-Sys0.B2 = [0 0 0.71 0 0.072].*meV;
-%In this case the standard method fails to converge this is most likely due to the highly non
-% linear nature of the problem:
-Opt.Verbose = true;
-
-SysOutB = INS_IEP(Sys0,Sys0,ExpB)
-
-%In this case it is better to use an alternaitve minimisation method, 
-%for example the Riemannian Gradient Descent Lift and Projection method [6],
-% which finds the minimum for each example:
-Opt = struct('Method', 'RGD_LP');
-SysOutB = INS_IEP(Sys0,Sys0,ExpB,Opt)
-
-Sys0.B4 = [zeros(1,8),-1e-2].*meV;
-SysOutA = INS_IEP(Sys0,Sys0,ExpA,Opt)
 
 
