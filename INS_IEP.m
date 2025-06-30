@@ -495,8 +495,7 @@ switch res.Method
         end
     case "RGD_LP"
         Fun  = str2func('RGD_LP');
-
-            if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"
+            if isfield(Opt,"Linesearch")&&Opt.Linesearch ~="No" 
                 if isfield(Opt,"Alpha0")&&params.linesearch.merit.alpha0 <=2
                     params.linesearch.merit.method = "No";
                     warning("Line search only applied to Lift and Projection method when Alpha0 > 2.")
@@ -504,6 +503,8 @@ switch res.Method
                     params.linesearch.merit.phi = @(objective_function,x,constants,~,~) objective_function(x,constants);
                     params.linesearch.merit.gradphi = @(X) 2*(X.J'*X.R);
                 end
+            else
+                params.linesearch.merit.method = "No";
             end
 
 
@@ -623,7 +624,7 @@ warning('on',"MATLAB:rankDeficientMatrix")
 
 
 SysOut1 = [];
-if length(Output) - length(res.SysFound) >0
+if ~isempty(Output(1).DeflatedPoint) && length(Output) - length(res.SysFound) >0
     if res.Scaled
         SysOut1 = Sys_Output([Output(length(res.SysFound)+1:length(Output)).DeflatedPoint].*scale_x,Ops,SysFixed);
     else
