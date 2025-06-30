@@ -9,38 +9,42 @@ meV = rcm*8.065; % meV to MHz
 %% Simulate Eigenvalues:
 ExpSys.S = [6 1/2];
 % Exchange coupling
-Jxx = -0.54;
-Jyy = -0.54;
-Jzz = -0.298;
-ExpSys.ee = [Jxx Jyy Jzz].*meV;
+% Jxx = -0.54;
+% Jyy = -0.54;
+% Jzz = -0.298;
+% ExpSys.ee = [Jxx Jyy Jzz].*meV;
+ExpSys.ee = [-0.54 -0.54 -0.298].*meV;
 %Stevens parameters
-B22 = 0.066;    B20 = -0.197;  
-B44 = 5e-4;     B40 = 1.5e-4;  
-B64 = 1.17e-4;  B60 = -1.25e-5;
-ExpSys.B2 = [B22 0 B20 0 0 ; zeros(1,5)].*meV;
-ExpSys.B4 = [B44 0 0 0 B40 0 0 0 0 ; zeros(1,9)].*meV;
-ExpSys.B6 = [0 0 B64 0 0 0 B60 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
+% B22 = 0.066;    B20 = -0.197;  
+% B44 = 5e-4;     B40 = 1.5e-4;  
+% B64 = 1.17e-4;  B60 = -1.25e-5;
+% ExpSys.B2 = [B22 0 B20 0 0 ; zeros(1,5)].*meV;
+% ExpSys.B4 = [B44 0 0 0 B40 0 0 0 0 ; zeros(1,9)].*meV;
+% ExpSys.B6 = [0 0 1.17e-4 0 0 0 B60 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
+ExpSys.B2 = [0.066 0 -0.197 0 0 ; zeros(1,5)].*meV;
+ExpSys.B4 = [5e-4 0 0 0 1.5e-4 0 0 0 0 ; zeros(1,9)].*meV;
+ExpSys.B6 = [0 0 B64 0 0 0 -1.25e-5 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
 H = ham(ExpSys,[0,0,0]);
 EE = eig(H);
 %only save a subset of the eigenvalues
-Exp.ev = EE(1:26)-EE(1);
+% Exp.ev = EE(1:10)-EE(1);
+Exp.ev = EE(1:end)-EE(1);
+
 % ExpSys.Nucs = '159Tb,63Cu';
 % ExpSys.A = [6.2e-3 6.2e-3 6.2e-3 0 0 0 ; 0 0 0 0.043 0.043 0.043].*meV;
 % H2 = ham(ExpSys,[0,0,0]);
 %% Set up the model spin system and initial values
+% Sys0.S = [6 1/2];
+% Sys0.ee = [-0.5 -0.5 -0.25].*meV;
+% Sys0.B2 = [0.1 0 -0.1 0 0 ; zeros(1,5)].*meV;
+% Sys0.B4 = [1e-4 0 0 0 1e-4 0 0 0 0 ; zeros(1,9)].*meV;
+% Sys0.B6 = [0 0 1e-4 0 0 0 -1e-4 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
+
 Sys0.S = [6 1/2];
-Sys0.ee = [-0.5 -0.5 -0.25].*meV;
+Sys0.ee = [-0.5 -0.5 -0.05].*meV;
 Sys0.B2 = [0.1 0 -0.1 0 0 ; zeros(1,5)].*meV;
-Sys0.B4 = [1e-4 0 0 0 1e-4 0 0 0 0 ; zeros(1,9)].*meV;
-Sys0.B6 = [0 0 1e-4 0 0 0 -1e-4 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
-
-Sys0.S = [6 1/2];
-Sys0.ee = [-0.5 -0.5 -0.2].*meV;
-Sys0.B2 = [0.1 0 -0.2 0 0 ; zeros(1,5)].*meV;
-Sys0.B4 = [5e-4 0 0 0 1e-4 0 0 0 0 ; zeros(1,9)].*meV;
-Sys0.B6 = [0 0 1e-4 0 0 0 -1e-5 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
-
-
+Sys0.B4 = [1e-10 0 0 0 1e-10 0 0 0 0 ; zeros(1,9)].*meV;
+Sys0.B6 = [0 0 1e-10 0 0 0 -1e-10 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
 
 % Find a minimum
 
@@ -50,12 +54,18 @@ SysOut = INS_IEP(Sys0,Sys0,Exp);
 %simulate teh eigenvalues
 SysOut.Output.ErrorAtDeflatedPoint
 %%
-
-% Opt.NDeflations = 10;
+clear Opt
+Opt.NDeflations = 2;
 Opt.Verbose = true;
-Opt.Scaled = true;
-Opt.Sigma = 1e-8;
-Opt.Regularisation = 1e-8;
+% Opt.Scaled = true;
+Opt.Sigma = 1e-10;
+% Opt.Regularisation = 1e-8;
+Opt.StepTolerance = 1e-4;
+% Opt.Theta = 1;
+% Opt.Alpha0 = 1e-1;
+Opt.C1= 0;
+% Opt.Epsilon = 0.0001;
+Opt.IEPType = "Classic";
 
 SysOut = INS_IEP(Sys0,Sys0,Exp,Opt);
 

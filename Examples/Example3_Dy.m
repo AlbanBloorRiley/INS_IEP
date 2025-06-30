@@ -1,32 +1,5 @@
 %% Dy_6 Dysprosium
-clear Sys
-% Simulation and Comparison  6A energy
-%Only need to run this once!
-% cmf = mfilename('fullpath')
-% cf = fileparts(cmf)
-% folder = fullfile(cf,'Dy_data')
-%
-%    folder = '/Volumes/mlbakerlab/neutron_data/FRMII/6396_TOFTOF/analysis/DyHNN2_analysis/2021/data/feb2022/for_Alan/';
-%    folder = '/Users/user/Dropbox (The University of Manchester)/alban.bloorriley@manchester.ac.uk’s files/MatLab/mint/Dy_data/';
-%    folder = '/Dy_data/';
-   filename = 'DyHNN2_IofE_6A_1K_2theta_gt_30_bkgdsub=0p1.inx';
-%    Dy_6A1K = importdata([folder,filename]);
-   Dy_6A1K = importdata(filename);
-   filename = 'DyHNN2_IofE_6A_9K_2theta_gt_30_bkgdsub_0p1.inx';
-%    Dy_6A9K = importdata([folder,filename]);
-    Dy_6A9K = importdata(filename);
-   A= {Dy_6A1K,Dy_6A9K};
-   %for i=1:length(A)
-   n=2;
-       x_avg_1 = arrayfun(@(j) mean(A{1}(j:j+n-1,1)),1:n:length(A{1}(:,1))-n+1)';
-    y_avg_1 = arrayfun(@(j) mean(A{1}(j:j+n-1,2)),1:n:length(A{1}(:,1))-n+1)';
-    err_avg_1 = arrayfun(@(j) sqrt(mean(A{1}(j:j+n-1,3).^2)),1:n:length(A{1}(:,1))-n+1)'; 
-    x_avg_2 = arrayfun(@(j) mean(A{2}(j:j+n-1,1)),1:n:length(A{2}(:,1))-n+1)';
-    y_avg_2 = arrayfun(@(j) mean(A{2}(j:j+n-1,2)),1:n:length(A{2}(:,1))-n+1)';
-    err_avg_2 = arrayfun(@(j) sqrt(mean(A{2}(j:j+n-1,3).^2)),1:n:length(A{2}(:,1))-n+1)'; 
-   %end
-
-
+clear all
 rcm = 29979.2458;   meV = rcm*8.065; 
 %Experimental eigenvalues
 Exp.ev = [0;0;0.72;0.72;1.12;1.12;1.28;1.28;1.28;1.28;1.58;1.58].*meV;
@@ -50,7 +23,7 @@ Sys.ee = [diag([Jex1,Jex1,Jex1+1]);zeros(3);diag([Jex2,Jex2,Jex2+1])];
 
 %Fix the value of B22
 Vary = Sys;
-Vary.B2([2]) = 0;
+Vary.B2(2) = 0;
 
 %%
 % This model of the system is rank deficien and does not converge within 
@@ -60,8 +33,7 @@ SysOut = INS_IEP(Sys,Vary,Exp);
 %Note the warning about rank deficiency, now if we include a regularisation
 %term the method converges very quickly:
 clear Opt
-Opt.MaxIter = 200;
-Opt.Regularisation = 1e-8;
+Opt.Regularisation = 1e-4;
 SysOut= INS_IEP(Sys,Vary,Exp,Opt);
 %%
 %Warnings are still given about how the matrix is singular or badly
@@ -77,23 +49,36 @@ SysOut= INS_IEP(Sys,Vary,Exp,Opt);
 %If multiple solutions are required:
 clear Opt
 Opt.Verbose = true;
-Opt.NDeflations = 3;
+Opt.NDeflations = 7;
 Opt.Sigma = 1e-3;
-% Opt.Theta = 'exp';
-% Opt.SysFound = SysFound;
 Opt.Scaled = true;
 Opt.MaxIter = 400;
-Opt.Regularisation = 1e-1;
+Opt.Regularisation = 1e-8;
 Opt.LinearSolver = "lsqminnorm";
-% Opt.Method = "Newton";
-% Opt.Method = "Bad_GN";
 Opt.C1 = 1e-10;
-% Opt.StepTolerance = 1e-10;
-% Opt.FunctionTolerance = 1e-4;
-Opt.IEPType = "Classic";
+% Opt.IEPType = "Classic";
 [SysOut,Opt,params] = INS_IEP(Sys,Vary,Exp,Opt);
-% Antiisotropic? off diagonals
 
+
+%% Antiisotropic off diagonals
+%Can include Antiisotropic exchange terms, as offdiagonal elements of
+%Sys.ee
+%Note that the skew symmetric terms will be pinned. 
+ Sys.ee = [diag([Jex1,Jex1,Jex1+1]);zeros(3);diag([Jex2,Jex2,Jex2+1])];
+ Sys.ee(3,1) = 0.1*meV;
+Sys.ee(1,3) = -Sys.ee(3,1);
+ Sys.ee(9,1) = 0.2*meV;
+Sys.ee(7,3) = -Sys.ee(9,1);
+Vary.ee = Sys.ee;
+
+
+clear Opt
+Opt.NDeflations = 10;
+Opt.Verbose = true;
+Opt.Scaled = true;
+Opt.Regularisation = 1e-8;
+Opt.LinearSolver = "lsqminnorm";
+SysOut= INS_IEP(Sys,Vary,Exp,Opt);
 
 
 %% Plotting the INS Spectrum of the minimising Spin Systems (Requires mint)
