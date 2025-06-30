@@ -43,7 +43,7 @@ Neutrons are an excellent bulk probe of material properties since they carry no 
 
 The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, it is  widely used to model data arising from many spectroscopy techniques [@launay_electrons_2014]. It can be modeled as a linear combination of interaction terms, we will focus on the zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
 
-$$H = H_{ZFI} + H_{EEI} $$
+$$H = H_{ZFI} + H_{EEI}.$$
 
 Both of these terms can themselves be modelled as the linear sum of other basis matrices. The zero field interaction can be written as:
 
