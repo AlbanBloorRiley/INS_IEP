@@ -29,7 +29,7 @@ bibliography: paper.bib
 
 # Summary
 
-Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins. Fitting the experimental data to a spin Hamiltonian model can be formulated as an inverse eigenvalue problem (IEP). `INS_IEP` is a MATLAB package that uses deflated numerical optimisation techniques to find multiple solutions to this problem. The package requires and is fully compatible with `easyspin` [@stoll_easyspin_2006], a package for solving similar problems in electron paramagnetic resonance.
+Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins. The task of fitting the data gained from INS experiemnts to can be formulated as an inverse eigenvalue problem (IEP), where the matrix formed represents the spin Hamiltonian of the sample molecule. `INS_IEP` is a MATLAB package that uses deflated numerical optimisation techniques to systematically find multiple solutions to this IEP. The package requires and is fully compatible with `easyspin` [@stoll_easyspin_2006], a package for solving similar problems in electron paramagnetic resonance.
 
 # Statement of need
 
