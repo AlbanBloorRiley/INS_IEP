@@ -105,7 +105,7 @@ The number of eigenvalues that can be probed via INS experiments varies  dependi
 
 ![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in Example 1. \label{fig:contour}](Mn12_contour.png){ width=90%}
 
-![Rate of converge for each deflation. \label{fig:convergence}](Mn12_convergence.png){ width=90%}
+![Rate of convergence for each deflation. \label{fig:convergence}](Mn12_convergence.png){ width=90%}
 
 # Examples
 ## Example 1 - Mn12 
