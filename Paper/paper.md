@@ -39,14 +39,14 @@ Inelastic neutron scattering (INS) is one such experimental technique that can b
 
 The energy of such excitations relates to the energy difference between eigenvalues of the Hamiltonian matrix that describes the quantum spin dynamics of the compound in question. Single-ion and molecular-based magnets are studied as prototype components (quantum bits, sensors) for quantum technologies. INS can therefore provide crucial information concerning the precise quantum properties of such systems. However, to relate the INS experimental results to the Hamiltonian that describes quantum spin dynamics requires parameterisation of matrix elements such that a set of eigenvalues and eigenstates matching the experiment are determined. This situation is known as the inverse eigenvalue problem. 
 
-To date, this problem is addressed in an iterative process where parameters of the Hamiltonian are varied manually, often one at a time, and the resultant eigenvalues compared to the experimental values - each such iteration requires an eigendecomposition of the Hamiltonian matrix. INS_IEP presents an elegant solution to solving this problem, alleviating the necessity of iterative Hamiltonian matrix diagonalisation, providing a more robust method to reliably extract an accurate spin Hamiltonian model from INS experimental data. 
+To date, this problem is addressed in an iterative process where parameters of the Hamiltonian are varied manually, often one at a time, and the resultant eigenvalues compared to the experimental values - each such iteration requires an eigendecomposition of the Hamiltonian matrix. INS_IEP presents an elegant solution to solving this problem, using algorithms to calculate multiple parameter sets that minimise the difference in eigenvalues, reducing the number of Hamiltonian matrix diagonalisations, and providing a more robust method to reliably extract an accurate spin Hamiltonian model from INS experimental data. 
 
 
 # Key Concepts
 
 ## The Spin Hamiltonian
 
-The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, it is  widely used to model data arising from many spectroscopy techniques [@launay_electrons_2014]. It can be modeled as a linear combination of interaction terms, we will focus on the zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
+The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, and is  widely used to model data arising from many spectroscopy techniques [@launay_electrons_2014]. It can be modeled as a linear combination of interaction terms; in this package we will use the  zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
 
 $$H = H_{ZFI} + H_{EEI}.$$
 
@@ -62,6 +62,10 @@ $$H_{EEI} = -\sum_{i\neq j} J_{ij}  S_i\cdot  S_j$$
 
 where $S_i$ is the vector of spin operators $S_i = [S_x, S_y, S_z]$ for the $i$-th spin centre, and $J_{ij}$ is the parameter to be found that represents the strength of interaction between the two spin centres. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotropic case will be a matrix where the off diagonals are skew symmetric (often the off diagonals are assumed to be zero). While the summation is in theory over all spin centre combinations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are modeled. 
 
+It is important to mention that these martix opperators can be very large. The size is defined by the number of spin centres ($n$) and  the spin $(S_i)$ of each on, where the dimension is given by:
+$$ \prod_i^n (2S_i+1).$$
+The operators are however highly sparse, this means that it is possible to use eigensolvers that can take advantage of this sparsity.
+
 
 ## Inverse Eigenvalue Problem
 
@@ -72,27 +76,26 @@ Let $A(x)$ be the affine family of matrices,
 
 $$A( x) = A_0 + \sum^\ell_{i=1} x_i A_i,$$
 
-where $x\in\mathbb R^\ell$ and $A_0,\dots,A_\ell \in \mathbb R^{n\times n}$ are linearly independent symmetric matrices, and denote the ordered eigenvalues of $A(x)$ as $\lambda_1(x)\leq\dots\leq\lambda_n(x)$.
+where $x\in\mathbb C^\ell$ and $A_0,\dots,A_\ell \in \mathbb R^{n\times n}$ are linearly independent Hermitian matrices, and denote the ordered eigenvalues of $A(x)$ as $\lambda_1(x)\leq\dots\leq\lambda_n(x)$.
 Then the least squares inverse eigenvalue problem is to find the parameters $x \in \mathbb R^\ell$ that minimises
 
 $$F(x) = \frac 1 2 ||r(x)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_i(x) - \lambda_i^*)^2$$
 
-where $\lambda^*_1\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues. In the case of INS fitting the $A_i$ basis matrices will be a combination of Stevens operators and electron-electron exchange terms. The IEP described above is formulated as an least squares problem, this is due to the fact that the number of eigenvalues that can be probed by INS experiments is often a small subset of the full spectrum. Due to the low temperatures that these experiments are performed at (can be as low as 1K) it is always the smallest eigenvalues that are involved. Note also that since it is the energy difference between the eigenvalues that is probed we actually have to modify the IEP - either by adding an additional parameter (an identity matrix) that shifts the values of the eigenvalues, or by changing the above formula for $F$ to directly sum the difference in eigenvalues thereby reducing the number of residual equations in $r(x)$ by one. 
+where $\lambda^*_1\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues [@chen_least_1996]. In the case of INS fitting the $A_i$ basis matrices will be a combination of Stevens operators and electron-electron exchange terms. The IEP described above is formulated as an least squares problem because the number of eigenvalues that can be probed by INS experiments is often a small subset of the full spectrum. Due to the low temperatures that these experiments are performed at (can be as low as 1K) it is always the smallest eigenvalues that are involved. Note also that since it is the energy difference between the eigenvalues that is probed we actually have to modify the IEP - either by adding an additional parameter (an identity matrix) that shifts the values of the eigenvalues, or by changing the above formula for $F$ to directly sum the difference in eigenvalues thereby reducing the number of residual equations in $r(x)$ by one. 
 
-As far as we are aware this is the first time that the fitting of INS data has been explicitly formulated as an IEP. The advantage of this formulation is that there are explicit formulas for the derivatives of $r(x)$, the first derivative (Jacobian) is:
+As far as we are aware this is the first time that the fitting of INS data has been explicitly formulated as an IEP. An advantage of this formulation is that there are explicit formulas for the derivatives of $r(x)$. The first derivative (Jacobian) is:
 
 $$ J_r(x) = \begin{pmatrix}
         q_1(x)^TA_1q_1(x)&\dots &q_1(x)^TA_\ell q_1(x)\\
         \vdots&\ddots&\vdots\\
         q_m(x)^TA_1q_m(x)&\dots& q_m(x)^TA_\ell q_m(x)
-    \end{pmatrix}.$$    
+    \end{pmatrix},$$    
 
-And the second derivative (Hessian) is:
+and the second derivative (Hessian) is:
 
 $$ (H_{r})_{ij}   = 2\sum^m_{k=1} (\lambda_k-\lambda_k^*) \sum^m_{\substack            {t=1\\\lambda_t\neq\lambda_k}} \frac{(q_t^TA_iq_k)(q_t^TA_jq_k)}{\lambda_k-\lambda_t}.
 $$
-
-Access to analytical forms of the derivatives means it is not necessary to use the finite difference approximation that other approaches use, making the  optimisation  methods that ``INS_IEP`` uses faster and more accurate.
+Another advantage is the number of constraints to fit is much smaller than fitting the spectrum itself, as it correspond to fitting only the locations of the peaks of the spectrum.
 
 ## Methods
 
@@ -102,11 +105,11 @@ All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ w
 -  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$ [@nocedal_numerical_2006]
 -  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$ [@bloor_riley_riemannian_2025]
 
-Where the matrix $B$ is the Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. The Lift and Projection method is a a Riemannian Gradient descent method [@bloor_riley_riemannian_2025], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. In [@bloor_riley_riemannian_2025] it is proven that the method is a strictly descending algorithm, that is it reduces the value of the objective function every step. Both the deflated Gauss-Newton method and the Riemannian Gradient descent Lift and Projection method are new methods designed for this package. 
+Where the matrix $B$ is the Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. The Lift and Projection method is a Riemannian Gradient descent method [@bloor_riley_riemannian_2025], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. In [@bloor_riley_riemannian_2025] it is proven that the method is a strictly descending algorithm, that is it reduces the value of the objective function every step. Both the deflated Gauss-Newton method and the Riemannian Gradient descent Lift and Projection method are new methods designed for this package [@bloor_riley_deflation_2025;@bloor_riley_riemannian_2025]. 
 
 ## Deflation 
 
-The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under (or even over) determined. The IEP is also highly nonlinear and due to the experimental nature of the data there is no guarentee that the problem is not ill-posed. One consequence of this is that the solution space may be very 'bumpy', that is there may exist many local minimisers to the problem. For example in \autoref{fig:contour}, there are clearly 4 distinct solutions (for more details see Example 1 and the file Example1_Mn12.m in the examples folder). We seek to solve the problem of multiple local minima by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015;@farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change. It is  proven in [@bloor_riley_deflation_2025] that the deflated methods will not converge to deflated points.  The usual requirements still apply to the convergence of the new methods - that the initial guess is close enough to the new minimum, and that the Jacobian is full rank in a neighbourhood around that minimum. The rate of convergence of the deflated methods is also more complicated, although the number of iterations required to converge can go up with the number of deflations this is not a strict correlation, as can be seen in  \autoref{fig:convergence}.
+The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under or even over  determined. The IEP is also highly nonlinear and due to the experimental nature of the data may be ill-posed. One consequence of this is that the solution space may be very 'bumpy', that is there may exist many local minimisers to the problem. For example in \autoref{fig:contour}, there are clearly 4 distinct solutions (for more details see Example 1 and the file Example1_Mn12.m in the examples folder). We seek to solve the problem of multiple local minima by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015;@farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change. It is  proven in [@bloor_riley_deflation_2025] that the deflated methods will not converge to deflated points.  The usual requirements still apply to the convergence of the new methods - that the initial guess is close enough to the new minimum, and that the Jacobian is full rank in a neighbourhood around that minimum. The rate of convergence of the deflated methods is also more complicated, although the number of iterations required to converge can go up with the number of deflations this is not a strict correlation, as can be seen in  \autoref{fig:convergence}.
 
 ![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in Example 1. \label{fig:contour}](Mn12_contour.png){ width=90%}
 
