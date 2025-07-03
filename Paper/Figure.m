@@ -21,13 +21,16 @@ y = linspace(-1.5e-5,1.5e-5,N);
 Z=zeros(length(x),length(y));   
 for i=1:length(x)
     for j=1:length(y)
-        Z(i,j) = IEP_Evaluate_diff([x(j);y(i)].*meV,constants);
+        [F,R,J] = IEP_Evaluate_diff([x(j);y(i)].*meV,constants);
+        Z(i,j) = sqrt(F);
+        % Z(i,j) = norm(J'*R);
     end
 end
-%
+%%
 f = figure(1);
 % subplot(1,2,1)
 contourf(X,Y,Z,100,'edgecolor','none');
+colorbar
 %
 ylabel("B^4_4 meV")
 xlabel("B^2_2 meV")
@@ -43,6 +46,7 @@ Opt.NDeflations = 4;
 Sys0 = ExpSys;
 Sys0.B2 = [-100,0,-1000,0,0];   
 Sys0.B4 = [-1,0,0,0,-1,0,0,0,0];
+% Opt.Verbose = true;
 SysOut = INS_IEP(Sys0, Sys0,Exp,Opt)
 
 %%
