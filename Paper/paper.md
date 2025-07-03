@@ -105,15 +105,15 @@ All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ w
 -  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$ [@nocedal_numerical_2006]
 -  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$ [@bloor_riley_riemannian_2025]
 
-Where the matrix $B$ is the Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. The Lift and Projection method is a Riemannian Gradient descent method [@bloor_riley_riemannian_2025], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. In [@bloor_riley_riemannian_2025] it is proven that the method is a strictly descending algorithm, that is it reduces the value of the objective function every step. Both the deflated Gauss-Newton method and the Riemannian Gradient descent Lift and Projection method are new methods designed for this package [@bloor_riley_deflation_2025;@bloor_riley_riemannian_2025]. 
+Where the matrix $B$ is the Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. The Lift and Projection method is a Riemannian Gradient descent method [@bloor_riley_riemannian_2025], specifically designed for solving IEPs. In [@bloor_riley_riemannian_2025] it is proven that the method is a strictly descending algorithm, that is it reduces the value of the objective function every step. Both the deflated Gauss-Newton method and the Riemannian Gradient descent Lift and Projection method are new methods designed for this package [@bloor_riley_deflation_2025;@bloor_riley_riemannian_2025]. 
 
 ## Deflation 
 
-The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under or even over  determined. The IEP is also highly nonlinear and due to the experimental nature of the data may be ill-posed. One consequence of this is that the solution space may be very 'bumpy', that is there may exist many local minimisers to the problem. For example in \autoref{fig:contour}, there are clearly 4 distinct solutions (for more details see Example 1 and the file Example1_Mn12.m in the examples folder). We seek to solve the problem of multiple local minima by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015;@farrell_deflation_2020]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change. It is  proven in [@bloor_riley_deflation_2025] that the deflated methods will not converge to deflated points.  The usual requirements still apply to the convergence of the new methods - that the initial guess is close enough to the new minimum, and that the Jacobian is full rank in a neighbourhood around that minimum. The rate of convergence of the deflated methods is also more complicated, although the number of iterations required to converge can go up with the number of deflations this is not a strict correlation, as can be seen in  \autoref{fig:convergence}.
+The number of eigenvalues that can be probed via INS experiments varies  depending on the equipment and sample in question, meaning that the fitting problem is often under or even over  determined. The IEP is also highly nonlinear and due to the experimental nature of the data may be ill-posed. One consequence of this is that the solution space may be very 'bumpy', that is there may exist many local minimisers to the problem. For example in \autoref{fig:contour}, there are clearly 4 distinct solutions (for more details see Example 1 and the file Example1_Mn12.m in the examples folder). We seek to solve the problem of multiple local minima by the use of Deflation, a numerical technique used to find multiple solutions to systems of equations [@farrell_deflation_2015]. Fortunately it is cheap to apply deflation for the above methods, it is simply a change to the length of the step - notably this means that the direction of each step does not change. It is  proven in [@bloor_riley_deflation_2025] that the deflated methods will not converge to deflated points.  The usual requirements still apply to the convergence of the new methods - that the initial guess is close enough to the new minimum, and that the Jacobian is full rank in a neighbourhood around that minimum. The rate of convergence of the deflated methods is also more complicated, although the number of iterations required to converge can go up with the number of deflations this is not a strict correlation, as can be seen in  \autoref{fig:convergence}.
 
-![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in Example 1. \label{fig:contour}](Mn12_contour.png){ width=90%}
+![Contour plot of how $F$ varies with the two parameters $B^2_2$ and $B_4^4$ for the molecule Mn\_12 as described in Example 1. There are four locally minimising parameter pairs corresponding to the four blue regions \label{fig:contour}](Mn12_contour.png){ width=90%}
 
-![Rate of convergence for each deflation. \label{fig:convergence}](Mn12_convergence.png){ width=90%}
+![Comparison of the convergence behaviour for computing each solution in Example 1. The gradient of the lines as the method approaches the solution shows how the methods are quadratically convergent local to a minimum.  \label{fig:convergence}](Mn12_convergence.png){ width=90%}
 
 # Examples
 ## Example 1 - Mn12 
@@ -131,7 +131,7 @@ We utilise the same spin system syntax as `easyspin`, so to set up the problem w
   Sys0.B2 = [-100,0,-1000,0,0];   
   Sys0.B4 = [-1,0,0,0,-1,0,0,0,0];
 ```
-Then we input the experimental eigenvalues, these will normally be translated such that the smallest eigenvalue is zero, and define which parameters to fit. Note that all values given must be in Hertz, so it may be useful to use conversions.
+Then we input the experimental eigenvalues - these are typically shifted  such that the smallest eigenvalue is zero - and define which parameters to fit. Note that all values given must be in Hertz, so it may be useful to use conversions.
 ```matlab
   rcm = 29979.2458;   meV = rcm*8.065;  %Conversions values
   %Input calculated eigenvalues:
@@ -149,11 +149,11 @@ If we wish to find all four solutions as shown in \autoref{fig:contour} then we 
   Opt.NDeflations = 4;
   SysOut = INS_IEP(Sys0,Vary,Exp,Opt);
 ```
-In this case SysOut will be an array of four spin structures each containing a distinct solution. It is possible to access information about the convergence of each deflation by using `SysOut.Output`. For example by utilising the iterates recorded, stored in `SysOut.Output.Iterates` it is possible to plot a graph of convergence, as can be seen in \autoref{fig:convergence}. The Output structure also contains the value of $F$ at the final point, as well as the number of iterations it took to get there.
+In this case SysOut will be an array of four spin structures each containing a distinct locally optimal solution. It is possible to access information about the convergence of each deflation by using `SysOut.Output`. For example by utilising the iterates recorded, stored in `SysOut.Output.Iterates` it is possible to plot a graph of convergence, as can be seen in \autoref{fig:convergence}. The Output structure also contains the value of $F$ at the final point, as well as the number of iterations it took to get there.
 
 ## Example 2 - Chromium(iii) Horseshoes
 The second example concerns antiferro-magnetically coupled
-chromium(III) chains six atoms long [@baker_varying_2011], although different length chains are of interest and can also be modelled. Because there are multiple spin centres an electron-electron interaction term is required. The spin hamiltonian is a 4096×4096 matrix composed of two Stevens operators and one interaction term, since it is known a priori that each spin centre will have the same value parameters we will pin the parameters here, by setting the initial gues as the same value:
+chromium(III) chains six atoms long [@baker_varying_2011], although different length chains are of interest and can also be modelled. Because there are multiple spin centres an electron-electron interaction term is required. The spin hamiltonian is a 4096×4096 matrix composed of two Stevens operators and one interaction term, since it is known a priori that each spin centre will have the same value parameters we will pin the parameters here, by setting the initial guess as the same value:
 
 ```matlab
   Sys0.S = [1.5 1.5 1.5 1.5 1.5 1.5];
@@ -168,7 +168,8 @@ chromium(III) chains six atoms long [@baker_varying_2011], although different le
   Exp.ev = [0,0.355,0.457,0.497,1.576,1.577,1.592,1.629,1.632,2.97,2.98,3.002,3.004,
             3.01,3.038,3.821,3.824,3.827,3.837,3.856,3.879,3.888,3.895,3.903];
 ```
-Note that only 24 eigenvalues were found experimentally, so this will form a partial eigenvalue problem. To find the solution system is as simple as:
+Note that only 24 eigenvalues were found experimentally, so this will form a partial least squares inverse eigenvalue problem (LSIEP). To find the solution system is as simple as:
+
 ```matlab
   SysOut = INS_IEP(Sys0,Vary,Exp);
 ```
@@ -179,7 +180,7 @@ It is possible to find multiple minimising systems even if they do not make any 
 ```
 The output contains four different spin systems that all have the same eigenvalues as input, one is the original solution up to a change of sign of the $B_2^2$ parameter, and all have the same exchange term. 
 
-Additional examples can be found in the Examples folder.
+Additional examples can be found in the Examples folder. A full list of options is provided in the help of INS_IEP.
 
 # Acknowledgements
 
