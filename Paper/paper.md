@@ -18,9 +18,9 @@ authors:
     orcid: 0000-0002-8246-3177
     affiliation: 2
 affiliations:
-  - name: The Uinversity of Manchester, Department of Mathematics
+  - name: The University of Manchester, Department of Mathematics
     index: 1
-  - name: The Uinversity of Manchester, Department of Chemistry
+  - name: The University of Manchester, Department of Chemistry
     index: 2
 date: June 2025
 bibliography: paper.bib
@@ -29,10 +29,9 @@ bibliography: paper.bib
 
 # Summary
 
-Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins. The task of fitting the data gained from INS experiemnts to can be formulated as an inverse eigenvalue problem (IEP), where the matrix formed represents the spin Hamiltonian of the sample molecule. `INS_IEP` is a MATLAB package that uses deflated numerical optimisation techniques to systematically find multiple solutions to this IEP. The package requires and is fully compatible with `easyspin` [@stoll_easyspin_2006], a package for solving similar problems in electron paramagnetic resonance.
+Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins. INS experiments yield data about the eigenvalues of the spin Hamiltonian of the material being studied. Fitting a model spin system to these experimental eigenvalues can be formulated as an inverse eigenvalue problem (IEP), where the matrix formed is the spin Hamiltonian operator of the sample molecule. `INS_IEP` is a MATLAB package that uses deflated numerical optimisation techniques to systematically find multiple solutions to this IEP. The package requires and is fully compatible with `easyspin` [@stoll_easyspin_2006], a package for solving fitting problems in electron paramagnetic resonance.
 
 # Statement of need
-
 
 Neutrons are an excellent bulk probe of material properties since they carry no charge and therefore penetrate deeply into matter. Neutrons also carry a quantum spin of a half, making them a sensitive probe of magnetism [@squires_introduction_2012]. Reactors and spallation sources with dedicated high-flux neutron sources serve the international research community with neutron scattering experiment capabilities for material research.
 Inelastic neutron scattering (INS) is one such experimental technique that can be used to study magnetism. In an INS experiment, a sample under investigation is irradiated with a beam of neutrons and the scattered neutron energy and momentum transfer are detected. For samples composed of finite-size clusters of magnetic moment-carrying atoms, such as single ions or molecular-based magnets, the detected neutron energy transfer gives direct access to the quantum spin excitations [@furrer_magnetic_2013;@baker_neutron_2012;@baker_spectroscopy_2014]. 
@@ -46,7 +45,7 @@ To date, this problem is addressed in an iterative process where parameters of t
 
 ## The Spin Hamiltonian
 
-The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, and is  widely used to model data arising from many spectroscopy techniques [@launay_electrons_2014]. It can be modeled as a linear combination of interaction terms; in this package we will use the  zero field interaction, $H_{ZFI}$, and the elctron-electron interaction, $H_{EEI}$:
+The Spin Hamiltonian, $H$, is an approximation of the Hamiltonian that uses spin coordinates instead of orbital coordinates, and is  widely used to model data arising from many spectroscopy techniques [@launay_electrons_2014]. It can be modeled as a linear combination of interaction terms; in this package we will use the  zero field interaction, $H_{ZFI}$, and the electron-electron interaction, $H_{EEI}$:
 
 $$H = H_{ZFI} + H_{EEI}.$$
 
@@ -62,7 +61,7 @@ $$H_{EEI} = -\sum_{i\neq j} J_{ij}  S_i\cdot  S_j$$
 
 where $S_i$ is the vector of spin operators $S_i = [S_x, S_y, S_z]$ for the $i$-th spin centre, and $J_{ij}$ is the parameter to be found that represents the strength of interaction between the two spin centres. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotropic case will be a matrix where the off diagonals are skew symmetric (often the off diagonals are assumed to be zero). While the summation is in theory over all spin centre combinations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are modeled. 
 
-It is important to mention that these martix opperators can be very large. The size is defined by the number of spin centres ($n$) and  the spin $(S_i)$ of each on, where the dimension is given by:
+It is important to mention that these matrix operators can be very large. The size is defined by the number of spin centres ($n$) and the spin $(S_i)$ of each spin centre. The dimension of matrices is given by:
 $$ \prod_i^n (2S_i+1).$$
 The operators are however highly sparse, this means that it is possible to use eigensolvers that can take advantage of this sparsity.
 
@@ -77,7 +76,7 @@ Let $A(x)$ be the affine family of matrices,
 $$A( x) = A_0 + \sum^\ell_{i=1} x_i A_i,$$
 
 where $x\in\mathbb C^\ell$ and $A_0,\dots,A_\ell \in \mathbb R^{n\times n}$ are linearly independent Hermitian matrices, and denote the ordered eigenvalues of $A(x)$ as $\lambda_1(x)\leq\dots\leq\lambda_n(x)$.
-Then the least squares inverse eigenvalue problem is to find the parameters $x \in \mathbb R^\ell$ that minimises
+Then the least squares inverse eigenvalue problem (LSIEP) is to find the parameters $x \in \mathbb R^\ell$ that minimises
 
 $$F(x) = \frac 1 2 ||r(x)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_i(x) - \lambda_i^*)^2$$
 
@@ -95,7 +94,7 @@ and the second derivative (Hessian) is:
 
 $$ (H_{r})_{ij}   = 2\sum^m_{k=1} (\lambda_k-\lambda_k^*) \sum^m_{\substack            {t=1\\\lambda_t\neq\lambda_k}} \frac{(q_t^TA_iq_k)(q_t^TA_jq_k)}{\lambda_k-\lambda_t}.
 $$
-Another advantage is the number of constraints to fit is much smaller than fitting the spectrum itself, as it correspond to fitting only the locations of the peaks of the spectrum.
+Another advantage is the number of constraints to fit is much smaller than fitting the spectrum itself, as it corresponds to fitting only the locations of the peaks of the spectrum.
 
 ## Methods
 
@@ -105,7 +104,7 @@ All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ w
 -  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$ [@nocedal_numerical_2006]
 -  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$ [@bloor_riley_riemannian_2025]
 
-Where the matrix $B$ is the Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. The Lift and Projection method is a Riemannian Gradient descent method [@bloor_riley_riemannian_2025], specifically designed for solving IEPs. In [@bloor_riley_riemannian_2025] it is proven that the method is a strictly descending algorithm, that is it reduces the value of the objective function every step. Both the deflated Gauss-Newton method and the Riemannian Gradient descent Lift and Projection method are new methods designed for this package [@bloor_riley_deflation_2025;@bloor_riley_riemannian_2025]. 
+Where the matrix $B$ is the Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. The Lift and Projection method is a Riemannian Gradient descent method [@bloor_riley_riemannian_2025], inspired by the Lift and Projection method [@chen_least_1996], specifically designed for solving IEPs. In [@bloor_riley_riemannian_2025] it is proven that the method is a strictly descending algorithm, that is it reduces the value of the objective function every step. Both the deflated Gauss-Newton method and the Riemannian Gradient descent Lift and Projection method are new methods designed for this package [@bloor_riley_deflation_2025;@bloor_riley_riemannian_2025]. 
 
 ## Deflation 
 
@@ -143,7 +142,7 @@ Then all that is required is to call `INS_IEP` with these three inputs:
 ```matlab
   SysOut = INS_IEP(Sys0,Vary,Exp);
 ```
-If we wish to find all four solutions as shown in \autoref{fig:contour} then we use the aditional option:
+If we wish to find all four solutions as shown in \autoref{fig:contour} then we use the additional option:
 
 ```matlab
   Opt.NDeflations = 4;
@@ -151,9 +150,11 @@ If we wish to find all four solutions as shown in \autoref{fig:contour} then we 
 ```
 In this case SysOut will be an array of four spin structures each containing a distinct locally optimal solution. It is possible to access information about the convergence of each deflation by using `SysOut.Output`. For example by utilising the iterates recorded, stored in `SysOut.Output.Iterates` it is possible to plot a graph of convergence, as can be seen in \autoref{fig:convergence}. The Output structure also contains the value of $F$ at the final point, as well as the number of iterations it took to get there.
 
+A full list of options is provided in the help of INS_IEP.
+
 ## Example 2 - Chromium(iii) Horseshoes
 The second example concerns antiferro-magnetically coupled
-chromium(III) chains six atoms long [@baker_varying_2011], although different length chains are of interest and can also be modelled. Because there are multiple spin centres an electron-electron interaction term is required. The spin hamiltonian is a 4096×4096 matrix composed of two Stevens operators and one interaction term, since it is known a priori that each spin centre will have the same value parameters we will pin the parameters here, by setting the initial guess as the same value:
+chromium(III) chains six atoms long [@baker_varying_2011], although different length chains are of interest and can also be modelled. Because there are multiple spin centres an electron-electron interaction term is required. The spin hamiltonian is a 4096×4096 matrix composed of two Stevens operators and one interaction term, since it is known a priori that each spin centre will have the same value parameters we pin the parameters here, by setting the initial guess as the same value:
 
 ```matlab
   Sys0.S = [1.5 1.5 1.5 1.5 1.5 1.5];
@@ -168,7 +169,7 @@ chromium(III) chains six atoms long [@baker_varying_2011], although different le
   Exp.ev = [0,0.355,0.457,0.497,1.576,1.577,1.592,1.629,1.632,2.97,2.98,3.002,3.004,
             3.01,3.038,3.821,3.824,3.827,3.837,3.856,3.879,3.888,3.895,3.903];
 ```
-Note that only 24 eigenvalues were found experimentally, so this will form a partial least squares inverse eigenvalue problem (LSIEP). To find the solution system is as simple as:
+Note that only 24 eigenvalues were found experimentally, so this will form a partial LSIEP. To find the solution system is as simple as:
 
 ```matlab
   SysOut = INS_IEP(Sys0,Vary,Exp);
@@ -180,7 +181,9 @@ It is possible to find multiple minimising systems even if they do not make any 
 ```
 The output contains four different spin systems that all have the same eigenvalues as input, one is the original solution up to a change of sign of the $B_2^2$ parameter, and all have the same exchange term. 
 
-Additional examples can be found in the Examples folder. A full list of options is provided in the help of INS_IEP.
+Additional examples can be found in the Examples folder. 
+
+Note also that using `mint` [@baker_mint_2022], which is fully compatible with `INS_IEP` it is possible to simulate the INS spectrum of any calculated system - which can then be compared to the experimental spectrum. A description of how to do this can also be found in the examples folder. 
 
 # Acknowledgements
 
