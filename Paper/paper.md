@@ -134,7 +134,8 @@ Then we input the experimental eigenvalues - these are typically shifted  such t
 ```matlab
   rcm = 29979.2458;   meV = rcm*8.065;  %Conversions values
   %Input calculated eigenvalues:
-  Exp.ev = [0,0,1.24,1.24,2.3,2.3,3.18,3.18,3.91,3.91,4.5,4.5,4.97,4.97,5.32,5.32,5.54,5.59,5.69,5.75,5.78].*meV;
+  Exp.ev = [0,0,1.24,1.24,2.3,2.3,3.18,3.18,3.91,3.91,4.5,4.5,
+           4.97,4.97,5.32,5.32,5.54,5.59,5.69,5.75,5.78].*meV;
   %Vary all non zero parameters (no Fixed parameters):
   Vary = Sys0; 
 ```
@@ -166,8 +167,9 @@ chromium(III) chains six atoms long [@baker_varying_2011], although different le
              1     0    -1     0     0];
   Sys0.J = [100,0,0,0,0,100,0,0,0,100,0,0,100,0,100];
   Vary = Sys0;
-  Exp.ev = [0,0.355,0.457,0.497,1.576,1.577,1.592,1.629,1.632,2.97,2.98,3.002,3.004,
-            3.01,3.038,3.821,3.824,3.827,3.837,3.856,3.879,3.888,3.895,3.903];
+  Exp.ev = [0,0.355,0.457,0.497,1.576,1.577,1.592,1.629,1.632,
+            2.97,2.98,3.002,3.004,3.01,3.038,3.821,3.824,3.827,
+            3.837,3.856,3.879,3.888,3.895,3.903];
 ```
 Note that only 24 eigenvalues were found experimentally, so this will form a partial LSIEP. To find the solution system is as simple as:
 
