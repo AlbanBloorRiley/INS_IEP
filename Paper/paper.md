@@ -168,19 +168,20 @@ The second example concerns antiferro-magnetically coupled chain of six chromium
   Vary = Sys0;
   Exp.ev = [0,0.355,0.457,0.497,1.576,1.577,1.592,1.629,1.632,
             2.97,2.98,3.002,3.004,3.01,3.038,3.821,3.824,3.827,
-            3.837,3.856,3.879,3.888,3.895,3.903];
+            3.837,3.856,3.879,3.888,3.895,3.903].*meV;
 ```
 Note that only 24 eigenvalues were found experimentally, so this will form a partial LSIEP. To find the solution system is as simple as:
 
 ```matlab
-  SysOut = INS_IEP(Sys0,Vary,Exp);
+  Opt.GradientTolerance = 1e-3; %Use additional stopping criterion.
+  SysOut= INS_IEP(Sys1,Vary1,Exp,Opt);
 ```
 It is possible to find multiple minimising systems even if they do not make any sense physically, however due to the scaling of the problem a change in the default deflation parameters is necessary:
 ```matlab
-  Opt = struct('NDeflations',4,'Sigma',1e-7);
+  Opt = struct('NDeflations',5,'Sigma',1e-7,'StepTolerance',1e-3 );
   SysOut= INS_IEP(Sys0,Vary,Exp,Opt);
 ```
-The output contains four different spin systems that all have the same eigenvalues as input, one is the original solution up to a change of sign of the $B_2^2$ parameter, and all have the same exchange term. 
+The output contains five different spin systems that all have the same eigenvalues as input. Like in example one some of the minima found differ only by a sign change of  the $B^2_2$ parameter, but all minima have the same exchange term. 
 
 Additional examples can be found in the Examples folder. 
 

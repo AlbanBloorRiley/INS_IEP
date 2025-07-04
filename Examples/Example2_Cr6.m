@@ -44,7 +44,7 @@ Sys1.J = [100,0,0,0,0,100,0,0,0,100,0,0,100,0,100];
 Vary1 = Sys;
 
 % Calculate the minimising system:
-Opt.StepTolerance = 1e-4;
+Opt.GradientTolerance = 1e-3; %Use additional stopping criterion.
 SysOut1= INS_IEP(Sys1,Vary1,Exp,Opt);
 
 
@@ -67,7 +67,7 @@ Sys2.ee = ee.*1e2;
 Sys2 = rmfield(Sys2,'J');
 %and Vary has to be updated: 
 Vary2 =Sys2;
-Opt.StepTolerance = 1e-4;
+Opt.GradientTolerance = 1e-3; %Use additional stopping criterion.
 SysOut2= INS_IEP(Sys2,Vary2,Exp,Opt);
 
 %Check that the output structures are equivalent:
@@ -79,7 +79,6 @@ all(all(ham(SysOut1,[0,0,0]) == ham(SysOut2,[0,0,0])))
 % sensitive. 
 
 Opt = struct('NDeflations',5,'Sigma',1e-7,'StepTolerance',1e-3);
-Opt.verbose = true
 SysOut= INS_IEP(Sys1,Vary1,Exp,Opt);
 
 
