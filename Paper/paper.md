@@ -29,7 +29,7 @@ bibliography: paper.bib
 
 # Summary
 
-Inelastic neutron scattering (INS) is a spectroscopic technique used to measure the magnetic excitations in materials with interacting electron spins. INS experiments yield data about the eigenvalues of the spin Hamiltonian of the material being studied. Fitting a model spin system to these experimental eigenvalues can be formulated as an inverse eigenvalue problem (IEP), where the matrix formed is the spin Hamiltonian operator of the sample molecule. `INS_IEP` is a MATLAB package that uses deflated numerical optimisation methods to systematically find multiple solutions to this IEP. The package requires and is fully compatible with `easyspin` [@stoll_easyspin_2006], a package for solving fitting problems in electron paramagnetic resonance (EPR).
+Inelastic neutron scattering (INS) is a spectroscopic technique that can be used to measure the magnetic excitations in materials with interacting electron spins. For samples composed of finite-size clusters of magnetic moment-carrying atoms, such as single ions or molecular-based magnets, INS experiments yield inelastic excitation with energies that correspond to the eigenvalues of the spin Hamiltonian of the material being studied. Fitting a model spin system to these experimental eigenvalues can be formulated as an inverse eigenvalue problem (IEP), where the matrix formed is the spin Hamiltonian operator of the sample molecule. `INS_IEP` is a MATLAB package that uses deflated numerical optimisation methods to systematically find multiple solutions to this IEP. The package requires and is fully compatible with `easyspin` [@stoll_easyspin_2006], a package for solving fitting problems in electron paramagnetic resonance (EPR).
 
 # Statement of need
 
@@ -59,7 +59,7 @@ When there are multiple spin centres it is also necessary to include an electron
 
 $$H_{EEI} = -\sum_{i\neq j} J_{ij}  S_i\cdot  S_j$$
 
-where $S_i$ is the vector of spin operators $S_i = [S_x, S_y, S_z]$ for the $i$-th spin centre, and $J_{ij}$ is the parameter to be found that represents the strength of interaction between the two spin centres. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotropic case will be a matrix where the off diagonals are skew symmetric (often the off diagonals are assumed to be zero). While the summation is in theory over all spin centre combinations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are modeled. 
+where $S_i$ is the vector of spin operators $S_i = [S_x, S_y, S_z]$ for the $i$-th spin centre, and $J_{ij}$ is the parameter to be found that represents the strength of interaction between the two spin centres. Note that in the isotropic case $J$ can be thought of as a scalar value, but in the anisotropic case will be a matrix where the off diagonals are skew symmetric (often the off diagonals are assumed to be zero). While the summation is in theory over all spin centre combinations, in practice many of these contributions will be negligible - often only the nearest neighbour interactions are significant. 
 
 It is important to mention that these matrix operators can be very large. The size is defined by the number of spin centres ($n$) and the spin $(S_i)$ of each spin centre. The dimension of matrices is given by:
 $$ \prod_i^n (2S_i+1).$$
@@ -80,7 +80,7 @@ Then the least squares inverse eigenvalue problem (LSIEP) is to find the paramet
 
 $$F(x) = \frac 1 2 ||r(x)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_i(x) - \lambda_i^*)^2$$
 
-where $\lambda^*_1\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues [@chu_inverse_2005]. In the case of INS fitting the $A_i$ basis matrices will be a combination of Stevens operators and electron-electron exchange terms. The IEP described above is formulated as an least squares problem because the number of eigenvalues that can be probed by INS experiments is often a small subset of the full spectrum. Due to the low temperatures that these experiments are performed at (can be as low as 1K) it is always the smallest eigenvalues that are involved. Note also that since it is the energy difference between the eigenvalues that is probed we actually have to modify the IEP - either by adding an additional parameter (an identity matrix) that shifts the values of the eigenvalues, or by changing the above formula for $F$ to directly sum the difference in eigenvalues thereby reducing the number of residual equations in $r(x)$ by one. 
+where $\lambda^*_1\leq\ldots\leq\lambda_m^*$ are the experimental eigenvalues [@chu_inverse_2005]. In the case of INS fitting the $A_i$ basis matrices will be a combination of Stevens operators and electron-electron exchange terms. The IEP described above is formulated as an least squares problem because the number of eigenvalues that can be probed by INS experiments is often a small subset of the full spectrum. Due to the low temperatures that these experiments are performed at (can be as low as 1K) it is generally the smallest eigenvalues that are involved. Note also that since it is the energy difference between the eigenvalues that is probed we actually have to modify the IEP - either by adding an additional parameter (an identity matrix) that shifts the values of the eigenvalues, or by changing the above formula for $F$ to directly sum the difference in eigenvalues thereby reducing the number of residual equations in $r(x)$ by one. 
 
 As far as we are aware this is the first time that the fitting of INS data has been explicitly formulated as an IEP. An advantage of this formulation is that there are explicit formulas for the derivatives of $r(x)$. The first derivative (Jacobian) is:
 
@@ -154,8 +154,7 @@ In this case SysOut will be an array of four spin structures each containing a d
 A full list of options is provided in the help of INS_IEP.
 
 ## Example 2 - Chromium(iii) Horseshoes
-The second example concerns antiferro-magnetically coupled
-chromium(III) chains six atoms long [@baker_varying_2011], although different length chains are of interest and can also be modelled. Because there are multiple spin centres an electron-electron interaction term is required. The spin hamiltonian is a 4096×4096 matrix composed of two Stevens operators and one interaction term, since it is known a priori that each spin centre will have the same value parameters we pin the parameters here, by setting the initial guess as the same value:
+The second example concerns antiferro-magnetically coupled chain of six chromium(III) ions [@baker_varying_2011]. Because there are multiple spin centres an electron-electron interaction term is required. The spin hamiltonian is a 4096×4096 matrix composed of two Stevens operators and one interaction term, since it is known a priori that each spin centre will have the same value parameters we pin the parameters here, by setting the initial guess as the same value:
 
 ```matlab
   Sys0.S = [1.5 1.5 1.5 1.5 1.5 1.5];
