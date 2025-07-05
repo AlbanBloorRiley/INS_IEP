@@ -13,7 +13,7 @@ ExpSys.ee = [-0.54 -0.54 -0.298].*meV;
 %Stevens parameters
 ExpSys.B2 = [0.066 0 -0.197 0 0 ; zeros(1,5)].*meV;
 ExpSys.B4 = [5e-4 0 0 0 1.5e-4 0 0 0 0 ; zeros(1,9)].*meV;
-ExpSys.B6 = [0 0 B64 0 0 0 -1.25e-5 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
+ExpSys.B6 = [0 0 1.17e-4 0 0 0 -1.25e-5 0 0 0 0 0 0 ; zeros(1,13)].*meV; 
 H = ham(ExpSys,[0,0,0]);
 EE = eig(H);
 %only save a subset of the eigenvalues
