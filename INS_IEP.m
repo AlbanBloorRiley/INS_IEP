@@ -26,10 +26,10 @@ function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,varySys,Exp,varar
 % symmetric ellements of ee that are equal to each others reciprical.
 %
 % Specifying Vary:
-% Vary should contain all the same fields of Sys (not including S), and any
+% Vary should contain all the same fields of Sys (not including S), any
 % entry that is non-zero specifies that it is a parameter to be varied,
 % using the initial value given in Sys. Note that parameters that are given
-% by Sys but are not to be varied will still be used as fixed values.
+% by Sys but are not to be varied will be used as fixed values.
 %
 % Experimental data:
 % Exp should contain the experimentally calculated eigenvalues saved as
@@ -43,20 +43,19 @@ function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,varySys,Exp,varar
 %
 %
 %OPTIONAL PARAMETERS
-%IEP:
-%SysVaryParameters - A structure containing all of the outputs of the
-%function [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary)
+%SysFound - array of Sys structures of previously found minimising systems
+% - [ {[]}, Sys]
 %IEPType - Defines which formulation of the IEP to use - [ Classic |
 %       {Difference} ]
-%Eigensolver - Specifies which eigensolver to use - [ eig | eigs ] (default
-%       is decided based on the size of the matrices used)
 %Scaled - specifies if the parameters are scaled to the size of the initil
 %       values - [ true | {false} ]
+%Eigensolver - Specifies which eigensolver to use - [ eig | eigs ] (default
+%       is decided based on the size of the matrices used)
 %EigsNotConvergedWarning - Specifies if a warning should be output of the
 %       eigensolver fails to converge for some of the eigenvalues - [ {true} |
 %       false ]
-%SysFound - array of Sys structures of previously found minimising systems
-% - [ {[]}, Sys]
+%SysVaryParameters - A structure containing all of the outputs of the
+%function [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary)
 %NUMERICAL:
 %NDeflations - The number of local minima you wish to find, the output -
 % [ {1} | positive integer ]
@@ -65,24 +64,25 @@ function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,varySys,Exp,varar
 %MaxIter - The integer value  of Maximum iterations per deflation -
 %           [ {1000} | positive integer ]
 %Linesearch - line search method - [ No | Basic | {Armijo} | Quadratic ]
-%theta - The deflation exponent - [ {2} | positive integer | exp ]
-%c1 - the armijo line search parameter - [ {1e-4} | positive scalar ]
+%Theta - The deflation exponent - [ {2} | positive integer | exp ]
+%C1 - the armijo line search parameter - [ {1e-4} | positive scalar ]
 %alpha0 - Initial value of the line search parameter each iteration - [ 1
 %           | positive scalar ]
 %Tau - The value of the decrease in the line search parameter - [ {0.5} |
-%         scalar in [0,1] ]
-%Minalpha - The minimum value of the line search parameter - [ 1e-10 |
-%       positive scalar ]
+%         positive scalar in [0,1] ]
+%Minalpha - The minimum value of the line search parameter - [ {1e-15 |
+%         positive scalar in [0,1] ]
 %Verbose - Output value of objective function and gradient at each
 %            iteration - [ true | {false} ]
-%Regularisation - The value regularing parameter - [ {0} ]
+%Regularisation - The value regularising parameter - [ {0} | 
+%         positive scalar ]
 %LinearSolver - The linear solver used - [ {mldivide} | lsqminnorm ]
 %ConvergenceFlags - The flags that are considered to mean convergence - [
 %        {Objective less than tolerance} | {Gradient less than tolerance} |
 %       Step Size too small | Line search failed | Max Iterations reached |
 %        Divergence Detected | NaN ]
-%DeflateLinesearch - Line searches should be applied to the deflated
-%        system - [ {true} | false ]
+%DeflatedLinesearch - Line search on deflated objective for
+%Bad Gauss-Newton method - [ {false} | true ]
 %Sigma - The value of the shift of the deflation - [ {1} | scalar ]
 %SingleShift - Deflation shift should only be applied once [ true |
 %        {false} ]
@@ -162,7 +162,7 @@ defaultC1 = 1e-7;
 defaultTau = 0.5;
 defaultAlpha0 = 1;
 defaultMinalpha = 1e-15;
-defaultDeflatedLinesearch = "No";
+defaultDeflatedLinesearch = false;
 
 %Deflation options
 defaultTheta = 2;
@@ -231,7 +231,7 @@ addParameter(IP,'c1',defaultC1,isnumericscalar)
 addParameter(IP,'tau',defaultTau,isnumericscalar)
 addParameter(IP,'alpha0',defaultAlpha0,isnumericscalar)
 addParameter(IP,'minalpha',defaultMinalpha,isnumericscalar)
-addParameter(IP,'DeflatedLinesearch',defaultDeflatedLinesearch,isstringorchar)
+addParameter(IP,'DeflatedLinesearch',defaultDeflatedLinesearch,@islogical)
 
 
 %Deflation options
@@ -458,9 +458,15 @@ params.convergence.ConvergenceFlags = res.ConvergenceFlags;
 
 % Set line search objective/merit function and derivatives - phi/gradphi
 %First set deflation linesearch
-params.linesearch.Mu.phi = @(~,x,constants,DeflatedPts,DeflationParameters) deflation(DeflatedPts,x,DeflationParameters);
-params.linesearch.Mu.gradphi = @(X) X.gradMu;
-
+if res.DeflatedLinesearch ~= "No"
+    if res.Method ~= "Bad_GN"
+        warning("Deflated Linesearch only applied to Bad Gauss-Newton method")
+    else
+        params.linesearch.Mu = params.linesearch.merit;
+        params.linesearch.Mu.phi = @(~,x,constants,DeflatedPts,DeflationParameters) deflation(DeflatedPts,x,DeflationParameters);
+        params.linesearch.Mu.gradphi = @(X) X.gradMu;
+    end
+end
 %
 % Set objective merit functions and optimisation methods
 %
@@ -478,21 +484,6 @@ switch res.Method
         params.linesearch.merit.phi = @(objective_function,x,constants,~,~) objective_function(x,constants);
         params.linesearch.merit.gradphi = @(X) 2*(X.J'*X.R);
         Fun = str2func('Bad_Deflated_GaussNewton');
-    case "LP"
-        Fun  = str2func('LP');
-
-        if isfield(Opt,"Linesearch")&&params.linesearch.merit.method ~= "No"||isfield(params.linesearch,"deflatedmerit")&&params.linesearch.deflatedmerit.method ~= "No"
-            warning("Note that no line search can be used with the Lift and Projection method.")
-        end
-        if res.NDeflations >1 || isstruct(res.SysFound)
-            warning("The Lift and Project method does not curently suport deflation")
-            res.NDeflations=1;
-        end
-        if res.IEPType ~= "Classic"
-            warning("When using the LP method the ""Classic"" IEP type must be used, switching to the  RGD_LP method.")
-            res.Method = "RGD_LP";
-            Fun  = str2func('RGD_LP');
-        end
     case "RGD_LP"
         Fun  = str2func('RGD_LP');
             if isfield(Opt,"Linesearch")&&Opt.Linesearch ~="No" 
@@ -506,13 +497,6 @@ switch res.Method
             else
                 params.linesearch.merit.method = "No";
             end
-
-
-            % if res.NDeflations >1 || isstruct(res.SysFound)
-            %     warning("The Lift and Project method does not curently suport deflation, only one minimum can be requested")
-            %     res.NDeflations=1;
-            % end
-
     otherwise
         error('Please select a valid method - Newton/Good_GN/Bad_GN')
 end

@@ -32,7 +32,7 @@ while stop == false
     % if regularise
     %     [Q,R] = qr([X.J;lambda(NIter)*diag(diag(X.J'*X.J))],0);
     % else
-        [Q,R] = qr(X.J,0);
+    [Q,R] = qr(X.J,0);
     % end
     X.gradEta = X.gradMu.'/X.Mu;
     p = -R \ (Q'* X.R );
@@ -61,17 +61,7 @@ while stop == false
         if pTgradEta > 1 % Zone 3
             p = deflated_p;
             % By default this linesearch just returns alpha0.
-            alpha = params.linesearch.merit.alpha0; FCount = 0;
-            % [alpha,FCount] = Linesearch(x, p, DeflatedPts, params, params.linesearch.Mu, obj_fun, X);
-            FuncCount = FuncCount+FCount;
-            if (alpha<=params.linesearch.merit.minalpha)
-                if rank(X.J)<length(x)
-                    CurrentLoop.ConvergenceFlag = "Mu line search terminated with rank deficient Jacobian";
-                else
-                    CurrentLoop.ConvergenceFlag = "Mu line search terminated";
-                end
-                break
-            end
+            alpha = params.linesearch.merit.alpha0;
         else % Zone 2
             p = deflated_p;
             % By default this linesearch just returns alpha0.
@@ -101,7 +91,7 @@ while stop == false
         end
         OutputLineLength = fprintf('k = %d; f(x) = %d; |gradf(x)| = %d; alpha = %d; \n', NIter,X.F,norm(X.J'*X.R),alpha);
     end
-        NIter = NIter + 1;
+    NIter = NIter + 1;
     % Save iterates for plotting
     if RecordIterates, CurrentLoop.Iterates = [CurrentLoop.Iterates, x]; end
 end
