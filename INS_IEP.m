@@ -42,73 +42,84 @@ function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,varySys,Exp,varar
 % the option 'IEPType' as either 'Classic' or 'Difference' respectivly.
 %
 %
-%OPTIONAL PARAMETERS
-%Main method options:
-%Method - The optimisation method to use - [ {"Good_GN"} | "Bad_GN" |
-%           "Newton" | "RGD_LP" ]
-%NDeflations - The number of local minima you wish to find -
-% [ {1} | positive integer ]
-%MaxNonMinima - number of deflations wi
-%SysFound - array of Sys structures of previously found minimising systems
-% - [ {[]}, SysFound]
-%IEPType - Defines which formulation of the IEP to use - [ "Classic" |
-%       {"Difference"} ]
-%Scaled - specifies if the parameters are scaled to the size of the initil
-%       values - [ true | {false} ]
-%Eigensolver - Specifies which eigensolver to use - [ "eig" | "eigs" ] 
-%       (default is decided based on the size of the matrices used)
-%EigsNotConvergedWarning - Specifies if a warning should be output of the
-%       eigensolver fails to converge for some of the eigenvalues - 
-%       [ {true} | false ]
-%SysVaryParameters - A structure containing all of the outputs of the
-%function [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary)
-%NUMERICAL:
-%NDeflations - The number of local minima you wish to find -
-% [ {1} | positive integer ]
-%Method - The optimisation method desired - [ {"Good_GN"} | "Bad_GN" |
-%           "Newton" | "RGD_LP" ]
-%MaxIter - The integer value  of Maximum iterations per deflation -
-%           [ {1000} | positive integer ]
-%Linesearch - line search method used - [ "No" | "Basic" | {"Armijo"} | 
-%              "Quadratic" ]
-%Theta - The deflation exponent - [ {2} | positive integer | "exp" ]
-%C1 - the armijo line search parameter - [ {1e-4} |
-%         positive scalar in  [0,1] ]
-%alpha0 - Initial value of the line search parameter each iteration - [ {1}
-%           | positive scalar ]
-%Tau - The value of the decrease in the line search parameter - [ {0.5} |
-%         positive scalar in [0,1] ]
-%Minalpha - The minimum value of the line search parameter - [ {1e-15 |
-%         positive scalar in [0,1] ]
-%Verbose - Output value of objective function and gradient at each
-%            iteration - [ true | {false} ]
-%Regularisation - The value regularising parameter - [ {0} | 
-%         positive scalar ]
-%LinearSolver - The linear solver used - [ {"mldivide"} | "lsqminnorm" ]
-%ConvergenceFlags - List flags that are considered to mean convergence - [
-%        {"Objective less than tolerance","Gradient less than tolerance",
-%       "Step Size below tolerance","Merit line search terminated",
-%       "Relative Step Size below tolerance"} |
-%       "Deflation operator is Nan/Inf" | "Max Iterations reached" | 
-%       "Max Iterations reached" |
-%       "Merit line search terminated with rank deficient Jacobian" | 
-%       "Deflated Merit line search terminated with rank deficient
-%       Jacobian" | "Deflated Merit line search terminated" ]
-%DeflatedLinesearch - Line search on deflated objective for
-%Bad Gauss-Newton method - [ {false} | true ]
-%Sigma - The value of the shift of the deflation - [ {1} | positive scalar ]
-%ShiftType - Deflation shift should only be applied once [ true |
-%        {false} ]
-%Epsilon - Tolerence on the application of deflation or line search - [
-%        {0.01} | scalar ]
-%NormWeighting - Weighting applied to the norms in calculation of
-%           deflation operators - [ {} | l \times l identity matrix ]
-%GradientTolerance - Stopping criterion based on gradient of function -
-%        [ {0} | positive scalar ]
-%StepTolerance - Stopping criterion based on difference of consecutive
-%        steps - [ {1e-8} | positive scalar ]
-%FunctionTolerance - Stopping criterion based on value of objective function
-%        function - [ {0} | positive scalar ]
+% OPTIONAL PARAMETERS
+% INS options:
+% IEPType - Defines which formulation of the IEP to use - [ "Classic" |
+%        {"Difference"} ]
+% SysFound - array of Sys structures of previously found minimising systems
+%  - [ {[]}, SysFound]
+% GroundStateFound - Value of groundstate found if not already specified by
+%        SysFound - [ [] | scalar ]
+% Main method options:
+% Method - The optimisation method to use - [ {"Good_GN"} | "Bad_GN" |
+%            "Newton" | "RGD_LP" ]
+% NDeflations - The number of local minima you wish to find -
+%  [ {1} | positive integer ]
+% MaxNonMinima - number of failed deflations before quiting method - [ {inf}
+%         | positive integer ]
+% Solver Options:
+% Regularisation - The value regularising parameter - [ {0} | 
+%          positive scalar ]
+% LinearSolver - The linear solver used - [ {"mldivide"} | "lsqminnorm" ]
+% Scaled - specifies if the parameters are scaled to the size of the initil
+%        values - [ true | {false} ]
+% Eigensolver - Specifies which eigensolver to use - [ "eig" | "eigs" ] 
+%        (default is decided based on the size of the matrices used)
+% Input/Output Options:
+% Verbose - Output value of objective function and gradient at each
+%             iteration - [ true | {false} ]
+% RecordIterates - Option to not record all iterates if running for large
+%        number of iterations - [ {true} | false ]
+% SupressConvergedFlag - Stops outputing when method has converged -  
+%        [ {false} | true ]
+% EigsNotConvergedWarning - Specifies if a warning should be output of the
+%        eigensolver fails to converge for some of the eigenvalues - 
+%        [ {true} | false ]
+% Lines earch options:
+% Linesearch - line search method used - [ "No" | "Basic" | {"Armijo"} | 
+%               "Quadratic" ]
+% C1 - the armijo line search parameter - [ {1e-4} |
+%          positive scalar in  [0,1] ]
+% Tau - The value of the decrease in the line search parameter - [ {0.5} |
+%          positive scalar in [0,1] ]
+% alpha0 - Initial value of the line search parameter each iteration - [ {1}
+%            | positive scalar ]
+% Minalpha - The minimum value of the line search parameter - [ {1e-15 |
+%          positive scalar in [0,1] ]
+% DeflatedLinesearch - Line search on deflated objective for
+%        Bad Gauss-Newton method - [ {false} | true ]
+% Deflation options:
+% Theta - The deflation exponent - [ {2} | positive integer | "exp" ]
+% Sigma - The value of the shift of the deflation - [ {1} | positive scalar ]
+% ShiftType - Deflation shift should only be applied once [ true |
+%         {false} ]
+% Epsilon - Tolerence on the application of deflation or line search - [
+%         {0.01} | scalar ]
+% Stopping criteria:
+% StepTolerance - Stopping criterion based on difference of consecutive
+%         steps - [ {1e-6} | positive scalar ]
+% GradientTolerance - Stopping criterion based on gradient of function -
+%         [ {0} | positive scalar ]
+% FunctionTolerance - Stopping criterion based on value of objective function
+%         function - [ {0} | positive scalar ]
+% RelativeStepTolerance - Stopping criterion based on value of objective function
+%         function - [ {0} | positive scalar ]
+% MaxIter - The integer value  of Maximum iterations per deflation -
+%            [ {1000} | positive integer ]
+% ConvergenceFlags - List flags that are considered to mean convergence - [
+%         {"Objective less than tolerance","Gradient less than tolerance",
+%        "Step Size below tolerance","Merit line search terminated",
+%        "Relative Step Size below tolerance"} |
+%        "Deflation operator is Nan/Inf" | "Max Iterations reached" | 
+%        "Max Iterations reached" |
+%        "Merit line search terminated with rank deficient Jacobian" | 
+%        "Deflated Merit line search terminated with rank deficient
+%        Jacobian" | "Deflated Merit line search terminated" ]
+% Misc Options:
+% SysVaryParameters - A structure containing all of the outputs of the
+% function [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary) Used to  speed
+%  up the method when calling INS_IEP many times  - [ {[]} | struct ]
+
 if nargin ==4
     Opt = varargin{1};
 elseif nargin == 3
@@ -165,7 +176,6 @@ end
 %Input/output options
 defaultVerbose = false;
 defaultRecordIterates = true;
-defaultRecordTimes = false;
 defaultSupressConvergedFlag = false;
 defaultEigsNotConvergedWarning = true;
 
@@ -395,10 +405,7 @@ if isstruct(res.SysFound)
             params.method.constants.A0 = A0+speye(size(A0))*res.GroundStateFound;
         end
     end
-
-    % notfirstiteration = 1;
 else
-    % notfirstiteration = 0;
     Output = struct("DeflatedPoint",[],"ErrorAtDeflatedPoint",[],"NIter",[],"ConvergenceFlag",[],"FuncCount",[]);
     if res.RecordIterates == true
         Output.Iterates=[];
@@ -411,14 +418,7 @@ end
 
 
 
-
-
-
-
 %% Apply numerical method options
-
-
-
 
 
 %
@@ -427,7 +427,6 @@ end
 params.method.StepMethod = res.Method;
 params.method.Verbose = res.Verbose;
 params.method.Scaled = res.Scaled;
-% params.method.constants = res.constants;
 params.method.Regularisation = res.Regularisation;
 params.method.LinearSolver = res.LinearSolver;
 params.method.MaxStepSize = res.MaxStepSize;
