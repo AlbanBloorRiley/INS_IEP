@@ -243,7 +243,6 @@ addParameter(IP,'Eigensolver',defaultEigensolver)
 %Input/output options
 addParameter(IP,'Verbose',defaultVerbose,@islogical)
 addParameter(IP,'RecordIterates',defaultRecordIterates,@islogical)
-addParameter(IP,'RecordTimes',defaultRecordTimes,@islogical)
 addParameter(IP,'SupressConvergedFlag',defaultSupressConvergedFlag,@islogical)
 addParameter(IP,'EigsNotConvergedWarning',defaultEigsNotConvergedWarning)
 
@@ -517,12 +516,7 @@ end
 %% Main Loop
 
 j = 0;
-if res.RecordTimes
-    % Times = zeros([res.NDeflations,1]);
-    % stopearly=false;
-    Times{1,:,:} = [];
-    tic
-end
+
 if ~isempty(Output(1).DeflatedPoint)
     if res.Scaled
     DeflatedPts = [Output.DeflatedPoint]./scale_x;
@@ -557,24 +551,11 @@ for  i=length(res.SysFound)+1:res.NDeflations
             warning("Rank deficient matrix detected, consider using the Regularisation option. ")
         end
 
-    %Record Time to compute if requested
-    if res.RecordTimes
-        Times{i,:,:} = toc;
-        tic
-    end
-    % if res.Scaled
-    %     Iterations.DeflatedPoint = Iterations.DeflatedPoint .*scale_x;
-    % end
 
     if isfield(Output,'GroundStateFound')
         if res.IEPType == "Classic" %Need to fix this option
-            % if res.Scaled
             Iterations.GroundStateFound = Iterations.DeflatedPoint(end);
-            % scale_x(end)=[];
-            % else
             Iterations.GroundStateFound = Iterations.DeflatedPoint(end);
-            % end
-            % Iterations.DeflatedPoint(end) = [];
         else
             Iterations.GroundStateFound = [];
         end
@@ -592,15 +573,12 @@ for  i=length(res.SysFound)+1:res.NDeflations
     % Check for NaNs
     if Output(i).ConvergenceFlag == "NaN/Inf"
         warning("Method diverging to NaN or Inf values, stopped deflations early.")
-        % stopearly = true;
         break
     elseif Output(i).ConvergenceFlag == "Deflation operator is Nan/Inf"
         warning("Deflation operatoris NaN/Inf, stopped deflations early.")
-        % stopearly = true;
         break
     elseif (i-length(res.SysFound)-1-j)>res.MaxNonMinima
         warning("Stopping deflations as the maximum number of non minima have been deflated")
-        % stopearly = true;
         break
     end
 end
@@ -609,12 +587,6 @@ if j ~= i-length(res.SysFound)
     disp("Note: Not all systems found were minima")
 end
 
-if res.RecordTimes
-    % if stopearly
-    %     Times{i,:,:} = NaN;
-    % end
-    Output = cell2struct([struct2cell(Output);reshape(Times,1,1,length(Output))],[fieldnames(Output);'Times']);
-end
 warning('on',"MATLAB:rankDeficientMatrix")
 
 
@@ -634,10 +606,7 @@ for i=1:length(SysOut1)
     SysOut1(i).Output = Output(i+length(res.SysFound));
 end
 SysOut = [res.SysFound,SysOut1];
-% SysOut = mergestructs(SysOut,Output);
-% if res.IEPType == "Classic"
-%     SysOut = mergestructs(SysOut,GroundStateFound);
-% end
+
 
 end
 
@@ -679,7 +648,6 @@ end
 end
 
 function Output = CalculateOutputStructure(SysFound,Vary,IEPType,constants)
-
 for i = 1:length(SysFound)
     [~,~,x]= Sys_Input(SysFound(i),Vary);
     Output(i).DeflatedPoint = x;
@@ -690,8 +658,6 @@ for i = 1:length(SysFound)
     else
         Output(i).ErrorAtDeflatedPoint = IEP_Evaluate_diff(Output(i).DeflatedPoint,constants);
     end
-
-    % Output(i).ErrorAtDeflatedPoint = f(x);
     Output(i).NIter = 0;
     Output(i).ConvergenceFlag = "";
     Output(i).Iterates = x;
