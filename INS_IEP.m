@@ -43,30 +43,38 @@ function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,varySys,Exp,varar
 %
 %
 %OPTIONAL PARAMETERS
+%Main method options:
+%Method - The optimisation method to use - [ {"Good_GN"} | "Bad_GN" |
+%           "Newton" | "RGD_LP" ]
+%NDeflations - The number of local minima you wish to find -
+% [ {1} | positive integer ]
+%MaxNonMinima - number of deflations wi
 %SysFound - array of Sys structures of previously found minimising systems
-% - [ {[]}, Sys]
-%IEPType - Defines which formulation of the IEP to use - [ Classic |
-%       {Difference} ]
+% - [ {[]}, SysFound]
+%IEPType - Defines which formulation of the IEP to use - [ "Classic" |
+%       {"Difference"} ]
 %Scaled - specifies if the parameters are scaled to the size of the initil
 %       values - [ true | {false} ]
-%Eigensolver - Specifies which eigensolver to use - [ eig | eigs ] (default
-%       is decided based on the size of the matrices used)
+%Eigensolver - Specifies which eigensolver to use - [ "eig" | "eigs" ] 
+%       (default is decided based on the size of the matrices used)
 %EigsNotConvergedWarning - Specifies if a warning should be output of the
-%       eigensolver fails to converge for some of the eigenvalues - [ {true} |
-%       false ]
+%       eigensolver fails to converge for some of the eigenvalues - 
+%       [ {true} | false ]
 %SysVaryParameters - A structure containing all of the outputs of the
 %function [A,A0,scale_x,Ops,SysFixed] = Sys_Input(Sys0,Vary)
 %NUMERICAL:
-%NDeflations - The number of local minima you wish to find, the output -
+%NDeflations - The number of local minima you wish to find -
 % [ {1} | positive integer ]
-%Method - The optimisation method desired - [ {Newton} | GaussNewtonT1 |
-%           GaussNewtonT2 ]
+%Method - The optimisation method desired - [ {"Good_GN"} | "Bad_GN" |
+%           "Newton" | "RGD_LP" ]
 %MaxIter - The integer value  of Maximum iterations per deflation -
 %           [ {1000} | positive integer ]
-%Linesearch - line search method - [ No | Basic | {Armijo} | Quadratic ]
-%Theta - The deflation exponent - [ {2} | positive integer | exp ]
-%C1 - the armijo line search parameter - [ {1e-4} | positive scalar ]
-%alpha0 - Initial value of the line search parameter each iteration - [ 1
+%Linesearch - line search method used - [ "No" | "Basic" | {"Armijo"} | 
+%              "Quadratic" ]
+%Theta - The deflation exponent - [ {2} | positive integer | "exp" ]
+%C1 - the armijo line search parameter - [ {1e-4} |
+%         positive scalar in  [0,1] ]
+%alpha0 - Initial value of the line search parameter each iteration - [ {1}
 %           | positive scalar ]
 %Tau - The value of the decrease in the line search parameter - [ {0.5} |
 %         positive scalar in [0,1] ]
@@ -76,15 +84,20 @@ function [SysOut,Opt,params,obj_fun,Iterations] = INS_IEP(Sys0,varySys,Exp,varar
 %            iteration - [ true | {false} ]
 %Regularisation - The value regularising parameter - [ {0} | 
 %         positive scalar ]
-%LinearSolver - The linear solver used - [ {mldivide} | lsqminnorm ]
-%ConvergenceFlags - The flags that are considered to mean convergence - [
-%        {Objective less than tolerance} | {Gradient less than tolerance} |
-%       Step Size too small | Line search failed | Max Iterations reached |
-%        Divergence Detected | NaN ]
+%LinearSolver - The linear solver used - [ {"mldivide"} | "lsqminnorm" ]
+%ConvergenceFlags - List flags that are considered to mean convergence - [
+%        {"Objective less than tolerance","Gradient less than tolerance",
+%       "Step Size below tolerance","Merit line search terminated",
+%       "Relative Step Size below tolerance"} |
+%       "Deflation operator is Nan/Inf" | "Max Iterations reached" | 
+%       "Max Iterations reached" |
+%       "Merit line search terminated with rank deficient Jacobian" | 
+%       "Deflated Merit line search terminated with rank deficient
+%       Jacobian" | "Deflated Merit line search terminated" ]
 %DeflatedLinesearch - Line search on deflated objective for
 %Bad Gauss-Newton method - [ {false} | true ]
-%Sigma - The value of the shift of the deflation - [ {1} | scalar ]
-%SingleShift - Deflation shift should only be applied once [ true |
+%Sigma - The value of the shift of the deflation - [ {1} | positive scalar ]
+%ShiftType - Deflation shift should only be applied once [ true |
 %        {false} ]
 %Epsilon - Tolerence on the application of deflation or line search - [
 %        {0.01} | scalar ]
@@ -191,7 +204,6 @@ isSysFoundValid = @(x) isempty(x)||SysCompare(Sys0,varySys,x);
 
 IP = inputParser;
 %Validation functions
-mergestructs = @(x,y) cell2struct([struct2cell(x);struct2cell(y)],[fieldnames(x);fieldnames(y)]);
 isnumericscalar = @(x) isscalar(x) && isnumeric(x);
 isstringorchar = @(x) isstring(x) || ischar(x);
 
