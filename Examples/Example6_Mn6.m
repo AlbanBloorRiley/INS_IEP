@@ -45,15 +45,23 @@ Opt.Alpha0 = 1e-2;
 Opt.Linesearch = "Quadratic";
 % Opt.IEPType = "Classic";
 Opt.StepTolerance = 0.3;
-Opt.MaxIter = 400;
+Opt.MaxIter = 1000;
 % Opt.Method = "RGD_LP";
 SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
 %% Use Mint to simulate INS spectrum and compare agains baseline parameters
 
+
+
 for i = 1:length(SysOut)
     MintSys = SysOut(i);
-    MintSys.FormFactor = FormFactor;
-    MintSys.Coords = Coords;
+    MintSys.FormFactor = {'Mn3', 'Mn3', 'Mn2', 'Mn2', 'Mn2', 'Mn2'};
+    MintSys.Coords = [24.60550  13.06674   7.07523; % A
+              22.27025  11.49336   6.95626; % B
+              21.99544  13.57222   9.30268; % 1
+              24.62949  10.95050   9.41655; % 2
+              24.24486  10.55088   4.68547; % 3
+              22.84040  14.03029   4.66904; % 4
+              ];
     MintOpt.NumEigs = 50;
     [cross_sect] = mint(MintSys,MintExp,MintOpt);
     MintSysPrev = MintSys;
