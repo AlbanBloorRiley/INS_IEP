@@ -50,7 +50,21 @@ Opt.MaxIter = 1000;
 SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
 %% Use Mint to simulate INS spectrum and compare agains baseline parameters
 
+%Set up
+Ei = 4; %Incident neutron energy in meV
+MintExp.lwfwhm = 0.02*Ei/2.355; %calculated line width full-width-at-half-max, 2 % of incident energy
+% MintExp.lwfwhm = 0.05;
+MintExp.Energy = linspace(-Ei*0.8,Ei*0.8,1000); %calculating the spectrum in the interval -0.8*Ei to 0.8*Ei
+MintExp.Q = 0.1:0.01:2.5; %Q-range which the simulation integrates over.
+MintExp.Temperature = [1.5 5 10 30];
 
+MintOpt.NumEigs = 100; %100 eigenvalues gives a good INS sim
+
+b =[0 0.4470 0.7410];
+r=[0.8500 0.3250 0.0980];
+y=[0.9290 0.6940 0.1250];
+g=[0.4660 0.6740 0.1880];
+colours = [b;y;g;r];
 
 for i = 1:length(SysOut)
     MintSys = SysOut(i);
