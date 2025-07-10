@@ -468,7 +468,7 @@ params.convergence.ConvergenceFlags = res.ConvergenceFlags;
 
 % Set line search objective/merit function and derivatives - phi/gradphi
 %First set deflation linesearch
-if res.DeflatedLinesearch ~= "No"
+if res.DeflatedLinesearch
     if res.Method ~= "Bad_GN"
         warning("Deflated Linesearch only applied to Bad Gauss-Newton method")
     else
