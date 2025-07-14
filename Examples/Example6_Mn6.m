@@ -7,7 +7,7 @@ Sys0.S = [2 2 5/2 5/2 5/2 5/2]; % MnIII has S = 2, MnII has S = 5/2
 J_S4_S4   = -5*meV;    % (-5)   MnIII - MnIII.       Keep value fixed
 J_S4_S5_1 = 0.4*meV;  % (0.41) MnIII - MnII, MnIII JT involved.       
 J_S4_S5_2 = -0.4*meV;  % (-0.4) MnIII - MnII, MnIII JT not involved.   
-J_S5_S5   = -0.01*meV; % (-0.1) MnII  - MnII.       
+J_S5_S5   = -0.1*meV; % (-0.1) MnII  - MnII.       
 J_AB = J_S4_S4;
 J_A1 = J_S4_S5_1; J_A3 = J_S4_S5_1; J_B2 = J_S4_S5_1; J_B4 = J_S4_S5_1; %For these, the MnIII JT axis is involved. Can be FM or AFM
 J_A2 = J_S4_S5_2; J_A4 = J_S4_S5_2; J_B1 = J_S4_S5_2; J_B3 = J_S4_S5_2; %For these, the MnIII JT axis is NOT involved. Can only be AFM
@@ -36,17 +36,22 @@ Vary = Sys0; Vary.J(1)=0;   %Fix value of J_AB
 %Two sets of eigenvalues found - depending on the multiplicty
 Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218]'.*meV;   %or
 Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]'.*meV;
+Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134]'.*meV;
+
 %%
 clear Opt
 Opt.Verbose = true;
 Opt.Scaled = true;
 % Opt.C1 =1e-2;
-Opt.Alpha0 = 1e-2;
+Opt.Alpha0 = 1e0;
 Opt.Linesearch = "Quadratic";
 % Opt.IEPType = "Classic";
-Opt.StepTolerance = 0.3;
-Opt.MaxIter = 1000;
+Opt.StepTolerance = 0.1;
+Opt.GradientTolerance = 1e-4;
+Opt.MaxIter = 200;
 % Opt.Method = "RGD_LP";
+Opt.NDeflations = 2 ;
+Opt.SysFound = SysFound;
 SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
 %% Use Mint to simulate INS spectrum and compare agains baseline parameters
 
