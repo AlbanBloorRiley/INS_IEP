@@ -363,6 +363,9 @@ if isstruct(res.SysFound)
         Output = CalculateOutputStructure(res.SysFound,varySys,res.IEPType,constants);
         res.SysFound(1:length(res.SysFound)).Output = Output;
     end
+    if ~isfield(res.SysFound,'Exp')
+       res.SysFound(1).Exp = [];
+    end
     % If Classic IEP type then check if Groundstate values input
     if res.IEPType == "Classic"%&&~isfield(Output,'GroundStateFound')
         %If not then calculate groundstate values
@@ -604,6 +607,7 @@ warning('on','MATLAB:eigs:NotAllEigsConverged')
 
 for i=1:length(SysOut1)
     SysOut1(i).Output = Output(i+length(res.SysFound));
+    SysOut1(i).Exp = Exp;
 end
 SysOut = [res.SysFound,SysOut1];
 
