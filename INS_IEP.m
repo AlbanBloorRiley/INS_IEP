@@ -150,7 +150,7 @@ end
 l = length(scale_x);
 %% Set defaults
 % INS option defaults:
-defaultIEPType = 'Difference';
+defaultIEPType = 'ZeroDifference';
 defaultSysFound = [];
 defaultGroundStateFound = [];
 
@@ -314,9 +314,12 @@ if res.IEPType == "Classic"
         end
         constants.eigenvalueSD = ones(length(Exp.ev),1);
     end
-elseif res.IEPType == "Difference"
-    obj_fun = @IEP_Evaluate_diff;
-
+elseif res.IEPType == "Difference"||res.IEPType == "ZeroDifference"
+    if res.IEPType == "Difference"
+        obj_fun = @IEP_Evaluate_diff;
+    elseif res.IEPType == "ZeroDifference"
+        obj_fun = @IEP_Evaluate_Zerodiff;
+    end
     if isfield(Exp,'evdsd')
         if ~all(Exp.evdsd)
             warning('If standard deviation is given for experimental eigenvalue differences, any zero values are set to 1.')
@@ -388,7 +391,7 @@ if isstruct(res.SysFound)
                 Output(i).GroundStateFound = smallesteig;
             end
         end
-    elseif res.IEPType == "Difference"
+    elseif res.IEPType == "Difference"||res.IEPType == "ZeroDifference"
         warn = false;
         for i = 1:length(Output)
             if length(Output(i).DeflatedPoint) == l+1   %groundstate
