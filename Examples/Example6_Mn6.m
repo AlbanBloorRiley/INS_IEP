@@ -31,13 +31,15 @@ Sys0.B2 = [B22III 0 B20III 0 0;
           B22II 0 B20II 0 0;
           B22II 0 B20II 0 0];
 
-Vary = Sys0; Vary.J(1)=0;   %Fix value of J_AB
+Vary = Sys0; %Vary.J(1)=0;   %Fix value of J_AB
 
 %Two sets of eigenvalues found - depending on the multiplicty
 Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.5218, 2.5218, 2.5218, 2.5218]'.*meV;   %or
 Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134, 2.316, 2.316, 2.316, 2.316, 2.316,  2.5218, 2.5218]'.*meV;
 Exp.ev = [ 0, 0.1414, 0.59070, 0.59070, 1.0841, 1.0841 , 1.0841, 1.4134, 1.4134]'.*meV;
-
+Exp.ev = [0, 0.1414, 0.59079, 0.59079, 1.0841, 1.0841, 1.0841, 1.4134, 1.4134, 2.1868, 2.1868, 2.1868, 2.3123, 2.3123].*meV;
+Exp.ev = [0, 0.1411, 0.5906, 0.5906, 1.0337, 1.0852, 1.0852, 1.4128, 1.4128, 2.1502, 2.1815, 2.1815, 2.3118, 2.3118].*meV;
+%[0, 0.1411(4), 0.5906(3), 0.5906(3), 1.0337(18), 1.0852(5), 1.0852(5), 1.4128(4), 1.4128(4), 2.1502(14), 2.1815(12), 2.1815(12), 2.3118(10), 2.3118(10)]
 %%
 clear Opt
 Opt.Verbose = true;
@@ -51,7 +53,7 @@ Opt.GradientTolerance = 1e-4;
 Opt.MaxIter = 200;
 % Opt.Method = "RGD_LP";
 Opt.NDeflations = 2 ;
-Opt.SysFound = SysFound;
+% Opt.SysFound = SysFound;
 SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
 %% Use Mint to simulate INS spectrum and compare agains baseline parameters
 
