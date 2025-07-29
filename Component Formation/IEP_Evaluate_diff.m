@@ -45,6 +45,13 @@ else
 %         disp(D-D1(1:length(D)))
 %     end
 end
+if isfield(constants,'MintStruct')
+    constants.MintStruct.Opt.Eigs = D;
+    constants.MintStruct.Opt.Vecs = Q;
+    cross_sect = mint(constants.MintStruct.Sys,constants.MintStruct.Exp,constants.MintStruct.Opt);
+    plot(constants.MintStruct.Exp.Energy,cross_sect*1e-4,'linewidth',1.2)
+end
+
 % R = (D(2:end)-D(1:end-1))-(constants.ev(2:end)-constants.ev(1:end-1));
 % J = FormJ_Lambda(Q(:,2:end),constants.A) - FormJ_Lambda(Q(:,1:end-1),constants.A);
 %  L = D-constants.ev;

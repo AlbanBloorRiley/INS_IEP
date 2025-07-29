@@ -201,6 +201,8 @@ defaultRelativeStepTolerance = 0;%1e-10;
 defaultMaxIter = 1000;
 defaultConvergenceFlags = ["Objective less than tolerance","Gradient less than tolerance","Step Size below tolerance","Merit line search terminated","Relative Step Size below tolerance"];
 
+% %MintOptions3
+
 if isfield(Opt,'IEPType')&&Opt.IEPType =="Classic"
     defaultlbylIdentity = speye(length(scale_x)+1);
     isnumerical_lbyl = @(x) isnumeric(x) && all(size(x) == [length(scale_x)+1,length(scale_x)+1]);
@@ -271,6 +273,8 @@ addParameter(IP,'ConvergenceFlags',defaultConvergenceFlags,isstringorchar)
 
 addParameter(IP,'ScalingMatrix',defaultlbylIdentity,isnumerical_lbyl)
 addParameter(IP,'MaxStepSize',[],isnumericscalar)
+
+addParameter(IP,'MintStruct',[],@isstruct)
 
 IP.parse(Sys0,varySys,Exp,varargin{:})
 res = IP.Results;
@@ -351,6 +355,11 @@ constants.A = A;
 constants.A0 = A0;
 constants.ED = res.Eigensolver;
 params.method.constants = constants;
+
+if ~isempty(res.MintStruct)
+    constants.MintStruct = res.MintStruct;
+end
+
 
 
 %Parse the input of a previously found systems

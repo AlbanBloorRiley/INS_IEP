@@ -63,7 +63,6 @@ MintExp.Energy = linspace(-Ei*0.8,Ei*0.8,1000); %calculating the spectrum in the
 MintExp.Q = 0.1:0.01:2.5; %Q-range which the simulation integrates over.
 MintExp.Temperature = [1.5 5 10 30];
 
-MintOpt.NumEigs = 100; %100 eigenvalues gives a good INS sim
 
 b =[0 0.4470 0.7410];
 r=[0.8500 0.3250 0.0980];
@@ -101,3 +100,32 @@ for i = 1:length(SysOut)
     % f.Units = 'centimeters';
     % f.Position = [10 10 20 25];
 end
+
+%%
+
+MintStruct.Exp.lwfwhm = 0.02*Ei/2.355; %calculated line width full-width-at-half-max, 2 % of incident energy
+% MintStruct.Exp.lwfwhm = 0.05;
+MintStruct.Exp.Energy = linspace(-Ei*0.8,Ei*0.8,1000); %calculating the spectrum in the interval -0.8*Ei to 0.8*Ei
+MintStruct.Exp.Q = 0.1:0.01:2.5; %Q-range which the simulation integrates over.
+MintStruct.Sys.FormFactor = {'Mn3', 'Mn3', 'Mn2', 'Mn2', 'Mn2', 'Mn2'};
+MintStruct.Sys.Coords = [24.60550  13.06674   7.07523; % A
+              22.27025  11.49336   6.95626; % B
+              21.99544  13.57222   9.30268; % 1
+              24.62949  10.95050   9.41655; % 2
+              24.24486  10.55088   4.68547; % 3
+              22.84040  14.03029   4.66904; % 4
+              ];
+
+clear Opt
+Opt.MintStruct = MintStruct;
+Opt.Verbose = true;
+Opt.Scaled = true;
+Opt.Alpha0 = 1e0;
+Opt.Linesearch = "Quadratic";
+Opt.StepTolerance = 0.1;
+Opt.GradientTolerance = 1e-4;
+Opt.MaxIter = 200;
+Opt.Method = "RGD_LP";
+Opt.NDeflations = 2 ;
+Opt.SysFound = SysFound;
+SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
