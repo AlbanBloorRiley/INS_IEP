@@ -1,4 +1,4 @@
-function ok = SysInput_ee_full()
+function ok = Sys_Input_ee_full()
 % Tests Sys_input computation of basis matrices, for electron-electron 
 % interaction terms.
 
