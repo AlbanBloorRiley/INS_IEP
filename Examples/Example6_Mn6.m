@@ -19,10 +19,10 @@ Sys0.J = [J_AB J_A1 J_A2 J_A3 J_A4 J_B1 J_B2 J_B3 J_B4 J_12 J_13 J_14 J_23 J_24 
 
 DIII = -0.03*meV; %  (-0.029) MnIII anisotropy. Free Value 
 EIII = 0*DIII;   % MnIII rhombicity. For INS, assume 0.
-B20III = 3*DIII; B22III = EIII; %Converting to Stevens Operator formalism
+B20III = DIII/3; B22III = EIII; %Converting to Stevens Operator formalism
 DII = -0.000*meV; % MnII anisotropy. For INS, assume 0. 
 EII = DII*0;      % MnII rhombicity. For INS, assume 0.
-B20II = 3*DII; B22II = EII; %Converting to Stevens Operator formalism
+B20II = DII/3; B22II = EII; %Converting to Stevens Operator formalism
 
 Sys0.B2 = [B22III 0 B20III 0 0;
           B22III 0 B20III 0 0;
