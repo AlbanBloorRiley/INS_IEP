@@ -60,8 +60,8 @@ SysOut3= INS_IEP(Sys0,Vary,Exp,Opt);
 %% Known solutions
 %If there are other minima to the system that are already know or have been
 %previously calculated they can also be input:
-
-Opt = struct('NDeflations',4,'SysFound',SysOut3);
+  
+Opt = struct('NDeflations',5,'SysFound',SysOut3);
 SysOut4= INS_IEP(Sys0,Vary,Exp,Opt);
 %This finds all 4 solutions to the system, using the three previously found
 % inima. 
@@ -352,8 +352,10 @@ SysOut = INS_IEP(Sys0,Vary,Exp,Opt)
 % Another option is to try and find the minimum after multiple deflations.
 % When using deflation is it often adventagous to scale the variables:
 clear Opt
+% Opt.IEPType = "Difference";
 Opt.Scaled = true;
 Opt.NDeflations = 5;
+Opt.C1 = 1e-10;
 SysOut = INS_IEP(Sys0,Sys0,Exp,Opt);
 % In this case it is the 5th found system that we want.
 SysOut(5)
