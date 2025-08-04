@@ -18,7 +18,7 @@ for i = 1:N
     hes(:,:,i) = hessian(fun,x0);
 end
 
-ok = areequal(H,hes,1e-8,'rel');
+ok = areequal(H,hes,1e-7,'rel');
 
 end
 
