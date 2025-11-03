@@ -15,7 +15,7 @@
 %
 %   All test files must have an underscore _ in their filename.
 %
-%  Function adapted from easyspin package
+%   Function adapted from easyspin package
 
 
 
@@ -28,10 +28,10 @@ if isempty(INS_IEPPath)
 end
 
 % Check whether EasySpin is on the MATLAB path
-% EasySpinPath = fileparts(which('easyspin'));
-% if isempty(EasySpinPath)
-%   error('The required dependancy EasySpin is not on the MATLAB path!');
-% end
+EasySpinPath = fileparts(which('easyspin'));
+if isempty(EasySpinPath)
+  error('The required dependancy EasySpin is not on the MATLAB path!');
+end
 
 fid = 1; % output to command window
 
