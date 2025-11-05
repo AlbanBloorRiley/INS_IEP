@@ -5,8 +5,8 @@
 * Download the package on your PC.
 * Dowload the EasySpin package - details below.
 * Open MATLAB
-* Add both the 'INS_IEP' and 'easyspin' directories to your MATLAB path
-* Go to the directory 'INS_IEP'
+* Add both the INS_IEP/INS_IEP and EasySpin/easyspin directories to your MATLAB path
+* Go to the directory INS_IEP/
 
 ### Test
 You are then ready to run the tests, by openning the INS_IEP/Tests/ directory and then running `iitest`
@@ -19,9 +19,7 @@ Note that this package requires [`easyspin`](https://easyspin.org) to be install
 
 The INS_IEP repository is organized as follows:
 
-Component Formation/        source code for forming the various matrices and functions used by INS_IEP
-Conversions/        source code for converting between easyspin sytax and mathmatical optimisation syntax
+INS_IEP/      source code for the package
 Examples/        collection of INS_IEP example scripts
-Numerical Methods/    source code for the numerical methods used
 Paper/        source code for the JOSS paper (under review)
 Tests/        unit tests for INS_IEP
