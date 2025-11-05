@@ -130,12 +130,14 @@ We utilise the same spin system syntax as `easyspin`, so to set up the problem w
   Sys0.B2 = [-100,0,-1000,0,0];   
   Sys0.B4 = [-1,0,0,0,-1,0,0,0,0];
 ```
-Then we input the experimental eigenvalues - these are typically shifted  such that the smallest eigenvalue is zero - and define which parameters to fit. Note that all values given must be in Hertz, so it may be useful to use conversions.
+Then we input the experimental eigenvalues - these are typically shifted  such that the smallest eigenvalue is zero - and define which parameters to fit. Note that all values given must be in gigahertz, so it may be useful to use conversions.
 ```matlab
   rcm = 29979.2458;   meV = rcm*8.065;  %Conversions values
   %Input calculated eigenvalues:
   Exp.ev = [0,0,1.24,1.24,2.3,2.3,3.18,3.18,3.91,3.91,4.5,4.5,
            4.97,4.97,5.32,5.32,5.54,5.59,5.69,5.75,5.78].*meV;
+  %Note that these eigenvalues are simulated from the parameters given in [@bircher_transverse_2004].
+
   %Vary all non zero parameters (no Fixed parameters):
   Vary = Sys0; 
 ```
