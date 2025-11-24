@@ -1,5 +1,5 @@
 ---
-title: '`INS_IEP`: A MATLAB package for fitting Inelastic Neutron Scattering data.'
+title: '`INS_IEP`: A MATLAB package for fitting peaks of Inelastic Neutron Scattering data in spin cluster systems'
 tags:
   - MATLAB 
   - Inelastic Neutron Scattering
