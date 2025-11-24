@@ -100,7 +100,7 @@ Another advantage is the number of constraints to fit is much smaller than fitti
 
 All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ where the step $p^k$ uniquely defines each algorithm:
 
--  Newton's method: $p^k = (J_r^TJ_r + H_rr){-1}J_r^Tr$ [@nocedal_numerical_2006]
+-  Newton's method: $p^k = (J_r^TJ_r + H_rr)^{-1}J_r^Tr$ [@nocedal_numerical_2006]
 -  Gauss-Newton method: $p^k = (J_r^TJ_r)^{-1}J_r^Tr$ [@nocedal_numerical_2006]
 -  Lift and Projection Method: $p^k = B^{-1}J_r^Tr$ [@bloor_riley_riemannian_2025]
 
