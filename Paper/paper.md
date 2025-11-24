@@ -75,7 +75,7 @@ Let $A(x)$ be the affine family of matrices,
 
 $$A( x) = A_0 + \sum^\ell_{i=1} x_i A_i,$$
 
-where $x\in\mathbb C^\ell$ and $A_0,\dots,A_\ell \in \mathbb R^{n\times n}$ are linearly independent Hermitian matrices, and denote the ordered eigenvalues of $A(x)$ as $\lambda_1(x)\leq\dots\leq\lambda_n(x)$.
+where $x\in\mathbb R^\ell$ and $A_0,\dots,A_\ell \in \mathbb C^{n\times n}$ are linearly independent Hermitian matrices, and denote the ordered eigenvalues of $A(x)$ as $\lambda_1(x)\leq\dots\leq\lambda_n(x)$.
 Then the least squares inverse eigenvalue problem (LSIEP) is to find the parameters $x \in \mathbb R^\ell$ that minimises
 
 $$F(x) = \frac 1 2 ||r(x)||^2_2 = \frac 1 2 \sum^m_{i=1}(\lambda_i(x) - \lambda_i^*)^2$$
