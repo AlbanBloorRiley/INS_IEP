@@ -106,7 +106,7 @@ All of the methods used are iterative schemes of the form $x^{k+1} = x^k +p^k$ w
 
 Where the matrix $B$ is the Gram matrix formed from the frobenius inner products of the basis matrices: $B_{ij} = \langle A_i, A_j\rangle_F$. The Lift and Projection method is a Riemannian Gradient descent method [@bloor_riley_riemannian_2025], inspired by the Lift and Projection method [@chu_inverse_2005], specifically designed for solving IEPs. In [@bloor_riley_riemannian_2025] it is proven that the method is a strictly descending algorithm, that is it reduces the value of the objective function every step. Both the deflated Gauss-Newton method and the Riemannian Gradient descent Lift and Projection method are new methods designed for this package [@bloor_riley_deflation_2025;@bloor_riley_riemannian_2025]. 
 
-The $m$ eigenvalues of required to calculate $J_r$ are calculated using MATLAB's `eigs'' command, which is an efficient method based on Krylov subspaces to calculate a small subset of the eigenvalues of the matrix. This is invaluable in this setting because computing the full set of eigenvalues by exact diagonalisation is in some cases infeasible [@bloor_riley_riemannian_2025].
+The $m$ eigenvalues of required to calculate $J_r$ are calculated using MATLAB's `eigs` command, which is an efficient method based on Krylov subspaces to calculate a small subset of the eigenvalues of the matrix. This is invaluable in this setting because computing the full set of eigenvalues by exact diagonalisation is in some cases infeasible [@bloor_riley_riemannian_2025].
 
 ## Deflation 
 
