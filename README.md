@@ -8,7 +8,7 @@
 
 ### Verify Installation
 
-To verify that instalation was successful go to the directory INS_IEP/Tests , e.g. by `cd Tests`, and run the tests file `iitest`.
+To verify that instalation was successful navigate to the directory INS_IEP/Tests and run the tests file `iitest`.
 
 ### Dependencies 
 Note that this package requires [`easyspin`](https://easyspin.org) to be installed and added to the MATLAB path. This can be downladed at https://easyspin.org.
