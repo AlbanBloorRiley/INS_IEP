@@ -193,7 +193,7 @@ Note also that using `mint` [@baker_mint_2022], which is fully compatible with `
 
 # Acknowledgements
 
-ABR thanks the University of Manchester for a Dean’s Doctoral Scholarship. MW thanks the Polish National Science Centre (SONATA-BIS-9), project no. 2019/34/E/ST1/00390, for the funding that supported some of this research. 
+We thank the reviewers Garrett Granroth and Chen Zhang for their help to improve the paper. ABR thanks the University of Manchester for a Dean’s Doctoral Scholarship. MW thanks the Polish National Science Centre (SONATA-BIS-9), project no. 2019/34/E/ST1/00390, for the funding that supported some of this research. 
 
 # References
 
