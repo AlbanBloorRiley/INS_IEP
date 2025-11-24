@@ -3,7 +3,7 @@
 
 ## Installation
 * Download the package on your PC.
-* Dowload the EasySpin package - details below.
+* Download the EasySpin package - details below.
 * Open MATLAB
 * Add both the INS_IEP/INS_IEP and EasySpin/easyspin directories to your MATLAB path
 * Go to the directory INS_IEP/
@@ -12,7 +12,7 @@
 You are then ready to run the tests, by openning the INS_IEP/Tests/ directory and then running `iitest`
 
 ### Dependencies 
-Note that this package requires [`easyspin`](https://easyspin.org) to be installed and added to the MTLAB path. This can be downladed at https://easyspin.org.
+Note that this package requires [`easyspin`](https://easyspin.org) to be installed and added to the MATLAB path. This can be downladed at https://easyspin.org.
 
 
 ## Repository Organization
