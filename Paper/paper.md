@@ -40,6 +40,15 @@ The energy of such excitations relates to the energy difference between eigenval
 
 To date, this problem is addressed in an iterative process where parameters of the Hamiltonian are varied manually, often one at a time, and the resultant eigenvalues compared to the experimental values - each such iteration requires an eigendecomposition of the Hamiltonian matrix. INS_IEP presents an elegant solution to solving this problem, using algorithms to calculate multiple parameter sets that minimise the difference in eigenvalues, reducing the number of Hamiltonian matrix diagonalisations, and providing a more robust method to reliably extract an accurate spin Hamiltonian model from INS experimental data. 
 
+## State of the Art 
+
+There currently exists fitting software designed to solve this problem, such as:
+
+- `SPECTRE` [@a_t_boothroyd_spectre_1990] uses the NAG Fortran Library for minimisation and matrix diagonalisation.
+- `FOCUS` [@fabi_focus_1995] uses Monte-Carlo and general quasi-Newton methods to find the parameters.  
+- `PyCrystalField` [@scheie_pycrystalfield_2021] -  fitting uses the SciPy  minimize library. 
+
+All of these methods however only work for single ions (i.e. no exchange coupling) and only calculate one minimising system. `INS_IEP` however can fit INS data from samples with multiple spin centres, it can also find multiple minimising systems without multiple initial guesses to the parameter set.
 
 # Key Concepts
 
