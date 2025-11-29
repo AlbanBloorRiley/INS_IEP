@@ -45,7 +45,7 @@ To date, this problem is addressed in an iterative process where parameters of t
 There currently exists fitting software designed to solve this problem, such as:
 
 - `SPECTRE` [@a_t_boothroyd_spectre_1990] uses the NAG Fortran Library for minimisation and matrix diagonalisation.
-- `FOCUS` [@fabi_focus_1995] uses Monte-Carlo and general quasi-Newton methods to find the parameters.  
+- `FOCUS` [@fabi_focus_1995] uses Monte-Carlo and general quasi-Newton methods to find the parameters.
 - `PyCrystalField` [@scheie_pycrystalfield_2021] -  fitting uses the SciPy  minimize library. 
 
 All of these methods however only work for single ions (i.e. no exchange coupling) and only calculate one minimising system. `INS_IEP` however can fit INS data from samples with multiple spin centres, it can also find multiple minimising systems without multiple initial guesses to the parameter set.
