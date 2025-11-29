@@ -40,7 +40,7 @@ The energy of such excitations relates to the energy difference between eigenval
 
 To date, this problem is addressed in an iterative process where parameters of the Hamiltonian are varied manually, often one at a time, and the resultant eigenvalues compared to the experimental values - each such iteration requires an eigendecomposition of the Hamiltonian matrix. INS_IEP presents an elegant solution to solving this problem, using algorithms to calculate multiple parameter sets that minimise the difference in eigenvalues, reducing the number of Hamiltonian matrix diagonalisations, and providing a more robust method to reliably extract an accurate spin Hamiltonian model from INS experimental data. 
 
-## State of the Art 
+## Current State of the Art 
 
 There currently exists fitting software designed to solve this problem, such as:
 
