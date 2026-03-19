@@ -8,10 +8,10 @@
 
 ### Verify Installation
 
-To verify that instalation was successful navigate to the directory INS_IEP/Tests and run the tests file `iitest`.
+To verify that installation was successful navigate to the directory INS_IEP/Tests and run the tests file `iitest`.
 
 ### Dependencies 
-Note that this package requires [`easyspin`](https://easyspin.org) to be installed and added to the MATLAB path. This can be downladed at https://easyspin.org.
+Note that this package requires [`easyspin`](https://easyspin.org) to be installed and added to the MATLAB path. This can be downloaded at https://easyspin.org.
 
 
 ## Repository Organization
@@ -26,7 +26,7 @@ Tests/        unit tests for INS_IEP
 
 ## How to Contribute to this Software
 
-To make changes to the code, please make a fork of the repository, push your changes there and then make a pull request in this respository. Your contribution will be reviewed by one of the current contributors of the repository before being merged with the repository.
+To make changes to the code, please make a fork of the repository, push your changes there and then make a pull request in this repository. Your contribution will be reviewed by one of the current contributors of the repository before being merged with the repository.
 
 ## How to Report Issues, Bugs or Feature Requests
 
