@@ -18,9 +18,9 @@ authors:
     orcid: 0000-0002-8246-3177
     affiliation: 2
 affiliations:
-  - name: The University of Manchester, Department of Mathematics
+  - name: Department of Mathematics, The University of Manchester, The United Kingdom
     index: 1
-  - name: The University of Manchester, Department of Chemistry
+  - name: Department of Chemistry, The University of Manchester, The United Kingdom
     index: 2
 date: June 2025
 bibliography: paper.bib
